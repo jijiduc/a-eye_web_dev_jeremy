@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
+    <!-- Make it compatible to mobile devices -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AEye</title>
 
@@ -11,16 +12,37 @@
 </head>
 
 <body>
-    <div style="margin-top: 50px;" class="ui container">
-        <h1 class="ui center aligned header">AEye automated segmentation</h1>
-        <hr>
-        <a class="ui blue button" href="/predict">Predict</a>
-        {% if done == True %}
-        <span class="ui green label">Done</span>
-        {% else %}
-        <span class="ui gray label">Ready to inference</span>
-        {% endif %}
-    </div>
+  <div style="margin-top: 50px;" class="ui container">
+    <h1 class="ui center aligned header">AEye automated segmentation</h1>
+    <hrc:\Users\TORRE\AppData\Local\Programs\Microsoft VS Code\resources\app\out\vs\code\electron-sandbox\workbench\workbench.html>
+    <a class="ui blue button" href="/predict">Predict</a>
+    {% if done == True %}
+    <span class="ui green label">Done</span>
+    {% else %}
+    <span class="ui gray label">Ready to inference</span>
+    {% endif %}
+  </div>
+
+  <form method="POST" action="/" enctype="multipart/form-data">
+    <dl>
+      <p style="color:Violet;">
+        <input type="file" name="file"/>
+      </p>
+    </dl>
+    <p style="color:Violet;">
+      <input type="submit" name="submit" value="Submit">
+    </p>
+  </form>
+
+  <p style="color:MediumSeaGreen;">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+          Diagnosis for the following image is: <u><h3 style="color:MediumSeaGreen;">{{ messages[0] }}</h3></u><br>
+          <!-- <img src="{{ messages[1] }}" width="300", height="225"> -->
+      {% endif %}
+    {% endwith %}
+  </p>
+
 </body>
 
 </html>

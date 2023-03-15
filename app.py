@@ -1,20 +1,37 @@
 import os
-from flask import Flask, request, jsonify, render_template, request, redirect, url_for
+from main import getSegmentation
+from flask import Flask, request, jsonify, render_template, request, redirect, url_for, flash
 import logging
-from utilities import main
+from werkzeug.utils import secure_filename
 
 # ----------------------------------------------------------------------------------------------
 # FLASK
 
-app = Flask(__name__)
+#Save images to the 'static' folder as Flask serves images from this directory
+# UPLOAD_FOLDER = os.path('./a-eye_web/static/images/')
+# path to system folder
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static/images/')
+
+app = Flask(__name__, static_folder="static")
+
+#Add reference fingerprint. 
+#Cookies travel with a signature that they claim to be legit. 
+#Legitimacy here means that the signature was issued by the owner of the cookie.
+#Others cannot change this cookie as it needs the secret key. 
+#It's used as the key to encrypt the session - which can be stored in a cookie.
+#Cookies should be encrypted if they contain potentially sensitive information.
+app.secret_key = "secret key"
+
+#Define the upload folder to save images uploaded by the user. 
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Set Flask environment to development (to print console)
 # os.system('export FLASK_APP=./a-eye_web/app.py')
-os.environ['FLASK_APP'] = './app.py' # for flask run
+os.environ['FLASK_APP'] = './a-eye_web/app.py' # for flask run
 os.environ['FLASK_DEBUG'] = 'True' # to print console
 
 # Manage logs
-logging.basicConfig(filename='./app.log', level=logging.DEBUG,
+logging.basicConfig(filename='./a-eye_web/app.log', level=logging.DEBUG,
     format='%(asctime)s %(levelname)s %(name)s %(message)s')
 
 
@@ -27,8 +44,30 @@ def home():
 
 @app.route('/predict')
 def predict():
-    main()
+    getSegmentation()
     return render_template('base.html', done=True)
+
+#Add Post method to the decorator to allow for form submission. 
+@app.route('/', methods=['POST'])
+def submit_file():
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            flash('No file part')
+            return redirect(request.url)
+        file = request.files['file']
+        if file.filename == '':
+            flash('No file selected for uploading')
+            return redirect(request.url)
+        if file:
+            filename = secure_filename(file.filename) #Use this werkzeug method to secure filename. 
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(filepath)
+            result = getSegmentation(filepath)
+            flash(result)
+            # full_filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            # flash(full_filepath)
+            return render_template('base.html', done=True)
+            # return redirect(url_for('home'))
 
 
 # ----------------------------------------------------------------------------------------------
