@@ -73,8 +73,8 @@ def getSegmentation(filepath = None):
         -t Task313_Eye \
     '
 
-    sudo_command = f'echo {sudo_pwd} | sudo -S -s {command}'
-    # sudo_command = f'echo AEye mola mazo'
+    # sudo_command = f'echo {sudo_pwd} | sudo -S -s {command}'
+    sudo_command = f'echo AEye mola mazo'
 
     # Print command
     print_and_log(f'[AEye] nnUNet inference command: {command}', 'info', LOGS_FOLDER)
@@ -95,9 +95,8 @@ def getSegmentation(filepath = None):
     
     # Copy log files into output folder and remove content from log files
     if use_ext_folders:
-        # Copy log files into output folder
-        copy_file(f'{LOGS_FOLDER}app.log', args_out)
-        copy_file(f'{LOGS_FOLDER}console.log', args_out)
+        # Copy log files (log folder) into output folder
+        shutil.copytree(LOGS_FOLDER, os.path.join(args_out, 'logs'))
         # Remove content from log files
         # clear_app_logs(LOGS_FOLDER)
         # clear_console_logs(LOGS_FOLDER)
