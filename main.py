@@ -8,7 +8,7 @@ from flask import redirect, url_for
 enable_args = False
 use_ext_folders = True
 
-def getSegmentation(filepath):
+def getSegmentation(filepath = None):
     ''' Main function '''
 
     # input/output folders
@@ -20,7 +20,6 @@ def getSegmentation(filepath):
         args_in = args.input
         args_out = args.output
     else:
-        # args_in = '/home/jaimebarranco/Desktop/test_inference/input' # origin input folder
         args_in = filepath # origin input folder
         args_out = '/home/jaimebarranco/Desktop/test_inference/output' # origin output folder
 
@@ -31,17 +30,20 @@ def getSegmentation(filepath):
     shm_size = 10 # shared memory (gb)
     abs_path = '/mnt/sda1/Repos/a-eye/a-eye_segmentation/deep_learning/nnUNet/nnUNet'
     rel_path = '/opt/nnunet_resources'
-    aux_in = f'nnUNet_inference/temp_inference/{args_in.split("/")[-1]}' # input aux folder
+    aux_in = f'nnUNet_inference/temp_inference/input' # input aux folder
     aux_out = f'nnUNet_inference/temp_inference/output' # output aux folder
 
     start_docker()
 
     if use_ext_folders:
-        # Create output aux folder
+        # Copy content from origin input folder into local input folder
+        if os.path.isdir(args_in):
+            copy_folder(args_in, os.path.join(abs_path, aux_in))
+        elif os.path.isfile(args_in):
+            copy_file(args_in, os.path.join(abs_path, aux_in))
+        # Create output aux folder if it doesn't exist
         if not os.path.exists(os.path.join(abs_path, aux_out)):
             os.makedirs(os.path.join(abs_path, aux_out))
-        # Copy content from origin input folder into local input folder
-        copy_folder(args_in, os.path.join(abs_path, aux_in))
 
     # Convert to nifti
     convert_to_nifti(os.path.join(abs_path, aux_in))
@@ -74,8 +76,8 @@ def getSegmentation(filepath):
         # Copy aux output folder into origin output folder
         copy_folder(os.path.join(abs_path, aux_out), args_out)
         # Remove aux folders
-        delete_folder(os.path.join(abs_path, aux_in))
-        delete_folder(os.path.join(abs_path, aux_out))
+        delete_files_in_folder(os.path.join(abs_path, aux_in))
+        delete_files_in_folder(os.path.join(abs_path, aux_out))
     
     print('Done!')
     logging.info('AEye: Done!')
@@ -83,9 +85,31 @@ def getSegmentation(filepath):
     return 'Inference finished!!'
 
 def copy_folder(source, destination):
-    if os.path.exists(destination):
-        shutil.rmtree(destination)
-    shutil.copytree(source, destination)
+    if not os.path.exists(destination):
+        os.mkdir(destination)
+    for item in os.listdir(source):
+        s = os.path.join(source, item)
+        d = os.path.join(destination, item)
+        if os.path.isdir(s):
+            shutil.copytree(s, d)
+        else:
+            shutil.copy2(s, d)
+
+def copy_file(source, destination):
+    if not os.path.exists(destination):
+        os.mkdir(destination)
+    shutil.copy(source, destination)
+
+def delete_files_in_folder(folder):
+    for item in os.listdir(folder):
+        item_path = os.path.join(folder, item)
+        try:
+            if os.path.isdir(item_path):
+                shutil.rmtree(item_path)
+            elif os.path.isfile(item_path) or os.path.islink(item_path):
+                os.unlink(item_path)
+        except Exception as e:
+            print(f"Failed to delete {item_path}. Reason: {e}")
 
 def delete_folder(folder):
     shutil.rmtree(folder)
@@ -127,6 +151,9 @@ def convert_to_nifti(folder):
             # cmd = ["dcm2niix", "-f", filename, "-z", "y", "-o", output_nifti_folder, input_dicom_folder]
             # process = subprocess.Popen(cmd, stdout=subprocess.PIPE)  # pass the list as input to Popen
             # _ = process.communicate()[0]  # the [0] is to return just the output, because otherwise it would be outs, errs = proc.communicate()
+        # Remove DICOM folders
+        for dcm_folder in dcm_folders:
+            delete_folder(dcm_folder)
 
 def start_docker():
     # Check if Docker is already running
