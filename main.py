@@ -5,8 +5,14 @@ import logging
 from flask import redirect, url_for
 
 # bools
-enable_args = False
+enable_args = True
 use_ext_folders = True
+
+# logs folder
+LOGS_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs/')
+
+# ----------------------------------------------------------------------------------------------
+# MAIN FUNCTION
 
 def getSegmentation(filepath = None):
     ''' Main function '''
@@ -53,7 +59,6 @@ def getSegmentation(filepath = None):
 
     # inference command terminal
     command = f' \
-        echo {sudo_pwd} | sudo -S -s \
         docker run --rm \
         --gpus device=0 \
         --shm-size={shm_size}gb \
@@ -68,9 +73,14 @@ def getSegmentation(filepath = None):
         -t Task313_Eye \
     '
 
-    print(command)
-    logging.info(f'AEye: nnUNet inference command: \n{command}')
-    os.system(command)
+    sudo_command = f'echo {sudo_pwd} | sudo -S -s {command}'
+    # sudo_command = f'echo AEye mola mazo'
+
+    # Print command
+    print_and_log(f'[AEye] nnUNet inference command: {command}', 'info', LOGS_FOLDER)
+
+    # Run command
+    run_command_and_print_output(f'{sudo_command}')
 
     if use_ext_folders:
         # Copy aux output folder into origin output folder
@@ -78,11 +88,25 @@ def getSegmentation(filepath = None):
         # Remove aux folders
         delete_files_in_folder(os.path.join(abs_path, aux_in))
         delete_files_in_folder(os.path.join(abs_path, aux_out))
+
+    # DONE!
+    print('[AEye] Inference finished!!')
+    print_and_log('[AEye] Inference finished!!', 'info', LOGS_FOLDER)
     
-    print('Done!')
-    logging.info('AEye: Done!')
+    # Copy log files into output folder and remove content from log files
+    if use_ext_folders:
+        # Copy log files into output folder
+        copy_file(f'{LOGS_FOLDER}app.log', args_out)
+        copy_file(f'{LOGS_FOLDER}console.log', args_out)
+        # Remove content from log files
+        # clear_app_logs(LOGS_FOLDER)
+        # clear_console_logs(LOGS_FOLDER)
 
     return 'Inference finished!!'
+
+
+# ---------------------------------------------------------------------------------------------
+# AUX FUNCTIONS
 
 def copy_folder(source, destination):
     if not os.path.exists(destination):
@@ -109,7 +133,7 @@ def delete_files_in_folder(folder):
             elif os.path.isfile(item_path) or os.path.islink(item_path):
                 os.unlink(item_path)
         except Exception as e:
-            print(f"Failed to delete {item_path}. Reason: {e}")
+            print_and_log(f"[AEye] Failed to delete {item_path}. Reason: {e}", 'error', LOGS_FOLDER)
 
 def delete_folder(folder):
     shutil.rmtree(folder)
@@ -127,15 +151,14 @@ def check_filenames(folder):
         file_extension = ''.join(file_extensions)
         file_name = os.path.basename(file_path)
         file_path = f'{file_path}{file_extension}'
-        # print(f'file name: {file_name}')
-        # print(f'file extension: {file_extension}')
-        # print(f'absolute file path: {file_path}')
+        print_and_log(f'[AEye] file name: {file_name}', 'info', LOGS_FOLDER)
+        print_and_log(f'[AEye] file extension: {file_extension}', 'info', LOGS_FOLDER)
+        print_and_log(f'[AEye] absolute file path: {file_path}', 'info', LOGS_FOLDER)
         if not str(file_name).endswith('_0000'):
             correct_filename(file_path, file_name, file_extension)
 
 def correct_filename(file_path, file_name, file_extension):
-    # print('Changing filename')
-    logging.info('AEYE: Changing filename to nnUNet format...')
+    print_and_log('[AEye] Changing filename to nnUNet format...', LOGS_FOLDER)
     new_file_name = f'{file_name}_0000{file_extension}' # extension for nnUNet
     os.rename(file_path, os.path.join(os.path.dirname(file_path), new_file_name))
 
@@ -143,7 +166,7 @@ def convert_to_nifti(folder):
     # Get a list of all DICOM folders in the input folder
     dcm_folders = sorted([f.path for f in os.scandir(folder) if f.is_dir() and f.name != '.DS_Store'])
     if len(dcm_folders) >0:
-        logging.info('AEye: Converting DICOM to NIfTI format...')
+        print_and_log('[AEye] Converting DICOM to NIfTI format...', LOGS_FOLDER)
         # Convert each DICOM folder to NIfTI format
         for dcm_folder in dcm_folders:
             filename = str(os.path.basename(dcm_folder) + '.nii.gz')
@@ -156,17 +179,49 @@ def convert_to_nifti(folder):
             delete_folder(dcm_folder)
 
 def start_docker():
-    # Check if Docker is already running
+    # Check if Docker is running and if not, initialize it
     try:
-        os.system("docker version")
-        print("Docker is already running")
+        # docker version
+        run_command_and_print_output('docker version')
+        print_and_log("[AEye] Docker is already running...", 'info', LOGS_FOLDER)
     except:
-        # If Docker is not running, start it
-        print("Docker was not initialized!")
-        logging.warning("Docker was not initialized!")
-        print("Initializing docker...")
-        logging.info("Initializing docker...")
-        os.system("systemctl start docker")
-        os.system('sleep 10')
-        print("Docker has been started")
-        logging.info("Docker has been started")
+        # If Docker is not running...
+        print_and_log("[AEye] Docker was not initialized!!", 'warning', LOGS_FOLDER)
+        
+        # ... start it!
+        print_and_log("[AEye] Initializing docker...", 'info', LOGS_FOLDER)
+        
+        # docker start
+        run_command_and_print_output('systemctl start docker')
+        
+        # sleep 10s
+        run_command_and_print_output('sleep 10')
+        
+        print_and_log("[AEye] Docker has been started", 'info', LOGS_FOLDER)
+
+def clear_app_logs(logs_folder=None):
+    open(f'{logs_folder}app.log', 'w').close()
+
+def clear_console_logs(logs_folder=None):
+    open(f'{logs_folder}console.log','w').close()
+
+def print_console(text=None, logs_folder=None):
+    logs_file = f'{logs_folder}console.log'
+    print(text, file=open(logs_file, 'a'))
+
+def print_and_log(text=None, level='info', logs_folder=None):
+    logs_file = f'{logs_folder}console.log'
+    print(text, file=open(logs_file, 'a'))
+    if level=='info':
+        logging.info(text)
+    elif level=='warning':
+        logging.warning(text)
+    elif level=='error':
+        logging.error(text)
+
+def run_command_and_print_output(command):
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
+    console_output = process.communicate()[0]
+    console_output = console_output.decode('utf-8')
+    for line in console_output.splitlines():
+            print_console(line, LOGS_FOLDER)
