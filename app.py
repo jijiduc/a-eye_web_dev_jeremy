@@ -1,5 +1,5 @@
 import os
-from main import getSegmentation, clear_app_logs, clear_console_logs
+from main import getSegmentation, clear_logs
 from flask import Flask, request, jsonify, render_template, request, redirect, url_for, flash
 import logging
 from werkzeug.utils import secure_filename
@@ -75,8 +75,7 @@ def submit_file():
 # MAIN
 
 if __name__ == '__main__':
-    clear_app_logs(LOGS_FOLDER)
-    clear_console_logs(LOGS_FOLDER)
+    clear_logs(LOGS_FOLDER)
     app.run(host='0.0.0.0', port=5000, debug=True) # debug=True to development mode
 
 # ----------------------------------------------------------------------------------------------
@@ -90,7 +89,7 @@ if __name__ == '__main__':
 # kill -9 441420
 
 # Launch app.py and save console output
-# /home/jaimebarranco/miniconda3/envs/a-eye/bin/python /mnt/sda1/Repos/a-eye/a-eye_web/app.py >> ./a-eye_web/console.log 2>&1
+# /home/jaimebarranco/miniconda3/envs/a-eye/bin/python /mnt/sda1/Repos/a-eye/a-eye_web/app.py >> ./a-eye_web/logs/console.log 2>&1
 
 # Complete command: args, logs
 # /home/jaimebarranco/miniconda3/envs/a-eye/bin/python /mnt/sda1/Repos/a-eye/a-eye_web/app.py -i /home/jaimebarranco/Desktop/test_inference/input -o /home/jaimebarranco/Desktop/test_inference/output  >> ./a-eye_web/logs/console.log 2>&1

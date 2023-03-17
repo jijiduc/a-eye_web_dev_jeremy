@@ -5,7 +5,7 @@ import logging
 from flask import redirect, url_for
 
 # bools
-enable_args = True
+enable_args = False
 use_ext_folders = True
 
 # logs folder
@@ -73,8 +73,8 @@ def getSegmentation(filepath = None):
         -t Task313_Eye \
     '
 
-    # sudo_command = f'echo {sudo_pwd} | sudo -S -s {command}'
-    sudo_command = f'echo AEye mola mazo'
+    sudo_command = f'echo {sudo_pwd} | sudo -S -s {command}'
+    # sudo_command = f'echo AEye mola mazo'
 
     # Print command
     print_and_log(f'[AEye] nnUNet inference command: {command}', 'info', LOGS_FOLDER)
@@ -96,10 +96,9 @@ def getSegmentation(filepath = None):
     # Copy log files into output folder and remove content from log files
     if use_ext_folders:
         # Copy log files (log folder) into output folder
-        shutil.copytree(LOGS_FOLDER, os.path.join(args_out, 'logs'))
+        copy_folder(LOGS_FOLDER, os.path.join(args_out, 'logs')) # logs folder in output
         # Remove content from log files
-        # clear_app_logs(LOGS_FOLDER)
-        # clear_console_logs(LOGS_FOLDER)
+        # clear_logs(LOGS_FOLDER)
 
     return 'Inference finished!!'
 
@@ -186,22 +185,16 @@ def start_docker():
     except:
         # If Docker is not running...
         print_and_log("[AEye] Docker was not initialized!!", 'warning', LOGS_FOLDER)
-        
         # ... start it!
         print_and_log("[AEye] Initializing docker...", 'info', LOGS_FOLDER)
-        
         # docker start
         run_command_and_print_output('systemctl start docker')
-        
         # sleep 10s
         run_command_and_print_output('sleep 10')
-        
         print_and_log("[AEye] Docker has been started", 'info', LOGS_FOLDER)
 
-def clear_app_logs(logs_folder=None):
+def clear_logs(logs_folder=None):
     open(f'{logs_folder}app.log', 'w').close()
-
-def clear_console_logs(logs_folder=None):
     open(f'{logs_folder}console.log','w').close()
 
 def print_console(text=None, logs_folder=None):
@@ -223,4 +216,4 @@ def run_command_and_print_output(command):
     console_output = process.communicate()[0]
     console_output = console_output.decode('utf-8')
     for line in console_output.splitlines():
-            print_console(line, LOGS_FOLDER)
+        print_console(line, LOGS_FOLDER)
