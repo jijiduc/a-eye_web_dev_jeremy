@@ -1,6 +1,6 @@
 import os
-from main import getSegmentation, clear_logs
-from flask import Flask, request, jsonify, render_template, request, redirect, url_for, flash
+from main import getSegmentation, clear_logs, delete_files_in_folder
+from flask import Flask, jsonify, render_template, request, redirect, url_for, flash
 import logging
 from werkzeug.utils import secure_filename
 
@@ -8,17 +8,18 @@ from werkzeug.utils import secure_filename
 # FLASK
 
 #Save images to the 'static' folder as Flask serves images from this directory
-# UPLOAD_FOLDER = os.path('./a-eye_web/static/images/')
 # path to system folder
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static/images/')
+# UPLOAD_FOLDER ='/tmp'
+ALLOWED_EXTENSIONS = {'nii.gz', 'dcm'}
 LOGS_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs/')
 
 app = Flask(__name__, static_folder="static")
 
-#Add reference fingerprint. 
-#Cookies travel with a signature that they claim to be legit. 
+#Add reference fingerprint.
+#Cookies travel with a signature that they claim to be legit.
 #Legitimacy here means that the signature was issued by the owner of the cookie.
-#Others cannot change this cookie as it needs the secret key. 
+#Others cannot change this cookie as it needs the secret key.
 #It's used as the key to encrypt the session - which can be stored in a cookie.
 #Cookies should be encrypted if they contain potentially sensitive information.
 app.secret_key = "secret key"
@@ -35,6 +36,10 @@ os.environ['FLASK_DEBUG'] = 'True' # to print console
 logging.basicConfig(filename=f'{LOGS_FOLDER}app.log', level=logging.DEBUG,
     format='%(asctime)s %(levelname)s %(name)s %(message)s')
 
+def allowed_file(filename):
+    return '.' in filename and \
+        filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 # ----------------------------------------------------------------------------------------------
 # ROUTES
@@ -43,32 +48,26 @@ logging.basicConfig(filename=f'{LOGS_FOLDER}app.log', level=logging.DEBUG,
 def home():
     return render_template('base.html', done=False)
 
-@app.route('/predict')
-def predict():
-    getSegmentation()
+@app.route('/segment')
+def segment():
+    # getSegmentation('/home/jaimebarranco/Desktop/test_inference/input')
+    getSegmentation(UPLOAD_FOLDER)
     return render_template('base.html', done=True)
 
-#Add Post method to the decorator to allow for form submission. 
 @app.route('/', methods=['POST'])
-def submit_file():
+def upload_files():
     if request.method == 'POST':
-        if 'file' not in request.files:
-            flash('No file part')
+        if 'file' in request.files:
+            files = request.files.getlist('file')
+            for file in files:
+                filename = secure_filename(file.filename) #Use this werkzeug method to secure filename. 
+                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(filepath)
+            flash('Files uploaded successfully')
             return redirect(request.url)
-        file = request.files['file']
-        if file.filename == '':
-            flash('No file selected for uploading')
+        else:
+            flash('No file selected')
             return redirect(request.url)
-        if file:
-            filename = secure_filename(file.filename) #Use this werkzeug method to secure filename. 
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(filepath)
-            result = getSegmentation(filepath)
-            flash(result)
-            # full_filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            # flash(full_filepath)
-            return render_template('base.html', done=True)
-            # return redirect(url_for('home'))
 
 
 # ----------------------------------------------------------------------------------------------
@@ -76,6 +75,7 @@ def submit_file():
 
 if __name__ == '__main__':
     clear_logs(LOGS_FOLDER)
+    delete_files_in_folder(app.config['UPLOAD_FOLDER'])
     app.run(host='0.0.0.0', port=5000, debug=True) # debug=True to development mode
 
 # ----------------------------------------------------------------------------------------------
@@ -99,5 +99,3 @@ if __name__ == '__main__':
 # docker run --rm --gpus all nvidia/cuda:11.6.2-base-ubuntu20.04 nvidia-smi
 # echo $SUDO_PWD | sudo -S -s docker run --rm --gpus all nvidia/cuda:11.6.2-base-ubuntu20.04 nvidia-smi
 # LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1 docker run --rm --gpus all nvidia/cuda:11.6.2-base-ubuntu20.04 nvidia-smi
-
-

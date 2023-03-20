@@ -15,22 +15,29 @@
   <div style="margin-top: 50px;" class="ui container">
     <h1 class="ui center aligned header">AEye automated segmentation</h1>
     <hrc:\Users\TORRE\AppData\Local\Programs\Microsoft VS Code\resources\app\out\vs\code\electron-sandbox\workbench\workbench.html>
-    <a class="ui blue button" href="/predict">Predict</a>
+    <!-- Choose files button -->
+
+    <!-- Segment button -->
+    <a class="ui blue button" href="/segment">Segment</a>
+    <!-- Segment label -->
     {% if done == True %}
     <span class="ui green label">Done</span>
     {% else %}
-    <span class="ui gray label">Ready to inference</span>
+    <span class="ui gray label">Ready to segment</span>
     {% endif %}
-  </div>
 
+  </div>
+  
+  <!-- The enctype attribute specifies that the form data will be encoded using multipart/form-data, which is the standard encoding used for file uploads. -->
   <form method="POST" action="/" enctype="multipart/form-data">
     <dl>
       <p style="color:Violet;">
-        <input type="file" name="file"/>
+        <!-- The multiple attribute is set to allow the user to select multiple files to upload. -->
+        <input type="file" name="file" multiple>
       </p>
     </dl>
     <p style="color:Violet;">
-      <input type="submit" name="submit" value="Submit">
+      <input type="submit" name="upload_files" value="Upload">
     </p>
   </form>
 

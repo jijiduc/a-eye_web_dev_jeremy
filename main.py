@@ -14,8 +14,8 @@ LOGS_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs/')
 # ----------------------------------------------------------------------------------------------
 # MAIN FUNCTION
 
-def getSegmentation(filepath = None):
-    ''' Main function '''
+def getSegmentation(input=None):
+    ''' Main function: performs inference on input folder and saves output in output folder. '''
 
     # input/output folders
     if enable_args:
@@ -26,7 +26,7 @@ def getSegmentation(filepath = None):
         args_in = args.input
         args_out = args.output
     else:
-        args_in = filepath # origin input folder
+        args_in = input # origin input folder
         args_out = '/home/jaimebarranco/Desktop/test_inference/output' # origin output folder
 
     # sudo_pwd = os.environ['SUDO_PWD']
@@ -86,8 +86,8 @@ def getSegmentation(filepath = None):
         # Copy aux output folder into origin output folder
         copy_folder(os.path.join(abs_path, aux_out), args_out)
         # Remove aux folders
-        delete_files_in_folder(os.path.join(abs_path, aux_in))
-        delete_files_in_folder(os.path.join(abs_path, aux_out))
+        # delete_files_in_folder(os.path.join(abs_path, aux_in))
+        # delete_files_in_folder(os.path.join(abs_path, aux_out))
 
     # DONE!
     print('[AEye] Inference finished!!')
@@ -156,7 +156,7 @@ def check_filenames(folder):
             correct_filename(file_path, file_name, file_extension)
 
 def correct_filename(file_path, file_name, file_extension):
-    print_and_log('[AEye] Changing filename to nnUNet format...', LOGS_FOLDER)
+    print_and_log('[AEye] Changing filename to nnUNet format...', 'info', LOGS_FOLDER)
     new_file_name = f'{file_name}_0000{file_extension}' # extension for nnUNet
     os.rename(file_path, os.path.join(os.path.dirname(file_path), new_file_name))
 
@@ -213,7 +213,8 @@ def print_and_log(text=None, level='info', logs_folder=None):
 
 def run_command_and_print_output(command):
     process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
-    console_output = process.communicate()[0]
+    console_output, console_errors = process.communicate()
     console_output = console_output.decode('utf-8')
     for line in console_output.splitlines():
         print_console(line, LOGS_FOLDER)
+    print_console(console_errors, LOGS_FOLDER)
