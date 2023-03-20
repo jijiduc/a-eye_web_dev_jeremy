@@ -3,6 +3,7 @@ import dicom2nifti
 import argparse
 import logging
 from flask import redirect, url_for
+import zipfile
 
 # bools
 enable_args = False
@@ -26,8 +27,9 @@ def getSegmentation(input=None):
         args_in = args.input
         args_out = args.output
     else:
-        args_in = input # origin input folder
+        args_in = input # origin input
         args_out = '/home/jaimebarranco/Desktop/test_inference/output' # origin output folder
+
 
     # sudo_pwd = os.environ['SUDO_PWD']
     sudo_pwd = 'Patatahitech2.0'
@@ -45,8 +47,12 @@ def getSegmentation(input=None):
         # Copy content from origin input folder into local input folder
         if os.path.isdir(args_in):
             copy_folder(args_in, os.path.join(abs_path, aux_in))
-        elif os.path.isfile(args_in):
-            copy_file(args_in, os.path.join(abs_path, aux_in))
+        elif os.path.isfile(args_in): # local
+            # Manage zip files
+            if args_in.split('.')[-1].lower() == 'zip':
+                unzip_files(args_in, os.path.join(abs_path, aux_in))
+            else:
+                copy_file(args_in, os.path.join(abs_path, aux_in))
         # Create output aux folder if it doesn't exist
         if not os.path.exists(os.path.join(abs_path, aux_out)):
             os.makedirs(os.path.join(abs_path, aux_out))
@@ -106,6 +112,16 @@ def getSegmentation(input=None):
 # ---------------------------------------------------------------------------------------------
 # AUX FUNCTIONS
 
+def unzip_files(source, destination):
+    # Create a ZipFile object with the path of the zip file
+    zip_file = zipfile.ZipFile(source)
+    # Extract all the files to a folder
+    zip_file.extractall(destination)
+    print_and_log(f'[AEye] Unzipped file: {source}', 'info', LOGS_FOLDER)
+    # Close the zip file
+    zip_file.close()
+
+
 def copy_folder(source, destination):
     if not os.path.exists(destination):
         os.mkdir(destination)
@@ -115,7 +131,10 @@ def copy_folder(source, destination):
         if os.path.isdir(s):
             shutil.copytree(s, d)
         else:
-            shutil.copy2(s, d)
+            if s.split('.')[-1].lower() == 'zip':
+                unzip_files(s, destination)
+            else:
+                shutil.copy2(s, d)
 
 def copy_file(source, destination):
     if not os.path.exists(destination):
@@ -163,7 +182,7 @@ def correct_filename(file_path, file_name, file_extension):
 def convert_to_nifti(folder):
     # Get a list of all DICOM folders in the input folder
     dcm_folders = sorted([f.path for f in os.scandir(folder) if f.is_dir() and f.name != '.DS_Store'])
-    if len(dcm_folders) >0:
+    if len(dcm_folders) > 0:
         print_and_log('[AEye] Converting DICOM to NIfTI format...', LOGS_FOLDER)
         # Convert each DICOM folder to NIfTI format
         for dcm_folder in dcm_folders:

@@ -11,7 +11,7 @@ from werkzeug.utils import secure_filename
 # path to system folder
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static/images/')
 # UPLOAD_FOLDER ='/tmp'
-ALLOWED_EXTENSIONS = {'nii.gz', 'dcm'}
+ALLOWED_EXTENSIONS = {'gz', 'zip'}
 LOGS_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs/')
 
 app = Flask(__name__, static_folder="static")
@@ -61,10 +61,14 @@ def upload_files():
             files = request.files.getlist('file')
             if files != '': # empyt list
                 for file in files:
-                    filename = secure_filename(file.filename) #Use this werkzeug method to secure filename. 
-                    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                    file.save(filepath)
-                return render_template('base.html', uploaded=True)
+                    if file and allowed_file(file.filename):
+                        filename = secure_filename(file.filename) #Use this werkzeug method to secure filename. 
+                        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                        file.save(filepath)
+                        return render_template('base.html', uploaded=True)
+                    else:
+                        flash('File not allowed')
+                        return render_template('base.html', uploaded=False)
             else:
                 flash('No file selected')
                 return render_template('base.html', uploaded=False)
