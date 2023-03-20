@@ -15,7 +15,7 @@ LOGS_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs/')
 # ----------------------------------------------------------------------------------------------
 # MAIN FUNCTION
 
-def getSegmentation(input=None):
+def getSegmentation(input=None, output=None):
     ''' Main function: performs inference on input folder and saves output in output folder. '''
 
     # input/output folders
@@ -28,7 +28,7 @@ def getSegmentation(input=None):
         args_out = args.output
     else:
         args_in = input # origin input
-        args_out = '/home/jaimebarranco/Desktop/test_inference/output' # origin output folder
+        args_out = output # origin output folder
 
 
     # sudo_pwd = os.environ['SUDO_PWD']
@@ -117,7 +117,7 @@ def unzip_files(source, destination):
     zip_file = zipfile.ZipFile(source)
     # Extract all the files to a folder
     zip_file.extractall(destination)
-    print_and_log(f'[AEye] Unzipped file: {source}', 'info', LOGS_FOLDER)
+    print_and_log(f'[AEye] Unzipping file: {source}', 'info', LOGS_FOLDER)
     # Close the zip file
     zip_file.close()
 

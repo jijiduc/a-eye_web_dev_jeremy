@@ -1,18 +1,20 @@
 import os
 from main import getSegmentation, clear_logs, delete_files_in_folder
-from flask import Flask, jsonify, render_template, request, redirect, url_for, flash
+from flask import Flask, jsonify, render_template, request, redirect, url_for, flash, send_from_directory
 import logging
 from werkzeug.utils import secure_filename
+import zipfile
 
 # ----------------------------------------------------------------------------------------------
 # FLASK
 
 #Save images to the 'static' folder as Flask serves images from this directory
 # path to system folder
-UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static/images/')
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static/upload/')
 # UPLOAD_FOLDER ='/tmp'
 ALLOWED_EXTENSIONS = {'gz', 'zip'}
 LOGS_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs/')
+DOWNLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static/download/')
 
 app = Flask(__name__, static_folder="static")
 
@@ -40,6 +42,23 @@ def allowed_file(filename):
     return '.' in filename and \
         filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def zip_folder(folder):
+    # Create a zip file based on the key parameter
+    zip_file = zipfile.ZipFile('output.zip', 'w')
+    # Get the path of the folder to zip
+    folder_path = {folder}
+    # Get a list of all files and folders in folder path
+    items = os.listdir(folder_path)
+    # Filter out only files (not subfolders) using os.path.isfile 
+    files = [item for item in items if os.path.isfile(os.path.join(folder_path, item))]
+    # Loop through all files 
+    for file in files:
+        # Get full path of each file 
+        file_path = os.path.join(folder_path, file)
+        # Add each file to zip file     
+        zip_file.write(file_path)
+    # Close the zip file
+    zip_file.close()
 
 # ----------------------------------------------------------------------------------------------
 # ROUTES
@@ -51,7 +70,11 @@ def home():
 @app.route('/segment')
 def segment():
     # getSegmentation('/home/jaimebarranco/Desktop/test_inference/input')
-    getSegmentation(UPLOAD_FOLDER)
+    getSegmentation(UPLOAD_FOLDER, DOWNLOAD_FOLDER)
+    # Zip folder to download
+    zip_folder(DOWNLOAD_FOLDER)
+    # Return the zip file as an attachment
+    send_from_directory(DOWNLOAD_FOLDER, 'output.zip', mimetype='application/zip', as_attachment=True)
     return render_template('base.html', segmented=True)
 
 @app.route('/', methods=['POST'])
@@ -82,7 +105,7 @@ def upload_files():
 
 if __name__ == '__main__':
     clear_logs(LOGS_FOLDER)
-    delete_files_in_folder(app.config['UPLOAD_FOLDER'])
+    delete_files_in_folder(UPLOAD_FOLDER)
     app.run(host='0.0.0.0', port=5000, debug=True) # debug=True to development mode
 
 # ----------------------------------------------------------------------------------------------
