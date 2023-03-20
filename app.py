@@ -46,28 +46,31 @@ def allowed_file(filename):
 
 @app.route('/')
 def home():
-    return render_template('base.html', done=False)
+    return render_template('base.html', uploaded=False, segmented=False)
 
 @app.route('/segment')
 def segment():
     # getSegmentation('/home/jaimebarranco/Desktop/test_inference/input')
     getSegmentation(UPLOAD_FOLDER)
-    return render_template('base.html', done=True)
+    return render_template('base.html', segmented=True)
 
 @app.route('/', methods=['POST'])
 def upload_files():
     if request.method == 'POST':
-        if 'file' in request.files:
+        if 'file' in request.files: # check if the post request has the file part
             files = request.files.getlist('file')
-            for file in files:
-                filename = secure_filename(file.filename) #Use this werkzeug method to secure filename. 
-                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                file.save(filepath)
-            flash('Files uploaded successfully')
-            return redirect(request.url)
+            if files != '': # empyt list
+                for file in files:
+                    filename = secure_filename(file.filename) #Use this werkzeug method to secure filename. 
+                    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                    file.save(filepath)
+                return render_template('base.html', uploaded=True)
+            else:
+                flash('No file selected')
+                return render_template('base.html', uploaded=False)
         else:
             flash('No file selected')
-            return redirect(request.url)
+            return render_template('base.html', uploaded=False)
 
 
 # ----------------------------------------------------------------------------------------------
