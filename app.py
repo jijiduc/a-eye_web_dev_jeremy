@@ -9,10 +9,8 @@ import zipfile
 # FLASK
 
 # Save images to the 'static' folder as Flask serves images from this directory
-# path to system folder
-UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static/upload/')
-DOWNLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static/download/')
-# UPLOAD_FOLDER ='/tmp'
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static/upload') # /tmp cannot be used since we need access
+DOWNLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static/download') # /tmp cannot be used since we need access
 ALLOWED_EXTENSIONS = {'gz', 'zip'}
 LOGS_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs/')
 
@@ -31,7 +29,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Set Flask environment to development (to print console)
 # os.system('export FLASK_APP=./a-eye_web/app.py')
-os.environ['FLASK_APP'] = './a-eye_web/app.py' # for flask run
+os.environ['FLASK_APP'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'app.py') # for flask run
 os.environ['FLASK_DEBUG'] = 'True' # to print console
 
 # Manage logs
