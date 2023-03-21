@@ -94,6 +94,7 @@ def upload_files():
 if __name__ == '__main__':
     clear_logs(LOGS_FOLDER)
     delete_files_in_folder(UPLOAD_FOLDER)
+    delete_files_in_folder(DOWNLOAD_FOLDER)
     app.run(host='0.0.0.0', port=5000, debug=True) # debug=True to development mode
 
 # ----------------------------------------------------------------------------------------------
