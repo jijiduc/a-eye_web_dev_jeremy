@@ -50,7 +50,7 @@ def getSegmentation(input=None, output=None):
         elif os.path.isfile(args_in): # local
             # Manage zip files
             if args_in.split('.')[-1].lower() == 'zip':
-                unzip_files(args_in, os.path.join(abs_path, aux_in))
+                unzip_file(args_in, os.path.join(abs_path, aux_in))
             else:
                 copy_file(args_in, os.path.join(abs_path, aux_in))
         # Create output aux folder if it doesn't exist
@@ -112,7 +112,7 @@ def getSegmentation(input=None, output=None):
 # ---------------------------------------------------------------------------------------------
 # AUX FUNCTIONS
 
-def unzip_files(source, destination):
+def unzip_file(source, destination):
     # Create a ZipFile object with the path of the zip file
     zip_file = zipfile.ZipFile(source)
     # Extract all the files to a folder
@@ -132,7 +132,7 @@ def copy_folder(source, destination):
             shutil.copytree(s, d)
         else:
             if s.split('.')[-1].lower() == 'zip':
-                unzip_files(s, destination)
+                unzip_file(s, destination)
             else:
                 shutil.copy2(s, d)
 
@@ -183,7 +183,7 @@ def convert_to_nifti(folder):
     # Get a list of all DICOM folders in the input folder
     dcm_folders = sorted([f.path for f in os.scandir(folder) if f.is_dir() and f.name != '.DS_Store'])
     if len(dcm_folders) > 0:
-        print_and_log('[AEye] Converting DICOM to NIfTI format...', LOGS_FOLDER)
+        print_and_log('[AEye] Converting DICOM to NIfTI format...', 'info', LOGS_FOLDER)
         # Convert each DICOM folder to NIfTI format
         for dcm_folder in dcm_folders:
             filename = str(os.path.basename(dcm_folder) + '.nii.gz')
