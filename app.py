@@ -1,16 +1,16 @@
 import os
 from main import getSegmentation, clear_logs, delete_files_in_folder
-from flask import Flask, jsonify, render_template, request, redirect, url_for, flash, send_file, send_from_directory
-import logging
+from flask import Flask, jsonify, render_template, request, redirect, url_for, flash, send_file, send_from_directory, make_response
 from werkzeug.utils import secure_filename
+import logging
 import zipfile
 
 # ----------------------------------------------------------------------------------------------
 # FLASK
 
 # Save images to the 'static' folder as Flask serves images from this directory
-UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static/upload') # /tmp cannot be used since we need access
-DOWNLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static/download') # /tmp cannot be used since we need access
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static/upload/') # /tmp cannot be used since we need access
+DOWNLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static/download/') # /tmp cannot be used since we need access
 ALLOWED_EXTENSIONS = {'gz', 'zip'}
 LOGS_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs/')
 
@@ -50,8 +50,21 @@ def zip_folder(source, destination):
 # ROUTES
 
 @app.route('/')
-def home():
-    return render_template('base.html', uploaded=False, segmented=False)
+def index():
+    return render_template('index.html', uploaded=False, segmented=False)
+
+@app.route('/setcookie', methods = ['POST', 'GET'])
+def setcookie():
+    if request.method == 'POST':
+        user = request.form['nm']
+        resp = make_response(render_template('index.html'))
+        resp.set_cookie('userID', user)
+        return resp
+    
+@app.route('/getcookie')
+def getcookie():
+    name = request.cookies.get('userID')
+    return '<h1>welcome ' + name + '</h1>'
 
 @app.route('/segment')
 def segment():
@@ -61,7 +74,7 @@ def segment():
     zip_folder(f'{DOWNLOAD_FOLDER}output', f'{DOWNLOAD_FOLDER}output.zip')
     # Return the zip file as an attachment
     return send_file(f'{DOWNLOAD_FOLDER}output.zip', as_attachment=True)
-    # return render_template('base.html', segmented=True)
+    # return render_template('index.html', segmented=True)
 
 @app.route('/', methods=['POST'])
 def upload_files():
@@ -74,16 +87,16 @@ def upload_files():
                         filename = secure_filename(file.filename) #Use this werkzeug method to secure filename. 
                         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                         file.save(filepath)
-                        return render_template('base.html', uploaded=True)
+                        return render_template('index.html', uploaded=True)
                     else:
                         flash('File not allowed')
-                        return render_template('base.html', uploaded=False)
+                        return render_template('index.html', uploaded=False)
             else:
                 flash('No file selected')
-                return render_template('base.html', uploaded=False)
+                return render_template('index.html', uploaded=False)
         else:
             flash('No file selected')
-            return render_template('base.html', uploaded=False)
+            return render_template('index.html', uploaded=False)
 
 
 # ----------------------------------------------------------------------------------------------
