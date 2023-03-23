@@ -1,6 +1,6 @@
 import os
 from main import getSegmentation, clear_logs, delete_files_in_folder
-from flask import Flask, jsonify, render_template, request, redirect, url_for, flash, send_file, send_from_directory, make_response
+from flask import Flask, jsonify, render_template, request, redirect, url_for, flash, send_file, send_from_directory, make_response, session, escape
 from werkzeug.utils import secure_filename
 import logging
 import zipfile
@@ -51,7 +51,24 @@ def zip_folder(source, destination):
 
 @app.route('/')
 def index():
-    return render_template('index.html', uploaded=False, segmented=False)
+    if 'username' in session:
+        username = session['username']
+        return render_template('index.html', uploaded=False, segmented=False)
+    return "You are not logged in <br><a href = '/login'>" + "click here to log in</a>"
+
+@app.route('/login', methods = ['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        session['username'] = request.form['username']
+        return redirect(url_for('index'))
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    # remove the username from the session if it is there
+    session.pop('username', None)
+    return redirect(url_for('index'))
+
 
 @app.route('/setcookie', methods = ['POST', 'GET'])
 def setcookie():
