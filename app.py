@@ -1,7 +1,7 @@
 import os
 from main import getSegmentation, clear_logs, delete_files_in_folder
 from flask import Flask, jsonify, render_template, request, redirect, url_for, flash, send_file, send_from_directory, make_response, session, escape
-from flask_login import login_required, current_user
+from flask_login import login_required, current_user, login_user, logout_user, LoginManager
 from werkzeug.utils import secure_filename
 import logging
 import zipfile
@@ -72,7 +72,6 @@ def login():
     return render_template('login.html', error=error)
 
 @app.route('/logout')
-@login_required
 def logout():
     # remove the username from the session if it is there
     session.pop('username', None)
