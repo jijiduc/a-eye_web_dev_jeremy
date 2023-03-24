@@ -21,17 +21,14 @@
 
 <body>
 
-  <form action = "/setcookie" method = "POST">
-    <p><h3>Enter userID</h3></p>
-    <p><input type = 'text' name = 'nm'/></p>
-    <p><input type = 'submit' value = 'cookie'/></p>
-  </form>
-
   <div style="margin-top: 50px;" class="ui container">
 
     <!-- Header -->
     <h1 class="ui center aligned header">AEye automated segmentation</h1>
     <hrc:\Users\TORRE\AppData\Local\Programs\Microsoft VS Code\resources\app\out\vs\code\electron-sandbox\workbench\workbench.html>
+
+    <!-- Logout button -->
+    <a class="ui red basic right floated button" href="/logout">Logout</a>
 
     <!-- Choose and upload form -->
     <form method="POST" action="/" enctype="multipart/form-data">
@@ -46,7 +43,7 @@
       <div class="ui left pointing label">No files uploaded</div>
       {% endif %}
     </form>
-  
+
     <!-- Segment button -->
     <div class="ui hidden divider"></div>
     <a class="ui blue button" href="/segment">Segment</a>

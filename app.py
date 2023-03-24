@@ -1,6 +1,7 @@
 import os
 from main import getSegmentation, clear_logs, delete_files_in_folder
 from flask import Flask, jsonify, render_template, request, redirect, url_for, flash, send_file, send_from_directory, make_response, session, escape
+from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 import logging
 import zipfile
@@ -54,30 +55,29 @@ def index():
     if 'username' in session:
         username = session['username']
         return render_template('index.html', uploaded=False, segmented=False)
-    return "You are not logged in <br><a href = '/login'>" + "click here to log in</a>"
-
-@app.route('/login', methods = ['GET', 'POST'])
+    else:
+        return redirect(url_for('login'))
+    
+@app.route('/login', methods=['GET', 'POST'])
 def login():
+    error = None
     if request.method == 'POST':
-        session['username'] = request.form['username']
-        return redirect(url_for('index'))
-    return render_template('login.html')
+        if request.form['username'] != 'admin' or request.form['password'] != 'admin':
+            error = 'Invalid Credentials. Please try again.'
+        else:
+            session['username'] = request.form['username']
+            resp = make_response(render_template('index.html'))
+            resp.set_cookie('userID', session['username'])
+            return resp
+    return render_template('login.html', error=error)
 
 @app.route('/logout')
+@login_required
 def logout():
     # remove the username from the session if it is there
     session.pop('username', None)
     return redirect(url_for('index'))
 
-
-@app.route('/setcookie', methods = ['POST', 'GET'])
-def setcookie():
-    if request.method == 'POST':
-        user = request.form['nm']
-        resp = make_response(render_template('index.html'))
-        resp.set_cookie('userID', user)
-        return resp
-    
 @app.route('/getcookie')
 def getcookie():
     name = request.cookies.get('userID')
