@@ -92,8 +92,8 @@ def getSegmentation(input=None, output=None):
         # Copy aux output folder into origin output folder
         copy_folder(os.path.join(abs_path, aux_out), args_out)
         # Remove aux folders
-        # delete_files_in_folder(os.path.join(abs_path, aux_in))
-        # delete_files_in_folder(os.path.join(abs_path, aux_out))
+        delete_files_in_folder(os.path.join(abs_path, aux_in))
+        delete_files_in_folder(os.path.join(abs_path, aux_out))
 
     # DONE!
     print('[AEye] Inference finished!!')
@@ -104,7 +104,7 @@ def getSegmentation(input=None, output=None):
         # Copy log files (log folder) into output folder
         copy_folder(LOGS_FOLDER, os.path.join(args_out, 'logs')) # logs folder in output
         # Remove content from log files
-        # clear_logs(LOGS_FOLDER)
+        clear_logs(LOGS_FOLDER)
 
     return 'Inference finished!!'
 
