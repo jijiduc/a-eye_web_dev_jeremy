@@ -1,8 +1,20 @@
+# OS (template)
 FROM python:3.8.13
+
+# directory & requirements
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install -r requirements.txt
+
+# copy additional files
 COPY . .
+
+# environment variables and port forwarding
+ENV FLASK_APP=.app.py
+ENV FLASK_ENV=development
+EXPOSE 5000
+
+# entry point
 CMD ["python", "app.py"]
 
 # ------------------------------
