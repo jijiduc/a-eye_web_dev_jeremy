@@ -12,7 +12,7 @@ import zipfile
 # Save images to the 'static' folder as Flask serves images from this directory
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static/upload/') # /tmp cannot be used since we need access
 DOWNLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static/download/') # /tmp cannot be used since we need access
-ALLOWED_EXTENSIONS = {'gz', 'zip'}
+ALLOWED_EXTENSIONS = {'gz', 'zip', '7z'}
 LOGS_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs/')
 
 app = Flask(__name__, static_folder="static")

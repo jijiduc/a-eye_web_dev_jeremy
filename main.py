@@ -4,6 +4,8 @@ import argparse
 import logging
 from flask import redirect, url_for
 import zipfile
+import py7zr
+import fnmatch
 
 # bools
 enable_args = False
@@ -49,14 +51,18 @@ def getSegmentation(input=None, output=None):
             copy_folder(args_in, os.path.join(abs_path, aux_in))
         elif os.path.isfile(args_in): # local
             # Manage zip files
-            if args_in.split('.')[-1].lower() == 'zip':
-                unzip_file(args_in, os.path.join(abs_path, aux_in))
+            type = args_in.split('.')[-1].lower()
+            if type == 'zip' or type == '7z':
+                unzip_file(type, args_in, os.path.join(abs_path, aux_in))
             else:
                 copy_file(args_in, os.path.join(abs_path, aux_in))
         # Create output aux folder if it doesn't exist
         if not os.path.exists(os.path.join(abs_path, aux_out)):
             os.makedirs(os.path.join(abs_path, aux_out))
 
+    # Check dicom folders names
+    check_dicom_folders_names(os.path.join(abs_path, aux_in))
+    
     # Convert to nifti
     convert_to_nifti(os.path.join(abs_path, aux_in))
 
@@ -65,22 +71,21 @@ def getSegmentation(input=None, output=None):
 
     # inference command terminal
     command = f' \
-        docker run --rm \
-        --gpus device=0 \
-        --shm-size={shm_size}gb \
-        -v {abs_path}:{rel_path} \
-        petermcgor/nnunet:0.0.1 nnUNet_predict \
-        -i {rel_path}/{aux_in} \
-        -o {rel_path}/{aux_out} \
-        -tr nnUNetTrainerV2 \
-        -ctr nnUNetTrainerV2CascadeFullRes \
-        -m 3d_fullres \
-        -p nnUNetPlansv2.1 \
-        -t Task313_Eye \
+    docker run --rm \
+    --gpus device=0 \
+    --shm-size={shm_size}gb \
+    -v {abs_path}:{rel_path} \
+    petermcgor/nnunet:0.0.1 nnUNet_predict \
+    -i {rel_path}/{aux_in} \
+    -o {rel_path}/{aux_out} \
+    -tr nnUNetTrainerV2 \
+    -ctr nnUNetTrainerV2CascadeFullRes \
+    -m 3d_fullres \
+    -p nnUNetPlansv2.1 \
+    -t Task313_Eye \
     '
 
     sudo_command = f'echo {sudo_pwd} | sudo -S -s {command}'
-    # sudo_command = f'echo AEye mola mazo'
 
     # Print command
     print_and_log(f'[AEye] nnUNet inference command: {command}', 'info', LOGS_FOLDER)
@@ -112,14 +117,20 @@ def getSegmentation(input=None, output=None):
 # ---------------------------------------------------------------------------------------------
 # AUX FUNCTIONS
 
-def unzip_file(source, destination):
-    # Create a ZipFile object with the path of the zip file
-    zip_file = zipfile.ZipFile(source)
-    # Extract all the files to a folder
-    zip_file.extractall(destination)
-    print_and_log(f'[AEye] Unzipping file: {source}', 'info', LOGS_FOLDER)
-    # Close the zip file
-    zip_file.close()
+def unzip_file(type, source, destination):
+    if type == 'zip':
+        # Create a ZipFile object with the path of the zip file
+        zip_file = zipfile.ZipFile(source)
+        # Extract all the files to a folder
+        zip_file.extractall(destination)
+        print_and_log(f'[AEye] Unzipping file: {source}', 'info', LOGS_FOLDER)
+        # Close the zip file
+        zip_file.close()
+    elif type == '7z':
+        # Open the .7z archive file
+        with py7zr.SevenZipFile(source, mode='r') as archive:
+            # Extract all contents to the current directory
+            archive.extractall(path=destination)
 
 
 def copy_folder(source, destination):
@@ -131,8 +142,9 @@ def copy_folder(source, destination):
         if os.path.isdir(s):
             shutil.copytree(s, d)
         else:
-            if s.split('.')[-1].lower() == 'zip':
-                unzip_file(s, destination)
+            type = s.split('.')[-1].lower()
+            if type == 'zip' or type == '7z':
+                unzip_file(type, s, destination)
             else:
                 shutil.copy2(s, d)
 
@@ -154,6 +166,20 @@ def delete_files_in_folder(folder):
 
 def delete_folder(folder):
     shutil.rmtree(folder)
+
+def check_dicom_folders_names(folder):
+    # Get a list of all DICOM folders in the input folder
+    dicom_folders = find_dicom_folders(folder)
+    # Check dicom folders names
+    for dicom_folder in dicom_folders:
+        dicom_folder_name = os.path.basename(dicom_folder)
+        parent_folder_path = os.path.dirname(dicom_folder)
+        parent_folder_name = os.path.basename(parent_folder_path)
+        # Check if dicom_folder name already starts with parent_folder_name
+        if not dicom_folder_name.startswith(parent_folder_name):
+            new_folder_name = parent_folder_name + '_' + dicom_folder_name
+            new_folder_path = os.path.join(parent_folder_path, new_folder_name)
+            os.rename(dicom_folder, new_folder_path)
 
 def check_filenames(folder):
     file_paths = glob.glob(f'{folder}/*.nii.gz')
@@ -181,19 +207,30 @@ def correct_filename(file_path, file_name, file_extension):
 
 def convert_to_nifti(folder):
     # Get a list of all DICOM folders in the input folder
-    dcm_folders = sorted([f.path for f in os.scandir(folder) if f.is_dir() and f.name != '.DS_Store'])
-    if len(dcm_folders) > 0:
+    dicom_folders = find_dicom_folders(folder)
+    if len(dicom_folders) > 0:
         print_and_log('[AEye] Converting DICOM to NIfTI format...', 'info', LOGS_FOLDER)
         # Convert each DICOM folder to NIfTI format
-        for dcm_folder in dcm_folders:
-            filename = str(os.path.basename(dcm_folder) + '.nii.gz')
-            dicom2nifti.dicom_series_to_nifti(dcm_folder, f'{folder}/{filename}', reorient_nifti=False)
+        for dicom_folder in dicom_folders:
+            filename = str(os.path.basename(dicom_folder) + '.nii.gz')
+            dicom2nifti.dicom_series_to_nifti(dicom_folder, f'{folder}/{filename}', reorient_nifti=True)
             # cmd = ["dcm2niix", "-f", filename, "-z", "y", "-o", output_nifti_folder, input_dicom_folder]
             # process = subprocess.Popen(cmd, stdout=subprocess.PIPE)  # pass the list as input to Popen
             # _ = process.communicate()[0]  # the [0] is to return just the output, because otherwise it would be outs, errs = proc.communicate()
         # Remove DICOM folders
-        for dcm_folder in dcm_folders:
-            delete_folder(dcm_folder)
+        for dicom_folder in dicom_folders:
+            delete_folder(dicom_folder)
+
+def find_dicom_folders(root_path):
+    dicom_folders = []
+
+    for dirpath, dirnames, filenames in os.walk(root_path):
+        for filename in filenames:
+            if fnmatch.fnmatch(filename, '*.dcm'):
+                dicom_folders.append(dirpath)
+                break
+
+    return dicom_folders
 
 def start_docker():
     # Check if Docker is running and if not, initialize it
