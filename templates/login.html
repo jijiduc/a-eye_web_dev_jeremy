@@ -1,21 +1,65 @@
-<html>
-    <head>
-        <title>Login</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link href="static/bootstrap.min.css" rel="stylesheet" media="screen">
-    </head>
-    <body>
-        <div class="container">
-            <h1>Please, login</h1>
-            <br>
-            <form action="" method="post">
-            <input type="text" placeholder="Username" name="username" value="{{request.form.username }}">
-            <input type="password" placeholder="Password" name="password" value="{{request.form.password }}">
-            <input class="btn btn-default" type="submit" value="Login">
-            </form>
-            {% if error %}
-                <p class="error"><strong>Error:</strong> {{ error }}
-            {% endif %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
+</head>
+<body>
+    <div class="ui container" style="margin-top: 50px;">
+        <h2 class="ui center aligned header">Login</h2>
+        <form class="ui form" method="POST" action="/login">
+            <div class="field">
+                <label>Username</label>
+                <input type="text" name="username" placeholder="Username" required>
+            </div>
+            <div class="field">
+                <label>Password</label>
+                <input type="password" name="password" placeholder="Password" required>
+            </div>
+            <div class="field">
+                <div class="ui checkbox">
+                    <input type="checkbox" name="accept_terms" required>
+                    <label>I acknowledge that the data I use may pass through external servers, which may carry a risk of data leaks in the current version of the web platform. I understand that data security also relies on my responsibility as a user.</label>
+                </div>
+            </div>
+            <button class="ui button" type="submit">Login</button>
+        </form>
+        <div class="ui hidden divider"></div>
+        <div class="ui center aligned container">
+            <h3>Our partners</h3>
+            <div class="ui grid">
+                <div class="four wide column">
+                    <img src="{{ url_for('static', filename='images/BERN.png') }}" alt="Partner 1" class="ui small image">
+                </div>
+                <div class="four wide column">
+                    <img src="{{ url_for('static', filename='images/CHUV.png') }}" alt="Partner 2" class="ui small image">
+                </div>
+                <div class="four wide column">
+                    <img src="{{ url_for('static', filename='images/CIBM.png') }}" alt="Partner 3" class="ui small image">
+                </div>
+                <div class="four wide column">
+                    <img src="{{ url_for('static', filename='images/MAT-TECH_LAB.png') }}" alt="Partner 4" class="ui small image">
+                </div>
+                <div class="four wide column">
+                    <img src="{{ url_for('static', filename='images/MIAL.png') }}" alt="Partner 5" class="ui small image">
+                </div>
+                <div class="four wide column">
+                    <img src="{{ url_for('static', filename='images/ROSTOCK.png') }}" alt="Partner 6" class="ui small image">
+                </div>
+                <div class="four wide column">
+                    <img src="{{ url_for('static', filename='images/UNIL.png') }}" alt="Partner 7" class="ui small image">
+                </div>
+            </div>
         </div>
-    </body>
+    </div>
+    <script>
+        // Activer les checkboxes Semantic UI
+        document.addEventListener('DOMContentLoaded', function() {
+            $('.ui.checkbox').checkbox();
+        });
+    </script>
+</body>
 </html>

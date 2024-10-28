@@ -1,10 +1,13 @@
 import os
 from main import getSegmentation, clear_logs, delete_files_in_folder
-from flask import Flask, jsonify, render_template, request, redirect, url_for, flash, send_file, send_from_directory, make_response, session, escape
+from flask import Flask, jsonify, render_template, request, redirect, url_for, flash, send_file, send_from_directory, make_response, session#, escape
+from markupsafe import escape
 from flask_login import login_required, current_user, login_user, logout_user, LoginManager
 from werkzeug.utils import secure_filename
 import logging
 import zipfile
+import json
+
 
 # ----------------------------------------------------------------------------------------------
 # FLASK
@@ -24,6 +27,16 @@ app = Flask(__name__, static_folder="static")
 #It's used as the key to encrypt the session - which can be stored in a cookie.
 #Cookies should be encrypted if they contain potentially sensitive information.
 app.secret_key = "secret key"
+
+# Charge the whitelist of users
+with open('whitelist.json', 'r') as f:
+    whitelist = json.load(f)['users']
+
+def check_credentials(username, password):
+    for user in whitelist:
+        if user['username'] == username and user['password'] == password:
+            return True
+    return False
 
 #Define the upload folder to save images uploaded by the user. 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -53,29 +66,37 @@ def zip_folder(source, destination):
 @app.route('/')
 def index():
     if 'username' in session:
-        username = session['username']
-        return render_template('index.html', uploaded=False, segmented=False)
-    else:
-        return redirect(url_for('login'))
+        return render_template('index.html')
+    return redirect(url_for('login'))
+    
+
     
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    error = None
     if request.method == 'POST':
-        if request.form['username'] != 'admin' or request.form['password'] != 'admin':
-            error = 'Invalid Credentials. Please try again.'
+        username = request.form['username']
+        password = request.form['password']
+        accept_terms = request.form.get('accept_terms')
+        if not accept_terms:
+            return "Vous devez accepter les conditions pour vous connecter.", 400
+        if check_credentials(username, password):
+            session['username'] = username
+            return redirect(url_for('index'))
         else:
-            session['username'] = request.form['username']
-            resp = make_response(render_template('index.html'))
-            resp.set_cookie('userID', session['username'])
-            return resp
-    return render_template('login.html', error=error)
+            return "Invalid credentials", 401
+    return render_template('login.html')
+
+@app.route('/informations')
+def informations():
+    if 'username' in session:
+        return render_template('informations.html')
+    return redirect(url_for('login'))
 
 @app.route('/logout')
 def logout():
     # remove the username from the session if it is there
     session.pop('username', None)
-    return redirect(url_for('index'))
+    return redirect(url_for('login'))
 
 @app.route('/getcookie')
 def getcookie():

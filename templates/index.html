@@ -1,19 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<style>
-  /* Hide the default file upload button */
-  #myFile {
-    display: none;
-  }
-</style>
-
 <head>
     <meta charset="UTF-8">
-    <!-- Make it compatible to mobile devices -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Title -->
-    <title>AEye</title>
+    <title>A-Eye Web Segmentation Platform</title>
     <!-- Semantic UI -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
     <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
@@ -25,18 +16,29 @@
 
     <!-- Header -->
     <h1 class="ui center aligned header">AEye automated segmentation</h1>
-    <hrc:\Users\TORRE\AppData\Local\Programs\Microsoft VS Code\resources\app\out\vs\code\electron-sandbox\workbench\workbench.html>
+    <hr>
 
     <!-- Logout button -->
     <a class="ui red basic right floated button" href="/logout">Logout</a>
 
+    <!-- Information button -->
+    <a class="ui icon button" href="/informations" target="_blank" title="Informations">
+      <i class="info circle icon"></i>
+    </a>
+
     <!-- Choose and upload form -->
     <form method="POST" action="/" enctype="multipart/form-data">
-      <!-- Choose button -->
-      <input type="file" name="file" multiple> <!-- The multiple attribute is set to allow the user to select multiple files to upload. -->
+      <input type="file" name="file" multiple>
       <div class="ui hidden divider"></div>
-      <!-- Upload button -->
-      <input class="ui blue button" type="submit" name="upload_files" value="Upload">
+
+      <!-- Button group for alignment -->
+      <div class="ui buttons">
+        <input class="ui blue button" type="submit" name="upload_files" value="Upload">
+        <a class="ui blue button" href="/segment">Segment</a>
+        <a class="ui blue button" href="/download">Download</a>
+      </div>
+
+      <!-- Upload label -->
       {% if uploaded == True %}
       <div class="ui left pointing green label">Files uploaded successfully</div>
       {% else %}
@@ -44,9 +46,6 @@
       {% endif %}
     </form>
 
-    <!-- Segment button -->
-    <div class="ui hidden divider"></div>
-    <a class="ui blue button" href="/segment">Segment</a>
     <!-- Segment label -->
     {% if segmented==True %}
     <span class="ui left pointing green label">Segmentation finished!</span>
@@ -59,13 +58,11 @@
       {% with messages = get_flashed_messages() %}
         {% if messages %}
           <h3 class="ui blue header">{{ messages[0] }}</h3>
-          <!-- <img src="{{ messages[1] }}" width="300", height="225"> -->
         {% endif %}
       {% endwith %}
     </p>
 
   </div>
-  
 
 </body>
 
