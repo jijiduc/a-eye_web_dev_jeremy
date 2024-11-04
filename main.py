@@ -62,9 +62,6 @@ def getSegmentation(input=None, output=None):
 
     # Check dicom folders names
     check_dicom_folders_names(os.path.join(abs_path, aux_in))
-    
-    # Convert to nifti
-    convert_to_nifti(os.path.join(abs_path, aux_in))
 
     # Check input filenames (need to be in nnUNet format (0000.nii.gz))
     check_filenames(os.path.join(abs_path, aux_in))
@@ -97,8 +94,8 @@ def getSegmentation(input=None, output=None):
         # Copy aux output folder into origin output folder
         copy_folder(os.path.join(abs_path, aux_out), args_out)
         # Remove aux folders
-        delete_files_in_folder(os.path.join(abs_path, aux_in))
-        delete_files_in_folder(os.path.join(abs_path, aux_out))
+        # delete_files_in_folder(os.path.join(abs_path, aux_in))
+        # delete_files_in_folder(os.path.join(abs_path, aux_out))
 
     # DONE!
     print('[AEye] Inference finished!!')
@@ -109,7 +106,7 @@ def getSegmentation(input=None, output=None):
         # Copy log files (log folder) into output folder
         copy_folder(LOGS_FOLDER, os.path.join(args_out, 'logs')) # logs folder in output
         # Remove content from log files
-        clear_logs(LOGS_FOLDER)
+        # clear_logs(LOGS_FOLDER)
 
     return 'Inference finished!!'
 
@@ -171,55 +168,55 @@ def check_dicom_folders_names(folder):
     # Get a list of all DICOM folders in the input folder
     dicom_folders = find_dicom_folders(folder)
     # Check dicom folders names
-    for dicom_folder in dicom_folders:
-        dicom_folder_name = os.path.basename(dicom_folder)
-        parent_folder_path = os.path.dirname(dicom_folder)
-        parent_folder_name = os.path.basename(parent_folder_path)
-        # Check if dicom_folder name already starts with parent_folder_name
-        if not dicom_folder_name.startswith(parent_folder_name):
-            new_folder_name = parent_folder_name + '_' + dicom_folder_name
-            new_folder_path = os.path.join(parent_folder_path, new_folder_name)
-            os.rename(dicom_folder, new_folder_path)
+    if not dicom_folders:
+        print_and_log('[AEye] No DICOM folders found.', 'info', LOGS_FOLDER)
+        return
+    else:
+        print_and_log('[AEye] Checking DICOM folders names...', 'info', LOGS_FOLDER)
+        for dicom_folder in dicom_folders:
+            dicom_folder_name = os.path.basename(dicom_folder)
+            parent_folder_path = os.path.dirname(dicom_folder)
+            parent_folder_name = os.path.basename(parent_folder_path)
+            # Check if dicom_folder name already starts with parent_folder_name
+            if not dicom_folder_name.startswith(parent_folder_name):
+                new_folder_name = parent_folder_name + '_' + dicom_folder_name
+                new_folder_path = os.path.join(parent_folder_path, new_folder_name)
+                os.rename(dicom_folder, new_folder_path)
+            # Convert to nifti
+            convert_to_nifti(folder, dicom_folders)
 
 def check_filenames(folder):
-    file_paths = glob.glob(f'{folder}/*.nii.gz')
-    for file_path in file_paths:
-        file_extensions = []
-        while True:
-            file_path, ext = os.path.splitext(file_path)
-            if ext:
-                file_extensions.insert(0, ext)
-            else:
-                break
-        file_extension = ''.join(file_extensions)
-        file_name = os.path.basename(file_path)
-        file_path = f'{file_path}{file_extension}'
-        print_and_log(f'[AEye] file name: {file_name}', 'info', LOGS_FOLDER)
-        print_and_log(f'[AEye] file extension: {file_extension}', 'info', LOGS_FOLDER)
-        print_and_log(f'[AEye] absolute file path: {file_path}', 'info', LOGS_FOLDER)
-        if not str(file_name).endswith('_0000'):
-            correct_filename(file_path, file_name, file_extension)
+    print_and_log(f'[AEye] checking filenames...', 'info', LOGS_FOLDER)
+    for root, dirs, files in os.walk(folder):
+        for file in files:
+            if file.endswith('.nii.gz'):
+                file_extension = '.nii.gz'
+                file_path = os.path.join(root, file)
+                file_name = os.path.basename(file_path).split('.')[0]
+                print_and_log(f'[AEye] file name: {file_name}', 'info', LOGS_FOLDER)
+                print_and_log(f'[AEye] file extension: {file_extension}', 'info', LOGS_FOLDER)
+                print_and_log(f'[AEye] absolute file path: {file_path}', 'info', LOGS_FOLDER)
+                if not str(file_name).endswith('_0000'):
+                    correct_filename(file_path, file_name, file_extension)
 
 def correct_filename(file_path, file_name, file_extension):
     print_and_log('[AEye] Changing filename to nnUNet format...', 'info', LOGS_FOLDER)
     new_file_name = f'{file_name}_0000{file_extension}' # extension for nnUNet
+    print_and_log(f'[AEye] New filename = {new_file_name}', 'info', LOGS_FOLDER)
     os.rename(file_path, os.path.join(os.path.dirname(file_path), new_file_name))
 
-def convert_to_nifti(folder):
-    # Get a list of all DICOM folders in the input folder
-    dicom_folders = find_dicom_folders(folder)
-    if len(dicom_folders) > 0:
-        print_and_log('[AEye] Converting DICOM to NIfTI format...', 'info', LOGS_FOLDER)
-        # Convert each DICOM folder to NIfTI format
-        for dicom_folder in dicom_folders:
-            filename = str(os.path.basename(dicom_folder) + '.nii.gz')
-            dicom2nifti.dicom_series_to_nifti(dicom_folder, f'{folder}/{filename}', reorient_nifti=True)
-            # cmd = ["dcm2niix", "-f", filename, "-z", "y", "-o", output_nifti_folder, input_dicom_folder]
-            # process = subprocess.Popen(cmd, stdout=subprocess.PIPE)  # pass the list as input to Popen
-            # _ = process.communicate()[0]  # the [0] is to return just the output, because otherwise it would be outs, errs = proc.communicate()
-        # Remove DICOM folders
-        for dicom_folder in dicom_folders:
-            delete_folder(dicom_folder)
+def convert_to_nifti(folder, dicom_folders):
+    print_and_log('[AEye] Converting DICOM to NIfTI format...', 'info', LOGS_FOLDER)
+    # Convert each DICOM folder to NIfTI format
+    for dicom_folder in dicom_folders:
+        filename = str(os.path.basename(dicom_folder) + '.nii.gz')
+        dicom2nifti.dicom_series_to_nifti(dicom_folder, f'{folder}/{filename}', reorient_nifti=True)
+        # cmd = ["dcm2niix", "-f", filename, "-z", "y", "-o", output_nifti_folder, input_dicom_folder]
+        # process = subprocess.Popen(cmd, stdout=subprocess.PIPE)  # pass the list as input to Popen
+        # _ = process.communicate()[0]  # the [0] is to return just the output, because otherwise it would be outs, errs = proc.communicate()
+    # Remove DICOM folders
+    for dicom_folder in dicom_folders:
+        delete_folder(dicom_folder)
 
 def find_dicom_folders(root_path):
     dicom_folders = []
