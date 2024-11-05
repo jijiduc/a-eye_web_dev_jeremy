@@ -122,9 +122,7 @@ def index():
 
 @app.route('/informations')
 def informations():
-    if 'username' in session:
-        return render_template('informations.html')
-    return redirect(url_for('login'))
+    return render_template('informations.html')
 
 
 @app.route('/logout')

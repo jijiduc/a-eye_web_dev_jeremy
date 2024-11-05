@@ -1,3 +1,8 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -20,13 +25,6 @@
     <h1 class="ui center aligned header">AEye automated segmentation</h1>
     <hr>
 
-    <!-- Logout button -->
-    <a class="ui red basic right floated button" href="/logout">Logout</a>
-
-    <!-- Information button -->
-    <a class="ui icon button" href="/informations" target="_blank" title="Informations">
-      <i class="info circle icon"></i>
-    </a>
 
     <!-- Choose and upload form -->
     <form method="POST" action="/" enctype="multipart/form-data">
@@ -69,3 +67,4 @@
 </body>
 
 </html>
+{% endblock %}
