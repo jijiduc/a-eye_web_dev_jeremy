@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
+</head>
+<body>
+    <div class="ui container" style="margin-top: 50px;">
+        <h2 class="ui center aligned header">Register</h2>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="ui message">
+                    {% for category, message in messages %}
+                        <div class="ui {{ category }} message">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        <form class="ui form" method="POST" action="/register">
+            <div class="field">
+                <label>Email</label>
+                <input type="email" name="email" placeholder="Email" required>
+            </div>
+            <div class="field">
+                <label>First Name</label>
+                <input type="text" name="first_name" placeholder="First Name" required>
+            </div>
+            <div class="field">
+                <label>Last Name</label>
+                <input type="text" name="last_name" placeholder="Last Name" required>
+            </div>
+            <div class="field">
+                <label>Password</label>
+                <input type="password" name="password" placeholder="Password" required>
+            </div>
+            <div class="field">
+                <label>Organization</label>
+                <select name="organization" id="organization" required>
+                    <option value="HES-SO">HES-SO</option>
+                    <option value="UNIL">UNIL</option>
+                    <option value="CHUV">CHUV</option>
+                    <option value="CIBM">CIBM</option>
+                    <option value="Other">Other</option>
+                </select>
+                <input type="text" name="other_organization" id="other_organization" placeholder="Please specify" style="display:none;">
+            </div>
+            <div class="field">
+                <label>Job</label>
+                <select name="job" required>
+                    <option value="student">Student</option>
+                    <option value="clinician">Clinician</option>
+                    <option value="researcher">Researcher</option>
+                    <option value="teacher">Teacher</option>
+                </select>
+            </div>
+            <button class="ui button" type="submit">Register</button>
+        </form>
+        <div class="ui hidden divider"></div>
+        <div class="ui center aligned container">
+            <p>Already have an account? Log in here</p>
+            <a href="{{ url_for('login') }}" class="ui green button">Log in</a>
+        </div>
+    </div>
+    <script>
+        document.getElementById('organization').addEventListener('change', function() {
+            var otherOrganization = document.getElementById('other_organization');
+            if (this.value === 'Other') {
+                otherOrganization.style.display = 'block';
+                otherOrganization.required = true;
+            } else {
+                otherOrganization.style.display = 'none';
+                otherOrganization.required = false;
+            }
+        });
+    </script>
+</body>
+</html>

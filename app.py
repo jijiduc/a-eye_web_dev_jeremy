@@ -1,13 +1,23 @@
 import os
-from main import getSegmentation, clear_logs, delete_files_in_folder
-from flask import Flask, jsonify, render_template, request, redirect, url_for, flash, send_file, send_from_directory, make_response, session#, escape
+from main import getSegmentation, clear_logs, delete_files_in_folder, copy_folder
+from flask import Flask, jsonify, render_template, request, redirect, url_for, flash, send_file, send_from_directory, make_response, session
 from markupsafe import escape
 from flask_login import login_required, current_user, login_user, logout_user, LoginManager
 from werkzeug.utils import secure_filename
 import logging
 import zipfile
 import json
+from models import db, User
+from werkzeug.security import generate_password_hash, check_password_hash
 
+
+def zip_folder(folder_path, output_path):
+    with zipfile.ZipFile(output_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for root, dirs, files in os.walk(folder_path):
+            for file in files:
+                zipf.write(os.path.join(root, file), os.path.relpath(os.path.join(root, file), folder_path))
+from models import db, User
+from werkzeug.security import generate_password_hash, check_password_hash
 
 # ----------------------------------------------------------------------------------------------
 # FLASK
@@ -20,83 +30,86 @@ LOGS_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs/')
 
 app = Flask(__name__, static_folder="static")
 
-#Add reference fingerprint.
-#Cookies travel with a signature that they claim to be legit.
-#Legitimacy here means that the signature was issued by the owner of the cookie.
-#Others cannot change this cookie as it needs the secret key.
-#It's used as the key to encrypt the session - which can be stored in a cookie.
-#Cookies should be encrypted if they contain potentially sensitive information.
-app.secret_key = "secret key"
+# Database configuration
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.secret_key = "your_secret_key"  # Ensure you have a secret key for session management
+db.init_app(app)
 
-# Charge the whitelist of users
-with open('whitelist.json', 'r') as f:
-    whitelist = json.load(f)['users']
+def create_tables():
+    with app.app_context():
+        db.create_all()
 
-def check_credentials(username, password):
-    for user in whitelist:
-        if user['username'] == username and user['password'] == password:
-            return True
-    return False
+if not app._got_first_request:
+    create_tables() # en appelant directement la fonction pour initialiser la BD
 
-#Define the upload folder to save images uploaded by the user. 
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
-# Set Flask environment to development (to print console)
-# os.system('export FLASK_APP=./a-eye_web/app.py')
-os.environ['FLASK_APP'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'app.py') # for flask run
-os.environ['FLASK_DEBUG'] = 'True' # to print console
-
-# Manage logs
-logging.basicConfig(filename=f'{LOGS_FOLDER}app.log', level=logging.DEBUG,
-    format='%(asctime)s %(levelname)s %(name)s %(message)s')
+# ----------------------------------------------------------------------------------------------
+# UTILS
 
 def allowed_file(filename):
-    return '.' in filename and \
-        filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-def zip_folder(source, destination):
-    with zipfile.ZipFile(destination, 'w', zipfile.ZIP_DEFLATED) as zipf:
-        for root, dirs, files in os.walk(source):
-            for file in files:
-                zipf.write(os.path.join(root, file), os.path.relpath(os.path.join(root, file), os.path.join(source, '..')))
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # ----------------------------------------------------------------------------------------------
 # ROUTES
 
-@app.route('/')
-def index():
-    if 'username' in session:
-        return render_template('index.html')
-    return redirect(url_for('login'))
-    
-
-    
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form['username']
+        email = request.form['email']
         password = request.form['password']
-        accept_terms = request.form.get('accept_terms')
-        if not accept_terms:
-            return "Vous devez accepter les conditions pour vous connecter.", 400
-        if check_credentials(username, password):
-            session['username'] = username
+        user = User.query.filter_by(email=email).first()
+        if user and check_password_hash(user.password, password):
+            session['username'] = user.email
             return redirect(url_for('index'))
         else:
-            return "Invalid credentials", 401
+            flash('Incorrect password or email', 'danger')
+            return redirect(url_for('login'))
     return render_template('login.html')
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        email = request.form['email']
+        first_name = request.form['first_name']
+        last_name = request.form['last_name']
+        password = generate_password_hash(request.form['password'])
+        organization = request.form['organization']
+        if organization == 'Other':
+            organization = request.form['other_organization']
+        job = request.form['job']
+        
+        # Verify if the email already exists
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
+            flash('An account with this email already exists.', 'danger')
+            return redirect(url_for('register'))
+        
+        new_user = User(email=email, first_name=first_name, last_name=last_name, password=password, organization=organization, job=job)
+        db.session.add(new_user)
+        db.session.commit()
+        flash('Your account has been successfully created. An administrator must still validate your account before you can log in and use your account.', 'success')
+        return redirect(url_for('login'))
+    return render_template('register.html')
+
+@app.route('/users')
+def users():
+    users = User.query.all()
+    return render_template('users.html', users=users)
+
+@app.route('/')
+def index():
+    return render_template('index.html')
 
 @app.route('/informations')
 def informations():
-    if 'username' in session:
-        return render_template('informations.html')
-    return redirect(url_for('login'))
+    return render_template('informations.html')
+
 
 @app.route('/logout')
 def logout():
     # remove the username from the session if it is there
     session.pop('username', None)
-    return redirect(url_for('login'))
+    return render_template('login.html')
 
 @app.route('/getcookie')
 def getcookie():
@@ -121,21 +134,10 @@ def upload_files():
             if files != '': # empyt list
                 for file in files:
                     if file and allowed_file(file.filename):
-                        filename = secure_filename(file.filename) #Use this werkzeug method to secure filename. 
-                        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                        file.save(filepath)
-                        return render_template('index.html', uploaded=True)
-                    else:
-                        flash('File not allowed')
-                        return render_template('index.html', uploaded=False)
-            else:
-                flash('No file selected')
-                return render_template('index.html', uploaded=False)
-        else:
-            flash('No file selected')
-            return render_template('index.html', uploaded=False)
-
-
+                        filename = secure_filename(file.filename)
+                        file.save(os.path.join(UPLOAD_FOLDER, filename))
+                return redirect(url_for('index'))
+    return render_template('index.html')
 # ----------------------------------------------------------------------------------------------
 # MAIN
 
