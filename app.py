@@ -59,6 +59,8 @@ def allowed_file(filename):
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if 'username' in session:
+        return redirect(url_for('welcome'))
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']

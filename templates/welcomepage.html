@@ -1,21 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome</title>
-    <!-- Link to the favicon -->
-    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
-</head>
-<body>
-    <div class="ui container" style="margin-top: 50px;">
-        <h2 class="ui center aligned header">Welcome to A-Eye Segmentation Web Platform</h2>
-        <div class="ui center aligned container">
-            <a href="{{ url_for('login') }}" class="ui blue button">Login</a>
-            <a href="{{ url_for('register') }}" class="ui green button">Register</a>
-        </div>
-    </div>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}Welcome{% endblock %}
+
+{% block content %}
+<h2 class="ui center aligned header">Welcome to A-Eye Segmentation Platform</h2>
+{% endblock %}

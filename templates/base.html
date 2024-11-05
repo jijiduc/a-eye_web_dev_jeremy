@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}My Website{% endblock %}</title>
+    <!-- Link to the favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
+</head>
+<body>
+    <div class="ui container" style="margin-top: 20px;">
+        <div class="ui menu">
+            <a href="{{ url_for('welcome') }}" class="header item">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" style="height: 40px;">
+            </a>
+            <div class="right menu">
+                {% if 'username' in session %}
+                    <div class="item">Welcome, {{ session['username'] }}</div>
+                    <a href="{{ url_for('logout') }}" class="item">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="item">Login</a>
+                    <a href="{{ url_for('register') }}" class="item">Register</a>
+                {% endif %}
+            </div>
+        </div>
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

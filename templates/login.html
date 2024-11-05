@@ -1,51 +1,37 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
-</head>
-<body>
-    <div class="ui container" style="margin-top: 50px;">
-        <h2 class="ui center aligned header">Login</h2>
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="ui message">
-                    {% for category, message in messages %}
-                        <div class="ui {{ category }} message">{{ message }}</div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
-        <form class="ui form" method="POST" action="/login">
-            <div class="field">
-                <label>Email</label>
-                <input type="email" name="email" placeholder="Email" required>
-            </div>
-            <div class="field">
-                <label>Password</label>
-                <input type="password" name="password" placeholder="Password" required>
-            </div>
-            <div class="field">
-                <div class="ui checkbox">
-                    <input type="checkbox" name="accept_terms" required>
-                    <label>I am aware that the data shared with the A-Eye web platform is shared on servers which do not necessarily belong to collaborators of the CHUV, CIBM, UNIL or the HES-SO. Data leaks are therefore possible.</label>
-                </div>
-            </div>
-            <button class="ui button" type="submit">Login</button>
-        </form>
-        <div class="ui hidden divider"></div>
-        <div class="ui center aligned container">
-            <p>Don't have an account? <a href="{{ url_for('register') }}">Register here</a></p>
+{% extends "base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<h2 class="ui center aligned header">Login</h2>
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="ui message">
+            {% for category, message in messages %}
+                <div class="ui {{ category }} message">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+<form class="ui form" method="POST" action="/login">
+    <div class="field">
+        <label>Email</label>
+        <input type="email" name="email" placeholder="Email" required>
+    </div>
+    <div class="field">
+        <label>Password</label>
+        <input type="password" name="password" placeholder="Password" required>
+    </div>
+    <div class="field">
+        <div class="ui checkbox">
+            <input type="checkbox" name="accept_terms" required>
+            <label>I am aware that the data shared with the A-Eye web platform is shared on servers which do not necessarily belong to collaborators of the CHUV, CIBM, UNIL or the HES-SO. Data leaks are therefore possible.</label>
         </div>
     </div>
-    <script>
-        // Activate the checkbox in the form using Semantic UI
-        document.addEventListener('DOMContentLoaded', function() {
-            $('.ui.checkbox').checkbox();
-        });
-    </script>
-</body>
-</html>
+    <button class="ui button" type="submit">Login</button>
+</form>
+<div class="ui hidden divider"></div>
+<div class="ui center aligned container">
+    <p>Don't have an account? <a href="{{ url_for('register') }}">Register here</a></p>
+</div>
+{% endblock %}
