@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register</title>
+    <!-- Link to the favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
     <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
 </head>
@@ -60,8 +62,7 @@
         </form>
         <div class="ui hidden divider"></div>
         <div class="ui center aligned container">
-            <p>Already have an account? Log in here</p>
-            <a href="{{ url_for('login') }}" class="ui green button">Log in</a>
+            <p>Already have an account? <a href="{{ url_for('login') }}">Log in here</a></p>
         </div>
     </div>
     <script>

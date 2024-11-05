@@ -1,16 +1,7 @@
 {
-    "users": [
-        {
-            "username": "admin",
-            "password": "admin"
-        },
-        {
-            "username": "guillaume",
-            "password": "raetz"
-        },
-        {
-            "username": "user2",
-            "password": "password2"
-        }
+    "whitelist": [
+        "g.raetz98@gmail.com",
+        "g.raetz@gmail.com",
+        "user3@example.com"
     ]
 }

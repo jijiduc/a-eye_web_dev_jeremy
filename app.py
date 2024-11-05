@@ -42,6 +42,11 @@ def create_tables():
 
 if not app._got_first_request:
     create_tables() # en appelant directement la fonction pour initialiser la BD
+    
+
+# Load whitelist
+with open('whitelist.json', 'r') as f:
+    whitelist = json.load(f)['whitelist']
 
 # ----------------------------------------------------------------------------------------------
 # UTILS
@@ -57,12 +62,19 @@ def login():
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
+        accept_terms = request.form.get('accept_terms')
+        if not accept_terms:
+            flash('You must accept the terms to log in.', 'danger')
+            return redirect(url_for('login'))
+        if email not in whitelist:
+            flash('Your email is not whitelisted.', 'danger')
+            return redirect(url_for('login'))
         user = User.query.filter_by(email=email).first()
         if user and check_password_hash(user.password, password):
             session['username'] = user.email
             return redirect(url_for('index'))
         else:
-            flash('Incorrect password or email', 'danger')
+            flash('Wrong Email or Password', 'danger')
             return redirect(url_for('login'))
     return render_template('login.html')
 

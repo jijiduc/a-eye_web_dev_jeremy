@@ -28,16 +28,21 @@
                 <label>Password</label>
                 <input type="password" name="password" placeholder="Password" required>
             </div>
+            <div class="field">
+                <div class="ui checkbox">
+                    <input type="checkbox" name="accept_terms" required>
+                    <label>I am aware that the data shared with the A-Eye web platform is shared on servers which do not necessarily belong to collaborators of the CHUV, CIBM, UNIL or the HES-SO. Data leaks are therefore possible.</label>
+                </div>
+            </div>
             <button class="ui button" type="submit">Login</button>
         </form>
         <div class="ui hidden divider"></div>
         <div class="ui center aligned container">
-            <p>Don't have an account yet? Create one here</p>
-            <a href="{{ url_for('register') }}" class="ui green button">Register</a>
+            <p>Don't have an account? <a href="{{ url_for('register') }}">Register here</a></p>
         </div>
     </div>
     <script>
-        // Activer les checkboxes Semantic UI
+        // Activate the checkbox in the form using Semantic UI
         document.addEventListener('DOMContentLoaded', function() {
             $('.ui.checkbox').checkbox();
         });
