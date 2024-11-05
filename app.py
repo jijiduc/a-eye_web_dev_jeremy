@@ -97,19 +97,27 @@ def users():
     return render_template('users.html', users=users)
 
 @app.route('/')
+def welcome():
+    return render_template('welcomepage.html')
+
+@app.route('/index')
 def index():
-    return render_template('index.html')
+    if 'username' in session:
+        return render_template('index.html')
+    return redirect(url_for('login'))
 
 @app.route('/informations')
 def informations():
-    return render_template('informations.html')
+    if 'username' in session:
+        return render_template('informations.html')
+    return redirect(url_for('login'))
 
 
 @app.route('/logout')
 def logout():
     # remove the username from the session if it is there
     session.pop('username', None)
-    return render_template('login.html')
+    return render_template('welcomepage.html')
 
 @app.route('/getcookie')
 def getcookie():
