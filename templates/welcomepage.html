@@ -3,5 +3,30 @@
 {% block title %}Welcome{% endblock %}
 
 {% block content %}
-<h2 class="ui center aligned header">Welcome to A-Eye Segmentation Platform</h2>
+<div class="ui center aligned container" style="margin-top: 50px;">
+    <h2 class="ui center aligned header">Welcome to the A-Eye Web Platform</h2>
+    <div class="ui segment">
+        <div class="ui stackable centered grid">
+            <div class="five wide column">
+                <div class="ui segment">
+                    <h3 class="ui center aligned header">MRI</h3>
+                    <img src="{{ url_for('static', filename='images/MRI_before.png') }}" alt="MRI Before" class="ui medium image">
+                </div>
+            </div>
+            <div class="two wide column" style="display: flex; align-items: center; justify-content: center; position: relative;">
+                <a href="{{ url_for('index') }}" class="ui icon button" style="background: none; border: none; box-shadow: none; position: relative;">
+                    <i class="huge arrow right icon" style="font-size: 10em;"></i>
+                    <div style="position: absolute; top: 57%; left: 50%; transform: translate(-50%, -50%); font-size: 1em; color: white;">SEGMENTATION</div>
+                </a>
+            </div>
+            <div class="five wide column">
+                <div class="ui segment">
+                    <h3 class="ui center aligned header">Automated Annotations</h3>
+                    <img src="{{ url_for('static', filename='images/MRI_after.png') }}" alt="MRI After" class="ui medium image">
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="ui hidden divider"></div>
+</div>
 {% endblock %}
