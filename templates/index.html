@@ -19,50 +19,48 @@
 
 <body>
 
-  <div style="margin-top: 50px;" class="ui container">
+  
 
-    <!-- Header -->
-    <h1 class="ui center aligned header">AEye automated segmentation</h1>
-    <hr>
+  <!-- Header -->
+  <h2 class="ui center aligned header">A-Eye Automated Segmentation Tool</h2>
+  <hr>
 
 
-    <!-- Choose and upload form -->
-    <form method="POST" action="/" enctype="multipart/form-data">
-      <input type="file" name="file" multiple>
-      <div class="ui hidden divider"></div>
+  <!-- Choose and upload form -->
+  <form method="POST" action="/" enctype="multipart/form-data">
+    <input type="file" name="file" multiple>
+    <div class="ui hidden divider"></div>
 
-      <!-- Button group for alignment -->
-      <div class="ui buttons">
-        <input class="ui blue button" type="submit" name="upload_files" value="Upload">
-        <a class="ui blue button" href="/segment">Segment</a>
-        <a class="ui blue button" href="/download">Download</a>
-      </div>
+    <!-- Button group for alignment -->
+    <div class="ui buttons">
+      <input class="ui blue button" type="submit" name="upload_files" value="Upload">
+      <a class="ui blue button" href="/segment">Segment</a>
+      <a class="ui blue button" href="/download">Download</a>
+    </div>
 
-      <!-- Upload label -->
-      {% if uploaded == True %}
-      <div class="ui left pointing green label">Files uploaded successfully</div>
-      {% else %}
-      <div class="ui left pointing label">No files uploaded</div>
-      {% endif %}
-    </form>
-
-    <!-- Segment label -->
-    {% if segmented==True %}
-    <span class="ui left pointing green label">Segmentation finished!</span>
+    <!-- Upload label -->
+    {% if uploaded == True %}
+    <div class="ui left pointing green label">Files uploaded successfully</div>
     {% else %}
-    <span></span>
+    <div class="ui left pointing label">No files uploaded</div>
     {% endif %}
-    
-    <!-- Display flash messages -->
-    <p>
-      {% with messages = get_flashed_messages() %}
-        {% if messages %}
-          <h3 class="ui blue header">{{ messages[0] }}</h3>
-        {% endif %}
-      {% endwith %}
-    </p>
+  </form>
 
-  </div>
+  <!-- Segment label -->
+  {% if segmented==True %}
+  <span class="ui left pointing green label">Segmentation finished!</span>
+  {% else %}
+  <span></span>
+  {% endif %}
+  
+  <!-- Display flash messages -->
+  <p>
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <h3 class="ui blue header">{{ messages[0] }}</h3>
+      {% endif %}
+    {% endwith %}
+  </p>
 
 </body>
 
