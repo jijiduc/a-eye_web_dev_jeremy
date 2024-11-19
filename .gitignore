@@ -129,4 +129,5 @@ dmypy.json
 .pyre/
 
 # Others
-static/
+static/download
+static/upload
