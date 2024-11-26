@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}My Website{% endblock %}</title>
-    <!-- Link to the favicon -->
+    <title>{% block title %}Auth0 Example{% endblock %}</title>
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
     <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
@@ -12,8 +11,11 @@
         .logout-link {
             color: red !important;
         }
-        .login-link {
-            color: green !important;
+        .welcome-text {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px; /* Adjust this value as needed */
         }
     </style>
 </head>
@@ -24,17 +26,15 @@
                 <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" style="height: 40px;">
             </a>
             <div class="right menu">
-                <!-- Information button -->
-                <a class="ui icon button" href="{{ url_for('informations') }}" target="_blank" title="Informations" style="display: flex; align-items: center;">
-                    <i class="info circle icon"></i>
-                </a>
-                {% if 'username' in session %}
-                    <div class="item">Welcome, {{ session['username'] }}</div>
+                {% if session.get('user') %}
+                    <div class="item welcome-text" style="max-width: 400px;">Welcome, {{ session.user.email }}</div>
                     <a href="{{ url_for('logout') }}" class="item logout-link">Logout</a>
                 {% else %}
-                    <a href="{{ url_for('login') }}" class="item login-link">Login</a>
-                    <a href="{{ url_for('register') }}" class="item">Register</a>
+                    <a href="{{ url_for('login') }}" class="item">Login</a>
                 {% endif %}
+                <a class="ui icon button" href="{{ url_for('informations') }}" target="_blank" title="Informations">
+                    <i class="info circle icon"></i>
+                </a>
             </div>
         </div>
         {% block content %}{% endblock %}
