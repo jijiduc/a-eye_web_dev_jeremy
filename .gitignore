@@ -131,3 +131,4 @@ dmypy.json
 # Others
 static/download
 static/upload
+nnUNet/

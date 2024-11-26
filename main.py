@@ -34,14 +34,14 @@ def getSegmentation(input=None, output=None):
 
 
     # sudo_pwd = os.environ['SUDO_PWD']
-    sudo_pwd = 'Patatahitech2.0'
+    sudo_pwd = 'Debi123.'
 
     # nnUNet
     shm_size = 10 # shared memory (gb)
-    abs_path = '/mnt/sda1/Repos/a-eye/a-eye_segmentation/deep_learning/nnUNet/nnUNet'
+    abs_path = 'nnUNet'  # /home/debi/jaime/repos/a-eye/a-eye_web/nnUNet
     rel_path = '/opt/nnunet_resources'
-    aux_in = f'nnUNet_inference/temp_inference/input' # input aux folder
-    aux_out = f'nnUNet_inference/temp_inference/output' # output aux folder
+    aux_in = f'nnUNet_inference/input' # input aux folder
+    aux_out = f'nnUNet_inference/output' # output aux folder
 
     start_docker()
 
@@ -72,7 +72,7 @@ def getSegmentation(input=None, output=None):
     # inference command terminal
     command = f' \
     docker run --rm \
-    --gpus device=0 \
+    --gpus device=all \
     --shm-size={shm_size}gb \
     -v {abs_path}:{rel_path} \
     petermcgor/nnunet:0.0.1 nnUNet_predict \
