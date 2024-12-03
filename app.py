@@ -11,6 +11,7 @@ import json
 from models import db, User
 from werkzeug.security import generate_password_hash, check_password_hash
 from authlib.integrations.flask_client import OAuth
+from authlib.integrations.base_client.errors import OAuthError, MismatchingStateError
 from six.moves.urllib.parse import urlencode, quote_plus
 from dotenv import load_dotenv
 
@@ -33,7 +34,7 @@ LOGS_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs/')
 
 app = Flask(__name__, static_folder="static")
 app.config.from_object('config.Config')
-
+app.secret_key = os.getenv('APP_SECRET_KEY', 'your_secret_key')
 
 oauth = OAuth(app)
 auth0 = oauth.register(
@@ -48,6 +49,8 @@ auth0 = oauth.register(
     },
     server_metadata_url=f"https://{app.config['AUTH0_DOMAIN']}/.well-known/openid-configuration"
 )
+
+
 
 # Load whitelist
 with open('whitelist.json', 'r') as f:
@@ -68,19 +71,38 @@ def welcome():
 
 @app.route("/callback", methods=["GET", "POST"])
 def callback():
-    token = oauth.auth0.authorize_access_token()
-    nonce = session.pop('nonce', None)
-    userinfo = oauth.auth0.parse_id_token(token, nonce=nonce)
-    session["user"] = userinfo
-    return redirect("/")
+    try:
+        token = oauth.auth0.authorize_access_token()
+        state = session.pop('state', None)
+        if request.args.get('state') != state:
+            raise MismatchingStateError()
+        nonce = session.pop('nonce', None)
+        userinfo = oauth.auth0.parse_id_token(token, nonce=nonce)
+        
+        # Vérifier si l'email est vérifié
+        if not userinfo.get('email_verified'):
+            return redirect(url_for('verify_email'))
+        
+        session["user"] = userinfo
+        return redirect(url_for('index'))
+    except OAuthError as error:
+        flash("Erreur d'authentification : " + error.description)
+        return redirect(url_for('welcome'))
+
+@app.route("/verify_email")
+def verify_email():
+    return render_template("verify_email.html")
 
 @app.route("/login")
 def login():
     nonce = secrets.token_urlsafe()
+    state = secrets.token_urlsafe()
     session['nonce'] = nonce
+    session['state'] = state
     return oauth.auth0.authorize_redirect(
         redirect_uri=url_for("callback", _external=True),
-        nonce=nonce
+        nonce=nonce,
+        state=state
     )
 
 @app.route("/logout")
