@@ -84,7 +84,7 @@ def callback():
             return redirect(url_for('verify_email'))
         
         session["user"] = userinfo
-        return redirect(url_for('index'))
+        return redirect(url_for('segmentationtool'))
     except OAuthError as error:
         flash("Erreur d'authentification : " + error.description)
         return redirect(url_for('welcome'))
@@ -117,16 +117,27 @@ def logout():
             quote_via=quote_plus,
         )
     )
+@app.route("/services")
+def services():
+    return render_template("services.html")
 
 @app.route('/users')
 def users():
     users = User.query.all()
     return render_template('users.html', users=users)
 
-@app.route('/index')
-def index():
+@app.route("/about")
+def about():
+    return render_template("about.html")
+
+@app.route("/faq")
+def faq():
+    return render_template("faq.html")
+
+@app.route('/segmentationtool')
+def segmentationtool():
     if 'user' in session:
-        return render_template('index.html')
+        return render_template('segmentationtool.html')
     return redirect(url_for('login'))
 
 @app.route('/informations')
@@ -142,8 +153,8 @@ def upload_files():
                 if file and allowed_file(file.filename):
                     filename = secure_filename(file.filename)
                     file.save(os.path.join(UPLOAD_FOLDER, filename))
-            return redirect(url_for('index'))
-    return render_template('index.html')
+            return redirect(url_for('segmentationtool'))
+    return render_template('segmentationtool.html')
 
 # ----------------------------------------------------------------------------------------------
 # MAIN
