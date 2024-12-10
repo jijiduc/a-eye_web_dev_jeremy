@@ -51,10 +51,6 @@ auth0 = oauth.register(
 
 
 
-# Load whitelist
-with open('whitelist.json', 'r') as f:
-    whitelist = json.load(f)['whitelist']
-
 # ----------------------------------------------------------------------------------------------
 # UTILS
 
