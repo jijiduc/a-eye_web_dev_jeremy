@@ -8,7 +8,6 @@ from werkzeug.utils import secure_filename
 import logging
 import zipfile
 import json
-from models import db, User
 from werkzeug.security import generate_password_hash, check_password_hash
 from authlib.integrations.flask_client import OAuth
 from authlib.integrations.base_client.errors import OAuthError, MismatchingStateError
