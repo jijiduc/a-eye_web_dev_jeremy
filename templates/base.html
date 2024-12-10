@@ -8,8 +8,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="{{ url_for('welcome') }}">A-Eye</a>
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <a class="navbar-brand" href="{{ url_for('welcome') }}" style="color: #ffffff;">A-Eye</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -19,7 +19,7 @@
                     <a class="nav-link" href="{{ url_for('welcome') }}">HOME</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('segmentationtool') }}">A-EYE SEGMENTATION</a>
+                    <a class="nav-link" href="{{ url_for('segmentation') }}">SEGMENTATION</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('users') }}">USERS</a>
@@ -32,11 +32,11 @@
                 </li>
                 {% if session.get('user') %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('logout') }}">LOGOUT</a>
+                        <a class="nav-link logout" href="{{ url_for('logout') }}">LOGOUT</a>
                     </li>
                 {% else %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('login') }}">LOGIN</a>
+                        <a class="nav-link login" href="{{ url_for('login') }}">LOGIN</a>
                     </li>
                 {% endif %}
             </ul>

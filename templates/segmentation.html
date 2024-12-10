@@ -1,27 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %}Home{% endblock %}
+{% block title %}Segmentation{% endblock %}
 
 {% block content %}
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>A-Eye Web Segmentation Platform</title>
-    <!-- Link to the favicon -->
-    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
-    <!-- Semantic UI -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.4.2/dist/semantic.min.js"></script>
-</head>
-
-<body>
-  <!-- Header -->
-  <h2 class="ui center aligned header">A-Eye Automated Segmentation Tool</h2>
-  <hr>
-
+<div class="container text-center" style="margin-top: 50px;">
+  <h2>Segmentation</h2>
+  <!-- Contenu spécifique à la page Segmentation -->
 
   <!-- Choose and upload form -->
   <form method="POST" action="/" enctype="multipart/form-data">
@@ -58,8 +42,5 @@
       {% endif %}
     {% endwith %}
   </p>
-
-</body>
-
-</html>
+</div>
 {% endblock %}
