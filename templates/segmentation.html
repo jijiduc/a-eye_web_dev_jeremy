@@ -3,44 +3,30 @@
 {% block title %}Segmentation{% endblock %}
 
 {% block content %}
-<div class="container text-center" style="margin-top: 50px;">
-  <h2>Segmentation</h2>
-  <!-- Contenu spécifique à la page Segmentation -->
-
-  <!-- Choose and upload form -->
-  <form method="POST" action="/" enctype="multipart/form-data">
-    <input type="file" name="file" multiple>
-    <div class="ui hidden divider"></div>
-
-    <!-- Button group for alignment -->
-    <div class="ui buttons">
-      <input class="ui blue button" type="submit" name="upload_files" value="Upload">
-      <a class="ui blue button" href="/segment">Segment</a>
-      <a class="ui blue button" href="/download">Download</a>
+<div class="container" style="margin-top: 50px;">
+    <h2 class="text-center">Segmentation Tool</h2>
+    <p class="text-center">Please follow the steps below to segment your NIfTI files:</p>
+    <ol class="text-center">
+        <li>Select your NIfTI files</li>
+        <li>Upload the files</li>
+        <li>Start the segmentation process</li>
+    </ol>
+    <div class="text-center">
+        <form id="segmentation-form" method="POST" action="{{ url_for('upload_files') }}" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="file">Choose File(s)</label>
+                <input type="file" class="form-control-file" id="file" name="file" multiple required>
+            </div>
+            <button type="submit" class="btn btn-custom" id="upload-btn">Upload</button>
+        </form>
+        <button class="btn btn-custom" id="segment-btn" onclick="startSegmentation()">Segment</button>
     </div>
-
-    <!-- Upload label -->
-    {% if uploaded == True %}
-    <div class="ui left pointing green label">Files uploaded successfully</div>
-    {% else %}
-    <div class="ui left pointing label">No files uploaded</div>
-    {% endif %}
-  </form>
-
-  <!-- Segment label -->
-  {% if segmented==True %}
-  <span class="ui left pointing green label">Segmentation finished!</span>
-  {% else %}
-  <span></span>
-  {% endif %}
-  
-  <!-- Display flash messages -->
-  <p>
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        <h3 class="ui blue header">{{ messages[0] }}</h3>
-      {% endif %}
-    {% endwith %}
-  </p>
 </div>
 {% endblock %}
+
+<script>
+function startSegmentation() {
+    // Add your segmentation logic here
+    alert("Segmentation started!");
+}
+</script>

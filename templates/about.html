@@ -10,6 +10,9 @@
             <img src="{{ url_for('static', filename='images/partners/GELBERT.PNG') }}" class="img-fluid" alt="Funding Foundation Logo">
         </div>
     </div>
+    <div class="contact-card text-center mb-5">
+        <p>Contact: <a href="mailto:jaime.barrancohernandez@hevs.ch">jaime.barrancohernandez@hevs.ch</a></p>
+    </div>
     <h2 class="text-center">A-Eye Team</h2>
     <div class="row">
         {% for i in range(10) %}
@@ -24,10 +27,10 @@
         {% endfor %}
     </div>
     <h2 class="text-center">Partners</h2>
-    <div class="row">
-        {% set partners = ['UNIL.png', 'BERN.png', 'CHUV.png', 'CIBM.png', 'MAT-TECH_LAB.png', 'MIAL.png', 'ROSTOCK.png','HES-SO_Valais-Wallis.png'] %}
+    <div class="row justify-content-center">
+        {% set partners = ['UNIL.png', 'BERN.png', 'CHUV.png', 'CIBM.png', 'ROSTOCK.png', 'HES-SO_Valais-Wallis.png'] %}
         {% for partner in partners %}
-        <div class="col-md-3 mb-4">
+        <div class="col-md-2 mb-4">
             <div class="partner-card">
                 <img src="{{ url_for('static', filename='images/partners/' ~ partner) }}" class="img-fluid" alt="Partner Logo">
             </div>
