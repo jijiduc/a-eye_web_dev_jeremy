@@ -4,33 +4,74 @@
 
 {% block content %}
 <div class="title-container">
-    <h2 class="about-title">Funding Foundation</h2>
+    <h2 class="main-title">Funding Foundation</h2>
 </div>
 <div class="text-center mb-5">
     <div class="partner-card">
         <img src="{{ url_for('static', filename='images/partners/GELBERT.PNG') }}" class="img-fluid" alt="Funding Foundation Logo">
     </div>
 </div>
-<div class="contact-card text-center mb-5">
-    <p>Contact: <a href="mailto:jaime.barrancohernandez@hevs.ch">jaime.barrancohernandez@hevs.ch</a></p>
-</div>
 <div class="title-container">
-    <h2 class="about-title">A-Eye Team</h2>
+    <h2 class="main-title">A-Eye Team</h2>
 </div>
 <div class="row">
-    {% for i in range(10) %}
     <div class="col-md-6 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Team Member {{ i + 1 }}</h5>
-                <p class="card-text">Description of team member {{ i + 1 }}.</p>
+        <div class="collaborator-card">
+            <div class="name-section">
+                <strong style="font-size: 2em;">Meritxell Bach Cuadra</strong>
+            </div>
+            <div class="email-section">
+                <strong>Email: </strong> <a href="mailto:meritxell.bachcuadra@unil.ch">meritxell.bachcuadra@unil.ch</a>
+            </div>
+            <div class="description-section">
+                Principal Investigator and Leader of the A-Eye project.
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="collaborator-card">
+            <div class="name-section">
+                <strong style="font-size: 2em;">Jaime Barranco Hernandez</strong>
+            </div>
+            <div class="email-section">
+                <strong>Email: </strong> <a href="mailto:jaime.barranco-hernandez@chuv.ch">jaime.barranco-hernandez@chuv.ch</a>
+            </div>
+            <div class="description-section">
+                Researcher affiliated with CIBM, CHUV, HES-SO, and developer of several eye segmentation automation techniques for the A-Eye project.
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="collaborator-card">
+            <div class="name-section">
+                <strong style="font-size: 2em;">Guillaume Raetz</strong>
+            </div>
+            <div class="email-section">
+                <strong>Email: </strong> <a href="mailto:guillaum.raetz@hes-so.ch">guillaum.raetz@hes-so.ch</a>
+            </div>
+            <div class="description-section">
+                Former student at the School of Engineering in Sion, developed the web platform and contributed closely to training a DeepLearning model for automatic eye segmentation during his bachelor thesis.
+            </div>
+        </div>
+    </div>
+    {% for i in range(7) %}
+    <div class="col-md-6 mb-4">
+        <div class="collaborator-card">
+            <div class="name-section">
+                <strong style="font-size: 2em;">Team Member {{ i + 4 }}</strong>
+            </div>
+            <div class="email-section">
+                <strong>Email: </strong> <a href="mailto:teammember{{ i + 4 }}@example.com">teammember{{ i + 4 }}@example.com</a>
+            </div>
+            <div class="description-section">
+                Description of team member {{ i + 4 }}.
             </div>
         </div>
     </div>
     {% endfor %}
 </div>
 <div class="title-container">
-    <h2 class="about-title">Partners</h2>
+    <h2 class="main-title">Partners</h2>
 </div>
 <div class="row justify-content-center">
     {% set partners = ['UNIL.png', 'BERN.png', 'CHUV.png', 'CIBM.png', 'ROSTOCK.png', 'HES-SO_Valais-Wallis.png'] %}

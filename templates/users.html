@@ -3,7 +3,13 @@
 {% block title %}Users{% endblock %}
 
 {% block content %}
-<div class="container text-center" style="margin-top: 50px;">
-    <h2>Coming Soon</h2>
+<div class="title-container">
+    <h1 class="main-title">User Statistics</h2>
+</div>
+<div class="user-container">
+    <p class="stats">Cases Processed: {{ cases_processed }} | Total Users: {{ total_users }}</p>
+</div>
+<div class="map-container">
+    {{ map_html|safe }}
 </div>
 {% endblock %}
