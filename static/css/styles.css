@@ -6,37 +6,37 @@ body {
 }
 
 .navbar {
-    height: 170%; /* Increase the height of the header by 70% */
-    background-color: #007849; /* Change the background color of the header */
+    height: 170%; /* Augmente la hauteur de l'entête de 70% */
+    background-color: #007849; /* Change la couleur de fond de l'entête */
 }
 
 .navbar-brand, .navbar-nav .nav-link {
-    line-height: 170%; /* Adjust the line height to center the text vertically */
-    color: #ffffff; /* Change the text color of the navigation links */
+    line-height: 170%; /* Ajuste la hauteur de ligne pour centrer le texte verticalement */
+    color: #ffffff; /* Change la couleur du texte des liens de navigation */
 }
 
 .navbar-nav .nav-item .nav-link {
-    color: #ffffff; /* Change the text color of the navigation links */
-    margin-right: 15px; /* Increase the distance between the buttons */
+    color: #ffffff; /* Change la couleur du texte des liens de navigation */
+    margin-right: 15px; /* Augmente la distance entre les boutons */
 }
 
 .navbar-nav .nav-item .nav-link.login, .navbar-nav .nav-item .nav-link.logout {
-    font-weight: bold; /* Make the text bold for the LOGIN / LOGOUT buttons */
+    font-weight: bold; /* Met le texte en gras pour les boutons LOGIN / LOGOUT */
 }
 
 .partner-card {
-    border: 1px solid #ddd; /* Add a gray border */
-    padding: 10px; /* Add padding around the image */
-    text-align: center; /* Center the image horizontally */
-    height: 200px; /* Set a fixed height for the frames */
+    border: 1px solid #ddd; /* Ajoute une bordure grise */
+    padding: 10px; /* Ajoute un padding autour de l'image */
+    text-align: center; /* Centre l'image horizontalement */
+    height: 200px; /* Définit une hauteur fixe pour les cadres */
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 .partner-card img {
-    max-height: 100%; /* Ensure the image does not exceed the height of the frame */
-    max-width: 100%; /* Ensure the image does not exceed the width of the frame */
+    max-height: 100%; /* Assure que l'image ne dépasse pas la hauteur du cadre */
+    max-width: 100%; /* Assure que l'image ne dépasse pas la largeur du cadre */
 }
 
 .animated-background {
@@ -48,7 +48,7 @@ body {
     z-index: -1;
     background: linear-gradient(45deg, #007849, #49a93e);
     background-size: 400% 400%;
-    animation: gradientAnimation 15s ease infinite;
+    animation: gradientAnimation 5s ease infinite;
 }
 
 @keyframes gradientAnimation {
@@ -77,16 +77,41 @@ body {
     margin-top: 10px;
 }
 
-.btn-custom {
-    background-color: #afb0b2;
-    color: #ffffff;
-    border: none;
-    padding: 10px 20px;
-    margin: 10px;
-    cursor: pointer;
-    font-size: 1.2em;
+.about-title, .faq-title {
+    font-size: 2.5em;
+    margin: 0;
 }
 
-.btn-custom:hover {
-    background-color: #49a93e;
+.title-container {
+    background-color: #ffffff; /* Couleur de fond blanche */
+    height: 150px; /* Hauteur fixe pour centrer verticalement */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+/* Styles pour les éléments de la FAQ */
+.faq-item {
+    width: 100vw; /* Utilise la largeur totale de la fenêtre */
+    padding: 50px;
+    box-sizing: border-box;
+    margin-left: calc(-50vw + 50%); /* Centre l'élément */
+}
+
+.faq-item .faq-content {
+    max-width: 1125px; /* Limite la largeur du texte */
+    margin: 0 auto; /* Centre le texte horizontalement */
+}
+
+.faq-item p {
+    margin: 0;
+}
+
+.faq-item p strong {
+    font-size: 1.5em; /* Augmente la taille de la police des questions */
+}
+
+.faq-item p:not(strong) {
+    font-size: 1em;
 }

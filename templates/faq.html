@@ -1,9 +1,35 @@
 {% extends "base.html" %}
 
-{% block title %}Users{% endblock %}
+{% block title %}Frequently Asked Questions{% endblock %}
 
 {% block content %}
-<div class="container text-center" style="margin-top: 50px;">
-    <h2>Coming Soon</h2>
+<div class="title-container">
+    <h2 class="faq-title">Frequently Asked Questions</h2>
+</div>
+<div class="container">
+    <div class="faq-item" style="background-color: #a5d5a1;">
+        <div class="faq-content">
+            <p><strong>I didn't receive the activation link. How do I proceed?</strong></p>
+            <p>First, please check your spam. Second, if you did not receive the email, you can use the forgot password feature on the <a href="http://localhost:5000/login">login page</a> to get back an activation link.</p>
+        </div>
+    </div>
+    <div class="faq-item" style="background-color: #ffffff;">
+        <div class="faq-content">
+            <p><strong>Is it possible to submit DICOM images directly?</strong></p>
+            <p>No, the currently only supported format is compressed Nifti: ".nii.gz". Please read the tutorial for help on format conversion. You can have additional help watching this <a href="https://www.youtube.com/watch?v=DMGWdi6Z73s&ab_channel=AndrewJahn">video</a> or reading this <a href="https://andysbrainbook.readthedocs.io/en/latest/MRIcroGL/MRIcroGL_2_dcm2nii.html">book</a>.</p>
+        </div>
+    </div>
+    <div class="faq-item" style="background-color: #a5d5a1;">
+        <div class="faq-content">
+            <p><strong>The pipeline finished, but I have an issue on the obtained results. How to report a bug?</strong></p>
+            <p>To report an issue on the platform or the pipelines, please contact: <a href="mailto:jaime.barrancohernandez@hevs.ch">jaime.barrancohernandez@hevs.ch</a>.</p>
+        </div>
+    </div>
+    <div class="faq-item" style="background-color: #ffffff;">
+        <div class="faq-content">
+            <p><strong>Where is my medical data stored and is it exposed?</strong></p>
+            <p>Imaging data is temporarily stored on a physical server at the HES-SO in Sion (Valais) and is deleted immediately after the segmentation process.</p>
+        </div>
+    </div>
 </div>
 {% endblock %}
