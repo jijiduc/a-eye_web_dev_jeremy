@@ -177,3 +177,12 @@ body {
     height: 100vh; /* Adjust the height to be relative to the viewport height */
     margin: 0 auto; /* Center the map */
 }
+
+/* Assurez-vous que ce fichier est inclus dans vos pages HTML */
+.navbar {
+    height: 60px; /* Ajustez cette valeur selon la hauteur souhaitée */
+}
+
+body {
+    padding-top: 60px; /* Ajustez cette valeur selon la hauteur de votre barre de navigation */
+}
