@@ -32,7 +32,7 @@ def zip_folder(folder_path, output_path):
             for file in files:
                 zipf.write(os.path.join(root, file), os.path.relpath(os.path.join(root, file), folder_path))
 
-# ----------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------------------
 # FLASK
 
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static/upload/')
