@@ -118,14 +118,28 @@ body {
 
 .collaborator-card {
     border: 1px solid #ddd; /* Ajoute une bordure grise */
-    padding: 10px; /* Ajoute un padding autour du contenu */
+    padding: 15px; /* Ajoute un padding autour du contenu */
     text-align: center; /* Centre le texte horizontalement */
-    height: 250px; /* Définit une hauteur fixe pour les cadres */
+    height: 350px; /* Définit une hauteur fixe pour les cadres */
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     margin-bottom: 20px; /* Ajoute une marge en bas */
     background-color: #c1e1be;
+    border-radius: 5px;
+    align-items: center;
+}
+
+.collaborator-card img {
+    width: 150px; /* Largeur fixe pour les images */
+    height: 150px; /* Hauteur fixe pour les images */
+    object-fit: cover; /* Pour s'assurer que l'image couvre entièrement l'espace */
+    border-radius: 50%; /* Optionnel : pour des images circulaires */
+    margin-right: 15px;
+}
+
+.collaborator-card .info-section {
+    flex: 1;
 }
 
 .collaborator-card .name-section {

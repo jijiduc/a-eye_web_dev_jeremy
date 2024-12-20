@@ -8,7 +8,7 @@
 </div>
 <div class="text-center mb-5">
     <div class="partner-card">
-        <img src="{{ url_for('static', filename='images/partners/GELBERT.png') }}" class="img-fluid" alt="Funding Foundation Logo">
+        <img src="{{ url_for('static', filename='images/partners/GELBERT2.png') }}" class="img-fluid" alt="Funding Foundation Logo">
     </div>
 </div>
 <div class="title-container">
@@ -17,58 +17,116 @@
 <div class="row">
     <div class="col-md-6 mb-4">
         <div class="collaborator-card">
-            <div class="name-section">
-                <strong style="font-size: 2em;">Meritxell Bach Cuadra</strong>
-            </div>
-            <div class="email-section">
-                <strong>Email: </strong> <a href="mailto:meritxell.bachcuadra@unil.ch">meritxell.bachcuadra@unil.ch</a>
-            </div>
-            <div class="description-section">
-                Principal Investigator and Leader of the A-Eye project.
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6 mb-4">
-        <div class="collaborator-card">
-            <div class="name-section">
-                <strong style="font-size: 2em;">Jaime Barranco Hernandez</strong>
-            </div>
-            <div class="email-section">
-                <strong>Email: </strong> <a href="mailto:jaime.barranco-hernandez@chuv.ch">jaime.barranco-hernandez@chuv.ch</a>
-            </div>
-            <div class="description-section">
-                Researcher affiliated with CIBM, CHUV, HES-SO, and developer of several eye segmentation automation techniques for the A-Eye project.
+            <img src="{{ url_for('static', filename='images/A-Eye_team/Meri.jpg') }}" alt="Meritxell Bach Cuadra">
+            <div class="info-section">
+                <div class="name-section">
+                    <strong style="font-size: 2em;">Meritxell Bach Cuadra</strong>
+                </div>
+                <div class="email-section">
+                    <strong>Email: </strong> <a href="mailto:meritxell.bachcuadra@unil.ch">meritxell.bachcuadra@unil.ch</a>
+                </div>
+                <div class="description-section">
+                    Principal Investigator and Leader of the A-Eye project.
+                </div>
             </div>
         </div>
     </div>
     <div class="col-md-6 mb-4">
         <div class="collaborator-card">
-            <div class="name-section">
-                <strong style="font-size: 2em;">Guillaume Raetz</strong>
-            </div>
-            <div class="email-section">
-                <strong>Email: </strong> <a href="mailto:guillaum.raetz@hes-so.ch">guillaum.raetz@hes-so.ch</a>
-            </div>
-            <div class="description-section">
-                Former student at the School of Engineering in Sion, developed the web platform and contributed closely to training a DeepLearning model for automatic eye segmentation during his bachelor thesis.
+            <img src="{{ url_for('static', filename='images/A-Eye_team/Jaime.jpg') }}" alt="Jaime Barranco Hernandez">
+            <div class="info-section">
+                <div class="name-section">
+                    <strong style="font-size: 2em;">Jaime Barranco Hernandez</strong>
+                </div>
+                <div class="email-section">
+                    <strong>Email: </strong> <a href="mailto:jaime.barranco-hernandez@chuv.ch">jaime.barranco-hernandez@chuv.ch</a>
+                </div>
+                <div class="description-section">
+                    Researcher affiliated with CIBM, CHUV, HES-SO, and developer of several eye segmentation automation techniques for the A-Eye project.
+                </div>
             </div>
         </div>
     </div>
-    {% for i in range(7) %}
     <div class="col-md-6 mb-4">
         <div class="collaborator-card">
-            <div class="name-section">
-                <strong style="font-size: 2em;">Team Member {{ i + 4 }}</strong>
-            </div>
-            <div class="email-section">
-                <strong>Email: </strong> <a href="mailto:teammember{{ i + 4 }}@example.com">teammember{{ i + 4 }}@example.com</a>
-            </div>
-            <div class="description-section">
-                Description of team member {{ i + 4 }}.
+            <img src="{{ url_for('static', filename='images/A-Eye_team/raphael.jpg') }}" alt="Raphael Sznitman">
+            <div class="info-section">
+                <div class="name-section">
+                    <strong style="font-size: 2em;">Raphael Sznitman</strong>
+                </div>
+                <div class="email-section">
+                    <strong>Email: </strong> <a href="mailto:raphael.sznitman@unibe.ch">raphael.sznitman@unibe.ch</a>
+                </div>
+                <div class="description-section">
+                    Professor at the University of Bern, ARTORG Center for Biomedical Engineering.
+                </div>
             </div>
         </div>
     </div>
-    {% endfor %}
+    <div class="col-md-6 mb-4">
+        <div class="collaborator-card">
+            <img src="{{ url_for('static', filename='images/A-Eye_team/bene.jpg') }}" alt="Benedetta Franceschiello">
+            <div class="info-section">
+                <div class="name-section">
+                    <strong style="font-size: 2em;">Benedetta Franceschiello</strong>
+                </div>
+                <div class="email-section">
+                    <strong>Email: </strong> <a href="mailto:benedetta.franceschiello@hevs.ch">benedetta.franceschiello@hevs.ch</a>
+                </div>
+                <div class="description-section">
+                    Research Staff Scientist at the CIBM Center for Biomedical Imaging, CHUV, and University of Lausanne. Co-principal Investigator on the project.
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="collaborator-card">
+            <img src="{{ url_for('static', filename='images/A-Eye_team/soenke.jpg') }}" alt="Soenke Langner">
+            <div class="info-section">
+                <div class="name-section">
+                    <strong style="font-size: 2em;">Soenke Langner</strong>
+                </div>
+                <div class="email-section">
+                    <strong>Email: </strong> <a href="mailto:soenke.langner@uni-greifswald.de">soenke.langner@uni-greifswald.de</a>
+                </div>
+                <div class="description-section">
+                    Professor of Neuroradiology at University of Rostock. Expert in MR microscopy of the eye and image analysis.
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="collaborator-card">
+            <img src="{{ url_for('static', filename='images/A-Eye_team/oliver.jpg') }}" alt="Prof. Dr. rer. nat. Oliver Stachs">
+            <div class="info-section">
+                <div class="name-section">
+                    <strong style="font-size: 2em;">Prof. Dr. rer. nat. Oliver Stachs</strong>
+                </div>
+                <div class="email-section">
+                    <strong>Email: </strong> <a href="mailto:oliver.stachs@med.uni-rostock.de">oliver.stachs@med.uni-rostock.de</a>
+                </div>
+                <div class="description-section">
+                    Head of section of experimental ophthalmology at the University of Rostock. Expert in biophotonics targeted to ophthalmic imaging.
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="collaborator-card">
+            <img src="{{ url_for('static', filename='images/A-Eye_team/guillaume.jpg') }}" alt="Guillaume Raetz">
+            <div class="info-section">
+                <div class="name-section">
+                    <strong style="font-size: 2em;">Guillaume Raetz</strong>
+                </div>
+                <div class="email-section">
+                    <strong>Email: </strong> <a href="mailto:guillaum.raetz@hes-so.ch">guillaum.raetz@hes-so.ch</a>
+                </div>
+                <div class="description-section">
+                    Former student at the School of Engineering in Sion, developed the web platform and contributed closely to training a DeepLearning model for automatic eye segmentation during his bachelor thesis.
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 <div class="title-container">
     <h2 class="main-title">Partners</h2>
