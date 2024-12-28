@@ -200,3 +200,20 @@ body {
 body {
     padding-top: 60px; /* Ajustez cette valeur selon la hauteur de votre barre de navigation */
 }
+
+/* Page users */
+.statistic {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.value {
+    font-size: 3em;
+    color: green;
+}
+
+.label {
+    font-size: 0.8em;
+}

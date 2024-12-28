@@ -17,6 +17,14 @@ import requests
 import pandas as pd
 import plotly.express as px
 import pycountry
+from flask import Flask, render_template
+from dotenv import load_dotenv
+import requests
+import pandas as pd
+import plotly.express as px
+import pycountry
+import os
+import zipfile
 
 
 # Load environment variables from .env file
@@ -24,6 +32,7 @@ load_dotenv()
 
 # Initialize global variable
 cases_processed = 0
+high_scale_nb_users = 100  # Set the maximum number of users for the color scale
 
 
 def zip_folder(folder_path, output_path):
@@ -67,6 +76,7 @@ def get_user_data():
     }
     
     response = requests.get(f'https://{auth0_domain}/api/v2/users', headers=headers)
+    response.raise_for_status()  # Raise an exception for HTTP errors
     users_data = response.json()
     return users_data
 
@@ -154,6 +164,15 @@ def users():
     users_data = get_user_data()
     total_users = len(users_data)
     
+    # Calculate the number of institutions
+    domains = set()
+    for user in users_data:
+        email = user.get('email')
+        if email:
+            domain = email.split('@')[-1]
+            domains.add(domain)
+    total_institutions = len(domains)
+    
     # Get country data from user IPs
     country_counts = {}
     for user in users_data:
@@ -177,11 +196,35 @@ def users():
     
     # Generate the choropleth map
     fig = px.choropleth(df, locations="Country", locationmode='ISO-3', color="Count",
-                        color_continuous_scale="Greens", range_color=(0, 100), title="User Distribution by Country",
-                        width=1200, height=800)  # Set the width and height of the figure
+                        color_continuous_scale="Greens", range_color=(0, high_scale_nb_users),
+                        width=1200, height=675)  # Set the width and height of the figure
+    
+    fig.update_layout(
+        margin={"r":0,"t":0,"l":0,"b":0},
+        geo=dict(
+            showframe=False,
+            showcoastlines=False,
+            projection_type='equirectangular',
+            # Center the map
+                                lataxis=dict(range=[-90, 90]),  # Adjust latitude range to exclude Antarctica
+                                lonaxis=dict(range=[-180, 180])  # Adjust longitude range to show the whole world
+        )
+    )
+    
+    fig.update_layout(
+        dragmode=False,
+        geo=dict(
+            showframe=False,
+            showcoastlines=False,
+            projection_type='equirectangular',
+            center=dict(lat=0, lon=0)  # Center the map
+        ),
+        coloraxis_showscale=False  # Remove the color scale
+    )
+    
     map_html = fig.to_html(full_html=False)
     
-    return render_template('users.html', total_users=total_users, cases_processed=cases_processed, map_html=map_html)
+    return render_template('users.html', total_users=total_users, cases_processed=cases_processed, total_institutions=total_institutions, map_html=map_html)
 
 
 @app.route("/about")
