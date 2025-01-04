@@ -17,15 +17,8 @@ import requests
 import pandas as pd
 import plotly.express as px
 import pycountry
-from flask import Flask, render_template
-from dotenv import load_dotenv
-import requests
-import pandas as pd
-import plotly.express as px
-import pycountry
-import os
-import zipfile
-
+import subprocess
+from flask_mail import Mail, Message
 
 # Load environment variables from .env file
 load_dotenv()
@@ -50,8 +43,22 @@ ALLOWED_EXTENSIONS = {'gz', 'zip', '7z'}
 LOGS_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs/')
 
 app = Flask(__name__, static_folder="static")
+UPLOAD_FOLDER = 'static/upload'
+DOWNLOAD_FOLDER = 'static/download'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['DOWNLOAD_FOLDER'] = DOWNLOAD_FOLDER
 app.config.from_object('config.Config')
 app.secret_key = os.getenv('APP_SECRET_KEY', 'your_secret_key')
+
+# Flask-Mail configuration
+app.config['MAIL_SERVER'] = 'smtp.example.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER')
+
+mail = Mail(app)
 
 oauth = OAuth(app)
 auth0 = oauth.register(
@@ -246,19 +253,45 @@ def informations():
     return render_template('informations.html')
 
 @app.route('/upload', methods=['POST'])
-def upload_files():
-    global cases_processed
-    if 'file' in request.files: # check if the post request has the file part
-        files = request.files.getlist('file')
-        if files: # non-empty list
-            for file in files:
-                if file and allowed_file(file.filename):
-                    filename = secure_filename(file.filename)
-                    file.save(os.path.join(UPLOAD_FOLDER, filename))
-            cases_processed += 1  # Increment the global variable
-            return redirect(url_for('segmentation'))
-    return render_template('segmentation.html')
+def upload_file():
+    if 'files[]' not in request.files:
+        return 'No file part', 400
+    files = request.files.getlist('files[]')
+    for file in files:
+        if file.filename == '':
+            return 'No selected file', 400
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], file.filename))
+    return 'Files uploaded successfully', 200
 
+@app.route('/segment', methods=['POST'])
+def segment_files():
+    input_folder = app.config['UPLOAD_FOLDER']
+    output_folder = app.config['DOWNLOAD_FOLDER']
+    os.makedirs(output_folder, exist_ok=True)
+    
+    # Run nnUNet inference command
+    command = f"docker run --rm -v {os.path.abspath(input_folder)}:/input -v {os.path.abspath(output_folder)}:/output nnunet docker_inference_command"
+    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout, stderr = process.communicate()
+    
+    if process.returncode != 0:
+        return f"Segmentation failed: {stderr.decode('utf-8')}", 500
+    
+    # Send email notification
+    user_email = session.get('user_email')
+    if user_email:
+        send_email(user_email)
+    
+    return 'Segmentation completed successfully', 200
+
+@app.route('/download', methods=['GET'])
+def download_files():
+    return send_from_directory(app.config['DOWNLOAD_FOLDER'], filename='', as_attachment=True)
+
+def send_email(to):
+    msg = Message('Segmentation Task Completed', recipients=[to])
+    msg.body = 'Your segmentation task has been completed successfully. You can now download the results from the AEye platform.'
+    mail.send(msg)
 # ----------------------------------------------------------------------------------------------
 # MAIN
 

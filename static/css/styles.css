@@ -217,3 +217,49 @@ body {
 .label {
     font-size: 0.8em;
 }
+
+.btn-success {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: white;
+}
+
+.btn-success:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: white;
+}
+
+.btn-lg {
+    font-size: 1.25rem;
+    padding: 0.75rem 1.25rem;
+    width: 100%;
+}
+
+.fas {
+    margin-right: 0.5rem;
+}
+
+.list-group-item {
+    text-align: left;
+}
+.progress {
+    width: 100%;
+    background-color: #e9ecef;
+    border-radius: 0.25rem;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+}
