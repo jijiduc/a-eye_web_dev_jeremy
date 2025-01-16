@@ -27,7 +27,6 @@ load_dotenv()
 cases_processed = 0
 high_scale_nb_users = 100  # Set the maximum number of users for the color scale
 
-
 def zip_folder(folder_path, output_path):
     with zipfile.ZipFile(output_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
         for root, dirs, files in os.walk(folder_path):
