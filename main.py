@@ -8,8 +8,8 @@ import py7zr
 import fnmatch
 
 # bools
-enable_args = False
-use_ext_folders = True
+enable_args = False # run the segmentation through the command line
+use_ext_folders = True # input and output folders
 
 # logs folder
 LOGS_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs/')
@@ -38,12 +38,12 @@ def getSegmentation(input=None, output=None):
 
     # nnUNet
     shm_size = 10 # shared memory (gb)
-    abs_path = 'nnUNet'  # /home/debi/jaime/repos/a-eye/a-eye_web/nnUNet
-    rel_path = '/opt/nnunet_resources'
-    aux_in = f'nnUNet_inference/input' # input aux folder
-    aux_out = f'nnUNet_inference/output' # output aux folder
+    abs_path = '/home/debi/jaime/repos/a-eye/a-eye_web/nnUNet' # nnUNet main folder
+    rel_path = '/opt/nnunet_resources' # for the docker image
+    aux_in = 'nnUNet_inference/input' # input aux folder
+    aux_out = 'nnUNet_inference/output' # output aux folder
 
-    start_docker()
+    start_docker() # initialize docker for segmentation with GPU
 
     if use_ext_folders:
         # Copy content from origin input folder into local input folder
@@ -72,7 +72,7 @@ def getSegmentation(input=None, output=None):
     # inference command terminal
     command = f' \
     docker run --rm \
-    --gpus device=all \
+    --gpus all \
     --shm-size={shm_size}gb \
     -v {abs_path}:{rel_path} \
     petermcgor/nnunet:0.0.1 nnUNet_predict \
@@ -96,7 +96,7 @@ def getSegmentation(input=None, output=None):
     if use_ext_folders:
         # Copy aux output folder into origin output folder
         copy_folder(os.path.join(abs_path, aux_out), args_out)
-        # Remove aux folders
+        # Remove content in aux folders
         delete_files_in_folder(os.path.join(abs_path, aux_in))
         delete_files_in_folder(os.path.join(abs_path, aux_out))
 

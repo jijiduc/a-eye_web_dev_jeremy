@@ -55,21 +55,56 @@
         var fileList = document.getElementById('file-list');
         var files = document.getElementById('file-input').files;
         fileList.innerHTML = ''; // Clear the list
-
+    
+        var acceptedFiles = [];
+        var rejectedFiles = [];
+        var allowedExtensions = ['gz', 'zip', '7z']; // Adjust based on backend rules
+    
         for (var i = 0; i < files.length; i++) {
             var listItem = document.createElement('li');
-            listItem.className = 'list-group-item';
+            listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
             listItem.textContent = files[i].name;
+    
+            var fileExtension = files[i].name.split('.').pop().toLowerCase();
+            if (allowedExtensions.includes(fileExtension)) {
+                listItem.style.color = 'green'; // ✅ Accepted (green)
+                listItem.innerHTML += ' <span class="badge bg-success">Accepted ✅</span>';
+                acceptedFiles.push(files[i].name);
+            } else {
+                listItem.style.color = 'red'; // ❌ Rejected (red)
+                listItem.innerHTML += ' <span class="badge bg-danger">Rejected ❌</span>';
+                rejectedFiles.push(files[i].name);
+            }
+    
             fileList.appendChild(listItem);
         }
-
-        // Enable and change the color of the upload button
+    
+        // Display summary
+        var summaryMessage = document.createElement('p');
+        summaryMessage.className = 'mt-2 fw-bold';
+        if (acceptedFiles.length > 0 && rejectedFiles.length > 0) {
+            summaryMessage.innerHTML = `✅ <span class="text-success">${acceptedFiles.length} accepted</span> | ❌ <span class="text-danger">${rejectedFiles.length} rejected</span>`;
+        } else if (acceptedFiles.length > 0) {
+            summaryMessage.innerHTML = `✅ <span class="text-success">${acceptedFiles.length} accepted</span>`;
+        } else if (rejectedFiles.length > 0) {
+            summaryMessage.innerHTML = `❌ <span class="text-danger">${rejectedFiles.length} rejected</span>`;
+        }
+    
+        fileList.appendChild(summaryMessage);
+    
+        // Enable upload button only if there are accepted files
         var uploadButton = document.getElementById('upload-button');
-        uploadButton.classList.remove('btn-secondary');
-        uploadButton.classList.add('btn-success');
-        uploadButton.disabled = false;
+        if (acceptedFiles.length > 0) {
+            uploadButton.classList.remove('btn-secondary');
+            uploadButton.classList.add('btn-success');
+            uploadButton.disabled = false;
+        } else {
+            uploadButton.classList.remove('btn-success');
+            uploadButton.classList.add('btn-secondary');
+            uploadButton.disabled = true;
+        }
     }
-
+    
     function uploadFiles() {
         var formData = new FormData();
         var files = document.getElementById('file-input').files;
@@ -81,17 +116,21 @@
         fetch('/upload', {
             method: 'POST',
             body: formData
-        }).then(response => {
-            if (response.ok) {
-                alert('Files uploaded successfully.');
-                // Enable and change the color of the segment button
+        })
+        .then(response => response.json())  // Parse JSON response
+        .then(data => {
+            alert(data.message);  // Display custom message from Flask
+            
+            if (data.status === 'success') {
                 var segmentButton = document.getElementById('segment-button');
                 segmentButton.classList.remove('btn-secondary');
                 segmentButton.classList.add('btn-success');
                 segmentButton.disabled = false;
-            } else {
-                alert('Failed to upload files.');
             }
+        })
+        .catch(error => {
+            alert('An error occurred while uploading files.');
+            console.error('Error:', error);
         });
     }
 
@@ -99,18 +138,14 @@
         var progressBar = document.getElementById('progress-bar');
         var downloadButton = document.getElementById('download-button');
         var progress = 0;
-
+    
         // Simulate progress for demonstration purposes
-        var interval = setInterval(function() {
+        var interval = setInterval(function () {
             if (progress >= 100) {
                 clearInterval(interval);
                 progressBar.style.width = '100%';
                 progressBar.setAttribute('aria-valuenow', 100);
                 progressBar.innerHTML = '100%';
-                downloadButton.classList.remove('btn-secondary');
-                downloadButton.classList.add('btn-success');
-                downloadButton.disabled = false;
-                alert('Segmentation completed successfully.');
             } else {
                 progress += 10;
                 progressBar.style.width = progress + '%';
@@ -118,23 +153,43 @@
                 progressBar.innerHTML = progress + '%';
             }
         }, 1000);
-
-        fetch('/segment', {
-            method: 'POST'
-        }).then(response => {
-            if (response.ok) {
+    
+        fetch('/segment', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
                 clearInterval(interval);
                 progressBar.style.width = '100%';
                 progressBar.setAttribute('aria-valuenow', 100);
                 progressBar.innerHTML = '100%';
+    
+                // Enable the download button
                 downloadButton.classList.remove('btn-secondary');
                 downloadButton.classList.add('btn-success');
                 downloadButton.disabled = false;
+    
+                // Store the download URL for manual download
+                downloadButton.setAttribute('data-download-url', data.download_url);
+    
                 alert('Segmentation completed successfully.');
-            } else {
+    
+                // Trigger automatic download
+                window.location.href = data.download_url;
+            })
+            .catch(error => {
                 alert('Failed to complete segmentation.');
-            }
-        });
+            });
     }
+    
+    // Add event listener to the download button
+    document.getElementById('download-button').addEventListener('click', function () {
+        var downloadUrl = this.getAttribute('data-download-url');
+        if (downloadUrl) {
+            window.location.href = downloadUrl;
+        } else {
+            alert('No file available for download. Please run segmentation first.');
+        }
+    });
+    
+    
 </script>
 {% endblock %}
