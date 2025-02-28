@@ -38,7 +38,7 @@ def getSegmentation(input=None, output=None):
 
     # nnUNet
     shm_size = 10 # shared memory (gb)
-    abs_path = '/home/debi/jaime/repos/a-eye/a-eye_web/nnUNet'  # nnUNet main folder
+    abs_path = '/home/debi/jaime/repos/a-eye/a-eye_web/nnUNetv2/35subs'  # nnUNet main folder
     rel_path = '/opt/nnunet_resources'  # for the docker image
     aux_in = 'nnUNet_inference/input'  # input aux folder
     aux_out = 'nnUNet_inference/output'  # output aux folder
@@ -75,14 +75,14 @@ def getSegmentation(input=None, output=None):
     --gpus all \
     --shm-size={shm_size}gb \
     -v {abs_path}:{rel_path} \
-    petermcgor/nnunet:0.0.1 nnUNet_predict \
+    jaimebarran/nnunet:0.1.0 nnUNetv2_predict \
+    -d Dataset313_Eye \
     -i {rel_path}/{aux_in} \
     -o {rel_path}/{aux_out} \
-    -tr nnUNetTrainerV2 \
-    -ctr nnUNetTrainerV2CascadeFullRes \
-    -m 3d_fullres \
-    -p nnUNetPlansv2.1 \
-    -t Task313_Eye \
+    -f 0 1 2 3 4 \
+    -tr nnUNetTrainer \
+    -c 3d_fullres \
+    -p nnUNetPlans \
     '
 
     sudo_command = f'echo {sudo_pwd} | sudo -S -s {command}'
@@ -268,9 +268,20 @@ def print_and_log(text=None, level='info', logs_folder=None):
         logging.error(text)
 
 def run_command_and_print_output(command):
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
+    process = subprocess.Popen(
+        command,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,  # Redirect stderr to stdout
+        shell=True
+    )
     console_output, console_errors = process.communicate()
-    console_output = console_output.decode('utf-8')
-    for line in console_output.splitlines():
-        print_console(line, LOGS_FOLDER)
-    print_console(console_errors, LOGS_FOLDER)
+    
+    if console_output:
+        console_output = console_output.decode('utf-8')
+        for line in console_output.splitlines():
+            print_console(line, LOGS_FOLDER)
+
+    if console_errors:
+        console_errors = console_errors.decode('utf-8')
+        for line in console_errors.splitlines():
+            print_console(line, LOGS_FOLDER)
