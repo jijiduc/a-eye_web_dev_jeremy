@@ -137,7 +137,17 @@
     function segmentFiles() {
         var progressBar = document.getElementById('progress-bar');
         var downloadButton = document.getElementById('download-button');
+        var segmentButton = document.getElementById('segment-button');
+        var uploadButton = document.getElementById('upload-button');
         var progress = 0;
+    
+        // Disable Segment and Upload buttons
+        segmentButton.disabled = true;
+        uploadButton.disabled = true;
+        segmentButton.classList.add('btn-secondary');
+        segmentButton.classList.remove('btn-success');
+        uploadButton.classList.add('btn-secondary');
+        uploadButton.classList.remove('btn-success');
     
         // Simulate progress for demonstration purposes
         var interval = setInterval(function () {
@@ -162,7 +172,7 @@
                 progressBar.setAttribute('aria-valuenow', 100);
                 progressBar.innerHTML = '100%';
     
-                // Enable the download button
+                // Enable the Download button
                 downloadButton.classList.remove('btn-secondary');
                 downloadButton.classList.add('btn-success');
                 downloadButton.disabled = false;
@@ -178,7 +188,7 @@
             .catch(error => {
                 alert('Failed to complete segmentation.');
             });
-    }
+    }    
     
     // Add event listener to the download button
     document.getElementById('download-button').addEventListener('click', function () {

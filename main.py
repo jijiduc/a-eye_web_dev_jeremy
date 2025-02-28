@@ -38,12 +38,12 @@ def getSegmentation(input=None, output=None):
 
     # nnUNet
     shm_size = 10 # shared memory (gb)
-    abs_path = '/home/debi/jaime/repos/a-eye/a-eye_web/nnUNet' # nnUNet main folder
-    rel_path = '/opt/nnunet_resources' # for the docker image
-    aux_in = 'nnUNet_inference/input' # input aux folder
-    aux_out = 'nnUNet_inference/output' # output aux folder
+    abs_path = '/home/debi/jaime/repos/a-eye/a-eye_web/nnUNet'  # nnUNet main folder
+    rel_path = '/opt/nnunet_resources'  # for the docker image
+    aux_in = 'nnUNet_inference/input'  # input aux folder
+    aux_out = 'nnUNet_inference/output'  # output aux folder
 
-    start_docker() # initialize docker for segmentation with GPU
+    start_docker()  # initialize docker for segmentation with GPU
 
     if use_ext_folders:
         # Copy content from origin input folder into local input folder
@@ -88,7 +88,7 @@ def getSegmentation(input=None, output=None):
     sudo_command = f'echo {sudo_pwd} | sudo -S -s {command}'
 
     # Print command
-    print_and_log(f'[AEye] nnUNet inference command: {command}', 'info', LOGS_FOLDER)
+    print_and_log(f'[A-eye] nnUNet inference command: {command}', 'info', LOGS_FOLDER)
 
     # Run command
     run_command_and_print_output(f'{sudo_command}')
@@ -101,8 +101,8 @@ def getSegmentation(input=None, output=None):
         delete_files_in_folder(os.path.join(abs_path, aux_out))
 
     # DONE!
-    print('[AEye] Inference finished!!')
-    print_and_log('[AEye] Inference finished!!', 'info', LOGS_FOLDER)
+    print('[A-eye] Inference finished!!')
+    print_and_log('[A-eye] Inference finished!!', 'info', LOGS_FOLDER)
     
     # Copy log files into output folder and remove content from log files
     if use_ext_folders:
@@ -123,7 +123,7 @@ def unzip_file(type, source, destination):
         zip_file = zipfile.ZipFile(source)
         # Extract all the files to a folder
         zip_file.extractall(destination)
-        print_and_log(f'[AEye] Unzipping file: {source}', 'info', LOGS_FOLDER)
+        print_and_log(f'[A-eye] Unzipping file: {source}', 'info', LOGS_FOLDER)
         # Close the zip file
         zip_file.close()
     elif type == '7z':
@@ -162,7 +162,7 @@ def delete_files_in_folder(folder):
             elif os.path.isfile(item_path) or os.path.islink(item_path):
                 os.unlink(item_path)
         except Exception as e:
-            print_and_log(f"[AEye] Failed to delete {item_path}. Reason: {e}", 'error', LOGS_FOLDER)
+            print_and_log(f"[A-eye] Failed to delete {item_path}. Reason: {e}", 'error', LOGS_FOLDER)
 
 def delete_folder(folder):
     shutil.rmtree(folder)
@@ -194,14 +194,14 @@ def check_filenames(folder):
         file_extension = ''.join(file_extensions)
         file_name = os.path.basename(file_path)
         file_path = f'{file_path}{file_extension}'
-        print_and_log(f'[AEye] file name: {file_name}', 'info', LOGS_FOLDER)
-        print_and_log(f'[AEye] file extension: {file_extension}', 'info', LOGS_FOLDER)
-        print_and_log(f'[AEye] absolute file path: {file_path}', 'info', LOGS_FOLDER)
+        print_and_log(f'[A-eye] file name: {file_name}', 'info', LOGS_FOLDER)
+        print_and_log(f'[A-eye] file extension: {file_extension}', 'info', LOGS_FOLDER)
+        print_and_log(f'[A-eye] absolute file path: {file_path}', 'info', LOGS_FOLDER)
         if not str(file_name).endswith('_0000'):
             correct_filename(file_path, file_name, file_extension)
 
 def correct_filename(file_path, file_name, file_extension):
-    print_and_log('[AEye] Changing filename to nnUNet format...', 'info', LOGS_FOLDER)
+    print_and_log('[A-eye] Changing filename to nnUNet format...', 'info', LOGS_FOLDER)
     new_file_name = f'{file_name}_0000{file_extension}' # extension for nnUNet
     os.rename(file_path, os.path.join(os.path.dirname(file_path), new_file_name))
 
@@ -209,7 +209,7 @@ def convert_to_nifti(folder):
     # Get a list of all DICOM folders in the input folder
     dicom_folders = find_dicom_folders(folder)
     if len(dicom_folders) > 0:
-        print_and_log('[AEye] Converting DICOM to NIfTI format...', 'info', LOGS_FOLDER)
+        print_and_log('[A-eye] Converting DICOM to NIfTI format...', 'info', LOGS_FOLDER)
         # Convert each DICOM folder to NIfTI format
         for dicom_folder in dicom_folders:
             filename = str(os.path.basename(dicom_folder) + '.nii.gz')
@@ -237,17 +237,17 @@ def start_docker():
     try:
         # docker version
         run_command_and_print_output('docker version')
-        print_and_log("[AEye] Docker is already running...", 'info', LOGS_FOLDER)
+        print_and_log("[A-eye] Docker is already running...", 'info', LOGS_FOLDER)
     except:
         # If Docker is not running...
-        print_and_log("[AEye] Docker was not initialized!!", 'warning', LOGS_FOLDER)
+        print_and_log("[A-eye] Docker was not initialized!!", 'warning', LOGS_FOLDER)
         # ... start it!
-        print_and_log("[AEye] Initializing docker...", 'info', LOGS_FOLDER)
+        print_and_log("[A-eye] Initializing docker...", 'info', LOGS_FOLDER)
         # docker start
         run_command_and_print_output('systemctl start docker')
         # sleep 10s
         run_command_and_print_output('sleep 10')
-        print_and_log("[AEye] Docker has been started", 'info', LOGS_FOLDER)
+        print_and_log("[A-eye] Docker has been started", 'info', LOGS_FOLDER)
 
 def clear_logs(logs_folder=None):
     open(f'{logs_folder}app.log', 'w').close()

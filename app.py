@@ -257,6 +257,10 @@ def upload_file():
     uploaded_files = []
     rejected_files = []
     
+    clear_logs(LOGS_FOLDER)
+    delete_files_in_folder(UPLOAD_FOLDER)
+    delete_files_in_folder(DOWNLOAD_FOLDER)
+    
     for file in files:
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)  # Use this werkzeug method to secure filename.
@@ -301,8 +305,8 @@ def send_email(to):
 
 if __name__ == '__main__':
     clear_logs(LOGS_FOLDER)
-    # delete_files_in_folder(UPLOAD_FOLDER)
-    # delete_files_in_folder(DOWNLOAD_FOLDER)
+    delete_files_in_folder(UPLOAD_FOLDER)
+    delete_files_in_folder(DOWNLOAD_FOLDER)
     app.run(host='0.0.0.0', port=5000, debug=True)
 
 
