@@ -1,0 +1,266 @@
+body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+.navbar {
+    height: 170%; /* Augmente la hauteur de l'entête de 70% */
+    background-color: #007849; /* Change la couleur de fond de l'entête */
+}
+
+.navbar-brand, .navbar-nav .nav-link {
+    line-height: 170%; /* Ajuste la hauteur de ligne pour centrer le texte verticalement */
+    color: #ffffff; /* Change la couleur du texte des liens de navigation */
+}
+
+.navbar-nav .nav-item .nav-link {
+    color: #ffffff; /* Change la couleur du texte des liens de navigation */
+    margin-right: 15px; /* Augmente la distance entre les boutons */
+}
+
+.navbar-nav .nav-item .nav-link.login, .navbar-nav .nav-item .nav-link.logout {
+    font-weight: bold; /* Met le texte en gras pour les boutons LOGIN / LOGOUT */
+}
+
+.partner-card {
+    border: 1px solid #ddd; /* Ajoute une bordure grise */
+    padding: 10px; /* Ajoute un padding autour de l'image */
+    text-align: center; /* Centre l'image horizontalement */
+    height: 200px; /* Définit une hauteur fixe pour les cadres */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.partner-card img {
+    max-height: 100%; /* Assure que l'image ne dépasse pas la hauteur du cadre */
+    max-width: 100%; /* Assure que l'image ne dépasse pas la largeur du cadre */
+}
+
+.animated-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background: linear-gradient(45deg, #007849, #49a93e);
+    background-size: 400% 400%;
+    animation: gradientAnimation 5s ease infinite;
+}
+
+@keyframes gradientAnimation {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.welcome-container {
+    text-align: center;
+    color: #ffffff;
+    margin-top: 100px;
+}
+
+.welcome-container img {
+    max-width: 200px;
+}
+
+.welcome-container h1 {
+    font-size: 3em;
+    margin-top: 20px;
+}
+
+.welcome-container p {
+    font-size: 1.5em;
+    margin-top: 10px;
+}
+
+.main-title {
+    font-size: 2.5em;
+    margin: 0;
+}
+
+.title-container {
+    background-color: #ffffff; /* Couleur de fond blanche */
+    height: 150px; /* Hauteur fixe pour centrer verticalement */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+/* Styles pour les éléments de la FAQ */
+.faq-item {
+    width: 100vw; /* Utilise la largeur totale de la fenêtre */
+    padding: 50px;
+    box-sizing: border-box;
+    margin-left: calc(-50vw + 50%); /* Centre l'élément */
+}
+
+.faq-item .faq-content {
+    max-width: 1125px; /* Limite la largeur du texte */
+    margin: 0 auto; /* Centre le texte horizontalement */
+}
+
+.faq-item p {
+    margin: 0;
+}
+
+.faq-item p strong {
+    font-size: 1.5em; /* Augmente la taille de la police des questions */
+}
+
+.faq-item p:not(strong) {
+    font-size: 1em;
+}
+
+.collaborator-card {
+    border: 1px solid #ddd; /* Ajoute une bordure grise */
+    padding: 15px; /* Ajoute un padding autour du contenu */
+    text-align: center; /* Centre le texte horizontalement */
+    height: 350px; /* Définit une hauteur fixe pour les cadres */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    margin-bottom: 20px; /* Ajoute une marge en bas */
+    background-color: #c1e1be;
+    border-radius: 5px;
+    align-items: center;
+}
+
+.collaborator-card img {
+    width: 150px; /* Largeur fixe pour les images */
+    height: 150px; /* Hauteur fixe pour les images */
+    object-fit: cover; /* Pour s'assurer que l'image couvre entièrement l'espace */
+    border-radius: 50%; /* Optionnel : pour des images circulaires */
+    margin-right: 15px;
+}
+
+.collaborator-card .info-section {
+    flex: 1;
+}
+
+.collaborator-card .name-section {
+    height: 50px; /* Hauteur fixe pour la section du nom */
+    line-height: 50px; /* Aligne le texte verticalement */
+    border-bottom: 1px solid #ddd; /* Ajoute une bordure en bas */
+    text-align: center; /* Centre le texte horizontalement */
+}
+
+.collaborator-card .email-section {
+    height: 50px; /* Hauteur fixe pour la section de l'email */
+    line-height: 50px; /* Aligne le texte verticalement */
+    border-bottom: 1px solid #ddd; /* Ajoute une bordure en bas */
+    text-align: center; /* Centre le texte horizontalement */
+}
+
+.collaborator-card .description-section {
+    height: 150px; /* Hauteur fixe pour la section de la description */
+    overflow: auto; /* Ajoute une barre de défilement si le contenu dépasse */
+    text-align: justify; /* Justifie le texte */
+    text-align: center; /* Centre le texte horizontalement */
+}
+
+
+.user-title {
+    font-size: 2.5em; /* Taille de la police pour le titre */
+    margin-bottom: 20px; /* Marge en bas du titre */
+}
+
+.user-count {
+    font-size: 1.5em; /* Taille de la police pour le nombre d'utilisateurs */
+    color: #007849; /* Couleur du texte */
+}
+
+.user-container {
+    text-align: left;
+    font-size: 18px;
+    font-family: Arial, sans-serif;
+    margin-bottom: 20px;
+}
+
+.stats {
+    display: inline-block;
+    margin-right: 20px;
+}
+
+.map-container {
+    width: 100%;
+    height: 100vh; /* Adjust the height to be relative to the viewport height */
+    margin: 0 auto; /* Center the map */
+}
+
+/* Assurez-vous que ce fichier est inclus dans vos pages HTML */
+.navbar {
+    height: 60px; /* Ajustez cette valeur selon la hauteur souhaitée */
+}
+
+body {
+    padding-top: 60px; /* Ajustez cette valeur selon la hauteur de votre barre de navigation */
+}
+
+/* Page users */
+.statistic {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.value {
+    font-size: 3em;
+    color: green;
+}
+
+.label {
+    font-size: 0.8em;
+}
+
+.btn-success {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: white;
+}
+
+.btn-success:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: white;
+}
+
+.btn-lg {
+    font-size: 1.25rem;
+    padding: 0.75rem 1.25rem;
+    width: 100%;
+}
+
+.fas {
+    margin-right: 0.5rem;
+}
+
+.list-group-item {
+    text-align: left;
+}
+.progress {
+    width: 100%;
+    background-color: #e9ecef;
+    border-radius: 0.25rem;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+}
+

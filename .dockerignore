@@ -21,3 +21,8 @@ coverage.xml
 .pytest_cache
 .hypothesis
 .idea
+.env
+.env.example
+.gitignore
+.git
+README.md

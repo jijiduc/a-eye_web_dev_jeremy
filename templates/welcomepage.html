@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome{% endblock %}
+
+{% block content %}
+<div class="animated-background"></div>
+<div class="welcome-container">
+    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="A-Eye Logo">
+    <h1>A-Eye Web Platform</h1>
+    <p>Automatic eye segmentation from MRI using AI</p>
+</div>
+{% endblock %}
