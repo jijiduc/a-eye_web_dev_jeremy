@@ -130,3 +130,6 @@ dmypy.json
 
 # Others
 static/
+
+nnUNet/
+nnUNetv2/
