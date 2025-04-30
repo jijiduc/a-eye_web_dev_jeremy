@@ -16,7 +16,7 @@ apptainer exec \
     --bind /home/jaime.barrancohernandez/datasets/nnunetv2/35subs:/opt/nnunet_resources \
     --bind /home/jaime.barrancohernandez/datasets/nnunetv2/35subs/nnUNet_inference/input:/input \
     --bind /home/jaime.barrancohernandez/results:/output \
-    /home/jaime.barrancohernandez/datasets/nnunetv2/nnunetv2/nnunetv2.sif \
+    /home/jaime.barrancohernandez/datasets/nnunetv2/nnunetv2.sif \
     nnUNetv2_predict \
     -d Dataset313_Eye \
     -i /input \
