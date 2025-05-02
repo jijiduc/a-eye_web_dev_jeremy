@@ -6,8 +6,8 @@
 #SBATCH --mem=64gb             # total memory (--mem-per-cpu per cpu-core 4G is default)
 #SBATCH --time=1-23:59:00      # total run time limit (HH:MM:SS)
 #SBATCH --gres=gpu:1           # number of gpus per node
-#SBATCH --output=%N.%j.%a.out  # output log
-#SBATCH --error=%N.%j.%a.err   # error log
+#SBATCH --output=/home/jaime.barrancohernandez/results/%N.%j.%a.out  # output log
+#SBATCH --error=/home/jaime.barrancohernandez/results/%N.%j.%a.err   # error log
 #SBATCH --mail-type=BEGIN,END  # send email when job begins and ends
 #SBATCH --mail-user=jaime.barrancohernandez@hevs.ch
 
