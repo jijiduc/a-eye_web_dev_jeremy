@@ -6,17 +6,17 @@
 #SBATCH --mem=64gb             # total memory (--mem-per-cpu per cpu-core 4G is default)
 #SBATCH --time=1-23:59:00      # total run time limit (HH:MM:SS)
 #SBATCH --gres=gpu:1           # number of gpus per node
-#SBATCH --output=/home/jaime.barrancohernandez/results/%N.%j.%a.out  # output log
-#SBATCH --error=/home/jaime.barrancohernandez/results/%N.%j.%a.err   # error log
+#SBATCH --output=/home/jaime.barrancohernandez/results/nnUNetv2_predict.%N.%j.%a.out  # output log
+#SBATCH --error=/home/jaime.barrancohernandez/results/nnUNetv2_predict.%N.%j.%a.err   # error log
 #SBATCH --mail-type=BEGIN,END  # send email when job begins and ends
 #SBATCH --mail-user=jaime.barrancohernandez@hevs.ch
 
 apptainer exec \
     --nv \
-    --bind /home/jaime.barrancohernandez/datasets/nnunetv2/35subs:/opt/nnunet_resources \
-    --bind /home/jaime.barrancohernandez/datasets/nnunetv2/35subs/nnUNet_inference/input:/input \
-    --bind /home/jaime.barrancohernandez/results:/output \
-    /home/jaime.barrancohernandez/datasets/nnunetv2/nnunetv2.sif \
+    --bind /home/jaime.barrancohernandez/shared_datasets/nnunetv2/35subs:/opt/nnunet_resources \
+    --bind /home/jaime.barrancohernandez/shared_datasets/nnunetv2/35subs/nnUNet_inference/input:/input \
+    --bind /home/jaime.barrancohernandez/results/nnunetv2:/output \
+    /home/jaime.barrancohernandez/shared_datasets/nnunetv2/nnunetv2.sif \
     nnUNetv2_predict \
     -d Dataset313_Eye \
     -i /input \
