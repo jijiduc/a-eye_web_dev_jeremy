@@ -1,39 +1,47 @@
-# OS (template)
-FROM python:3.8.13
+# Base image
+FROM python:3.10
 
-# directory & requirements
+# Set working directory
 WORKDIR /app
-COPY requirements.txt .
-RUN pip install -r requirements.txt
 
-# copy additional files
+# Install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Install Docker CLI
+RUN apt-get update && apt-get install -y docker.io \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy the rest of the application
 COPY . .
 
-# environment variables and port forwarding
-ENV FLASK_APP=.app.py
-ENV FLASK_ENV=development
+# Set environment variables
+ENV FLASK_DEBUG=1
+
+# Expose port
 EXPOSE 5000
 
-# entry point
+# Run the app (development)
 CMD ["python", "app.py"]
+
 
 # ------------------------------
 # Docker utilities
 
 # Build docker image
-# docker build -t aeye .
+# docker build -t aeyeweb .
 
 # See docker images
 # docker image ls or docker images
 
 # Remove docker image
-# docker rmi aeye
+# docker rmi aeyeweb
 
 # Rebuild docker image
-# docker build --no-cache -t aeye .
+# docker build --no-cache -t aeyeweb .
 
 # Run docker container
-# docker run -p 5000:5000 aeye
+# docker run -p 5000:5000 aeyeweb
 
 # See docker containers
 # docker container ls or docker ps

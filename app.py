@@ -18,11 +18,11 @@ from flask_mail import Mail, Message
 from werkzeug.utils import secure_filename
 
 
-UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static/upload/')
-DOWNLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static/download/')
+UPLOAD_FOLDER = "./static/upload/"
+DOWNLOAD_FOLDER = "/app/nnUNet/nnUNet_inference/output"
 ALLOWED_EXTENSIONS = {'gz', 'zip', '7z'}
-OUTPUT_ZIP = os.path.join(DOWNLOAD_FOLDER, "output.zip")
-LOGS_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs/')
+OUTPUT_ZIP = "/app/nnUNet/nnUNet_inference/output.zip"
+LOGS_FOLDER = "./logs"
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -60,7 +60,7 @@ def convert_country_to_iso3(country_code):
 load_dotenv()
 
 # Manage logs
-logging.basicConfig(filename=f'{LOGS_FOLDER}app.log', level=logging.DEBUG,
+logging.basicConfig(filename=f'{LOGS_FOLDER}/app.log', level=logging.DEBUG,
     format='%(asctime)s %(levelname)s %(name)s %(message)s')
 
 # Initialize global variable
@@ -281,10 +281,10 @@ def upload_file():
 @app.route('/segment', methods=['POST'])
 def segment():
     # Run segmentation function
-    getSegmentation(UPLOAD_FOLDER, f"{DOWNLOAD_FOLDER}output/")
+    getSegmentation(UPLOAD_FOLDER, DOWNLOAD_FOLDER)
 
     # Zip folder for download
-    zip_folder(f"{DOWNLOAD_FOLDER}output", OUTPUT_ZIP)
+    zip_folder(DOWNLOAD_FOLDER, OUTPUT_ZIP)
 
     return jsonify({"message": "Segmentation completed", "download_url": "/download"}), 200
 
@@ -305,8 +305,8 @@ def send_email(to):
 
 if __name__ == '__main__':
     clear_logs(LOGS_FOLDER)
-    delete_files_in_folder(UPLOAD_FOLDER)
-    delete_files_in_folder(DOWNLOAD_FOLDER)
+    # delete_files_in_folder(UPLOAD_FOLDER)
+    # delete_files_in_folder(DOWNLOAD_FOLDER)
     app.run(host='0.0.0.0', port=5000, debug=True)
 
 
@@ -314,11 +314,11 @@ if __name__ == '__main__':
 # MISC
 
 # Call flask from bash (other terminal)
-# curl -X POST -H "Content-Type: application/json" -d '{"text":"predict"}' 0.0.0.0:5000/predict
+# curl -X POST -H "Content-Type: application/json" -d '{"text":"predict"}' localhost:5000/predict
 
 # Finish open port
-# netstat -nlp | grep 5000
-# kill -9 441420
+# lsof -i :5000
+# kill -9 <process_id>
 
 # Launch app.py and save console output
 # /home/jaimebarranco/miniconda3/envs/a-eye/bin/python /mnt/sda1/Repos/a-eye/a-eye_web/app.py >> ./a-eye_web/logs/console.log 2>&1

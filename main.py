@@ -8,11 +8,11 @@ import py7zr
 import fnmatch
 
 # bools
-enable_args = False # run the segmentation through the command line
-use_ext_folders = True # input and output folders
+enable_args = False  # run the segmentation through the command line
+use_ext_folders = True  # input and output folders
 
 # logs folder
-LOGS_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs/')
+LOGS_FOLDER = "./logs"
 
 # ----------------------------------------------------------------------------------------------
 # MAIN FUNCTION
@@ -33,14 +33,11 @@ def getSegmentation(input=None, output=None):
         args_out = output # origin output folder
 
 
-    # sudo_pwd = os.environ['SUDO_PWD']
-    sudo_pwd = 'Debi123.'
-
     # nnUNet
     shm_size = 10 # shared memory (gb)
     # abs_path = '/home/debi/jaime/repos/a-eye/a-eye_web/nnUNetv2/35subs'  # nnUNetv2 main folder
     abs_path = '/home/debi/jaime/repos/a-eye/a-eye_web/nnUNet'  # nnUNetv1 main folder
-    rel_path = '/opt/nnunet_resources'  # for the docker image
+    rel_path = '/app/nnUNet'  # for the docker image
     aux_in = 'nnUNet_inference/input'  # input aux folder
     aux_out = 'nnUNet_inference/output'  # output aux folder
 
@@ -101,32 +98,31 @@ def getSegmentation(input=None, output=None):
     -p nnUNetPlansv2.1 \
     -t Task313_Eye" \
     '
-    
-    sudo_command = f'echo {sudo_pwd} | sudo -S -s {command}'
 
     # Print command
     print_and_log(f'[A-eye] nnUNet inference command: {command}', 'info', LOGS_FOLDER)
 
     # Run command
-    run_command_and_print_output(f'{sudo_command}')
-
-    if use_ext_folders:
-        # Copy aux output folder into origin output folder
-        copy_folder(os.path.join(abs_path, aux_out), args_out)
-        # Remove content in aux folders
-        delete_files_in_folder(os.path.join(abs_path, aux_in))
-        delete_files_in_folder(os.path.join(abs_path, aux_out))
+    run_command_and_print_output(f'{command}')
 
     # DONE!
     print('[A-eye] Inference finished!!')
     print_and_log('[A-eye] Inference finished!!', 'info', LOGS_FOLDER)
     
-    # Copy log files into output folder and remove content from log files
+    # Copy files into output folder and clean folders
     if use_ext_folders:
+        # Copy aux output folder into origin output folder
+        # copy_folder(os.path.join(rel_path, aux_out), args_out)
+        
         # Copy log files (log folder) into output folder
         copy_folder(LOGS_FOLDER, os.path.join(args_out, 'logs')) # logs folder in output
+        
+        # Remove content in aux folders
+        # delete_files_in_folder(os.path.join(rel_path, aux_in))
+        # delete_files_in_folder(os.path.join(rel_path, aux_out))
+        
         # Remove content from log files
-        clear_logs(LOGS_FOLDER)
+        # clear_logs(LOGS_FOLDER)
 
     return 'Inference finished!!'
 
@@ -151,8 +147,7 @@ def unzip_file(type, source, destination):
 
 
 def copy_folder(source, destination):
-    if not os.path.exists(destination):
-        os.mkdir(destination)
+    os.makedirs(destination, exist_ok=True)
     for item in os.listdir(source):
         s = os.path.join(source, item)
         d = os.path.join(destination, item)
@@ -166,8 +161,7 @@ def copy_folder(source, destination):
                 shutil.copy2(s, d)
 
 def copy_file(source, destination):
-    if not os.path.exists(destination):
-        os.mkdir(destination)
+    os.makedirs(destination, exist_ok=True)
     shutil.copy(source, destination)
 
 def delete_files_in_folder(folder):
@@ -275,15 +269,15 @@ def start_docker():
         print_and_log("[A-eye] Docker has been started", 'info', LOGS_FOLDER)
 
 def clear_logs(logs_folder=None):
-    open(f'{logs_folder}app.log', 'w').close()
-    open(f'{logs_folder}console.log','w').close()
+    open(f'{logs_folder}/app.log', 'w').close()
+    open(f'{logs_folder}/console.log','w').close()
 
 def print_console(text=None, logs_folder=None):
-    logs_file = f'{logs_folder}console.log'
+    logs_file = f'{logs_folder}/console.log'
     print(text, file=open(logs_file, 'a'))
 
 def print_and_log(text=None, level='info', logs_folder=None):
-    logs_file = f'{logs_folder}console.log'
+    logs_file = f'{logs_folder}/console.log'
     print(text, file=open(logs_file, 'a'))
     if level=='info':
         logging.info(text)

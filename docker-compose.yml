@@ -1,11 +1,20 @@
-version:  "0.0"
-
 services:
-  aeye:
-    container_name: aeye
-    image: jaimebarran/aeye
+  flask_app:
+    build:
+        context: .
+        dockerfile: Dockerfile
+    container_name: aeyeweb
     ports:
       - "5000:5000"
-    build:
-      context: .
-      dockerfile: Dockerfile
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /home/debi/jaime/repos/a-eye/a-eye_web/nnUNet:/app/nnUNet
+    environment:
+      FLASK_DEBUG: "1"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+    runtime: nvidia
+
