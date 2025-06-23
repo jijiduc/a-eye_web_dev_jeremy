@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=nnv2_inf    # job name
+#SBATCH --job-name=nnv1_inf    # job name
 #SBATCH --nodes=1              # number of nodes to use
 #SBATCH --ntasks=1             # total number of tasks across all nodes
 #SBATCH --cpus-per-task=10     # cpu-cores per task (>1 if multi-threaded tasks)

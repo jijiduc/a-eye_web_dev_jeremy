@@ -8,7 +8,7 @@ services:
       - "5000:5000"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - /home/debi/jaime/repos/a-eye/a-eye_web/nnUNet:/app/nnUNet
+      - ./nnUNet:/app/nnUNet
     environment:
       FLASK_DEBUG: "1"
     deploy:

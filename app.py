@@ -1,6 +1,6 @@
 import os
 import secrets
-from main import getSegmentation, clear_logs, delete_files_in_folder, copy_folder
+from main import getSegmentation, clear_logs, delete_files_in_folder, delete_subfolders
 from flask import Flask, jsonify, render_template, request, redirect, url_for, flash, send_file, send_from_directory, make_response, session
 import logging
 import zipfile
@@ -18,11 +18,11 @@ from flask_mail import Mail, Message
 from werkzeug.utils import secure_filename
 
 
-UPLOAD_FOLDER = "./static/upload/"
+UPLOAD_FOLDER = "./static/upload"
 DOWNLOAD_FOLDER = "/app/nnUNet/nnUNet_inference/output"
-ALLOWED_EXTENSIONS = {'gz', 'zip', '7z'}
+LOGS_FOLDER = "./logs"  # needed for app.log
 OUTPUT_ZIP = "/app/nnUNet/nnUNet_inference/output.zip"
-LOGS_FOLDER = "./logs"
+ALLOWED_EXTENSIONS = {'gz', 'zip', '7z'}
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -257,9 +257,9 @@ def upload_file():
     uploaded_files = []
     rejected_files = []
     
-    clear_logs(LOGS_FOLDER)
-    delete_files_in_folder(UPLOAD_FOLDER)
-    delete_files_in_folder(DOWNLOAD_FOLDER)
+    clear_logs(LOGS_FOLDER)  # Clear previous logs
+    delete_files_in_folder("/app/nnUNet/nnUNet_inference")  # Clear previous inference files
+    delete_subfolders("/app/nnUNet/nnUNet_inference/input")  # Clear previous uploaded files
     
     for file in files:
         if file and allowed_file(file.filename):
@@ -304,9 +304,9 @@ def send_email(to):
 # MAIN
 
 if __name__ == '__main__':
-    clear_logs(LOGS_FOLDER)
-    # delete_files_in_folder(UPLOAD_FOLDER)
-    # delete_files_in_folder(DOWNLOAD_FOLDER)
+    clear_logs(LOGS_FOLDER)  # Clear previous logs
+    delete_files_in_folder("/app/nnUNet/nnUNet_inference")  # Clear previous inference files
+    delete_subfolders("/app/nnUNet/nnUNet_inference/input")  # Clear previous uploaded files
     app.run(host='0.0.0.0', port=5000, debug=True)
 
 

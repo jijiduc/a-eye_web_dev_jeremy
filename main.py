@@ -7,11 +7,6 @@ import zipfile
 import py7zr
 import fnmatch
 
-# bools
-enable_args = False  # run the segmentation through the command line
-use_ext_folders = True  # input and output folders
-
-# logs folder
 LOGS_FOLDER = "./logs"
 
 # ----------------------------------------------------------------------------------------------
@@ -20,66 +15,34 @@ LOGS_FOLDER = "./logs"
 def getSegmentation(input=None, output=None):
     ''' Main function: performs inference on input folder and saves output in output folder. '''
 
-    # input/output folders
-    if enable_args:
-        parser = argparse.ArgumentParser()
-        parser.add_argument('-i', '--input', type=str, required=True, help='input folder')
-        parser.add_argument('-o', '--output', type=str, required=True, help='output folder')
-        args = parser.parse_args()
-        args_in = args.input
-        args_out = args.output
-    else:
-        args_in = input # origin input
-        args_out = output # origin output folder
-
-
     # nnUNet
     shm_size = 10 # shared memory (gb)
     # abs_path = '/home/debi/jaime/repos/a-eye/a-eye_web/nnUNetv2/35subs'  # nnUNetv2 main folder
-    abs_path = '/home/debi/jaime/repos/a-eye/a-eye_web/nnUNet'  # nnUNetv1 main folder
+    abs_path = '/home/debi/jaime/repos/a-eye/a-eye_web/nnUNet'  # nnUNetv1 main folder TODO remove -v in docker run
     rel_path = '/app/nnUNet'  # for the docker image
     aux_in = 'nnUNet_inference/input'  # input aux folder
     aux_out = 'nnUNet_inference/output'  # output aux folder
 
     start_docker()  # initialize docker for segmentation with GPU
 
-    if use_ext_folders:
-        # Copy content from origin input folder into local input folder
-        if os.path.isdir(args_in):
-            copy_folder(args_in, os.path.join(abs_path, aux_in))
-        elif os.path.isfile(args_in): # local
-            # Manage zip files
-            type = args_in.split('.')[-1].lower()
-            if type == 'zip' or type == '7z':
-                unzip_file(type, args_in, os.path.join(abs_path, aux_in))
-            else:
-                copy_file(args_in, os.path.join(abs_path, aux_in))
+    # Copy content from origin input folder into local input folder
+    if os.path.isdir(input):
+        copy_folder(input, os.path.join(rel_path, aux_in))
+    elif os.path.isfile(input): # local
+        # Manage zip files
+        type = input.split('.')[-1].lower()
+        if type == 'zip' or type == '7z':
+            unzip_file(type, input, os.path.join(rel_path, aux_in))
+        else:
+            copy_file(input, os.path.join(rel_path, aux_in))
         # Create output aux folder if it doesn't exist
-        if not os.path.exists(os.path.join(abs_path, aux_out)):
-            os.makedirs(os.path.join(abs_path, aux_out))
+        os.makedirs(os.path.join(rel_path, aux_out), exist_ok=True)
 
     # Check dicom folders names
-    check_dicom_folders_names(os.path.join(abs_path, aux_in))
+    check_dicom_folders_names(os.path.join(rel_path, aux_in))
 
     # Check input filenames (need to be in nnUNet format (0000.nii.gz))
-    check_filenames(os.path.join(abs_path, aux_in))
-
-    # inference command terminal (nnUNetv2)
-    # command = f' \
-    # docker run --rm \
-    # --gpus all \
-    # --shm-size={shm_size}gb \
-    # -v {abs_path}:{rel_path} \
-    # jaimebarran/nnunet:0.1.0 \
-    # nnUNetv2_predict \
-    # -d Dataset313_Eye \
-    # -i {rel_path}/{aux_in} \
-    # -o {rel_path}/{aux_out} \
-    # -f 0 1 2 3 4 \
-    # -tr nnUNetTrainer \
-    # -c 3d_fullres \
-    # -p nnUNetPlans \
-    # '
+    check_filenames(os.path.join(rel_path, aux_in))
 
     # inference command terminal (nnUNetv1)
     command = f' \
@@ -109,20 +72,8 @@ def getSegmentation(input=None, output=None):
     print('[A-eye] Inference finished!!')
     print_and_log('[A-eye] Inference finished!!', 'info', LOGS_FOLDER)
     
-    # Copy files into output folder and clean folders
-    if use_ext_folders:
-        # Copy aux output folder into origin output folder
-        # copy_folder(os.path.join(rel_path, aux_out), args_out)
-        
-        # Copy log files (log folder) into output folder
-        copy_folder(LOGS_FOLDER, os.path.join(args_out, 'logs')) # logs folder in output
-        
-        # Remove content in aux folders
-        # delete_files_in_folder(os.path.join(rel_path, aux_in))
-        # delete_files_in_folder(os.path.join(rel_path, aux_out))
-        
-        # Remove content from log files
-        # clear_logs(LOGS_FOLDER)
+    # Copy logs
+    copy_folder(LOGS_FOLDER, os.path.join(output, 'logs'))  # needed for app.log
 
     return 'Inference finished!!'
 
@@ -165,18 +116,24 @@ def copy_file(source, destination):
     shutil.copy(source, destination)
 
 def delete_files_in_folder(folder):
-    for item in os.listdir(folder):
-        item_path = os.path.join(folder, item)
-        try:
-            if os.path.isdir(item_path):
-                shutil.rmtree(item_path)
-            elif os.path.isfile(item_path) or os.path.islink(item_path):
-                os.unlink(item_path)
-        except Exception as e:
-            print_and_log(f"[A-eye] Failed to delete {item_path}. Reason: {e}", 'error', LOGS_FOLDER)
+    for root, dirs, files in os.walk(folder):
+        for file in files:
+            try:
+                os.remove(os.path.join(root, file))
+            except Exception as e:
+                print_and_log(f"[A-eye] Failed to delete {folder}. Reason: {e}", 'error', LOGS_FOLDER)
 
 def delete_folder(folder):
     shutil.rmtree(folder)
+    
+def delete_subfolders(folder):
+    for item in os.listdir(folder):
+        item_path = os.path.join(folder, item)
+        if os.path.isdir(item_path):
+            try:
+                shutil.rmtree(item_path)
+            except Exception as e:
+                print_and_log(f"[A-eye] Failed to delete {item_path}. Reason: {e}", 'error', LOGS_FOLDER)
 
 def check_dicom_folders_names(folder):
     # Get a list of all DICOM folders in the input folder
@@ -197,7 +154,7 @@ def check_dicom_folders_names(folder):
                 new_folder_path = os.path.join(parent_folder_path, new_folder_name)
                 os.rename(dicom_folder, new_folder_path)
             # Convert to nifti
-            convert_to_nifti(folder, dicom_folders)
+            convert_to_nifti(folder)
 
 def check_filenames(folder):
     file_paths = glob.glob(f'{folder}/*.nii.gz')
