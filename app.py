@@ -16,6 +16,7 @@ import pycountry
 import subprocess
 from flask_mail import Mail, Message
 from werkzeug.utils import secure_filename
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 
 UPLOAD_FOLDER = "./static/upload"
@@ -76,6 +77,8 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['DOWNLOAD_FOLDER'] = DOWNLOAD_FOLDER
 app.config.from_object('config.Config')
 app.secret_key = os.getenv('APP_SECRET_KEY', 'your_secret_key')
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)  # for https
+app.config['PREFERRED_URL_SCHEME'] = 'https'
 
 # Flask-Mail configuration
 app.config['MAIL_SERVER'] = 'smtp.example.com'
