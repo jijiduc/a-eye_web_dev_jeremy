@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - A-Eye Web Platform{% endblock %}
+
+{% block content %}
+<div class="mt-5 pt-5">
+    <h2 class="mb-4">User Profile</h2>
+    {% if user %}
+        <div class="card mb-3" style="max-width: 540px;">
+            <div class="row no-gutters">
+                <div class="col-md-4">
+                    <img src="{{ user.picture }}" class="card-img" alt="Profile Picture">
+                </div>
+                <div class="col-md-8">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ user.name or user.nickname }}</h5>
+                        <p class="card-text"><strong>Email:</strong> {{ user.email }}</p>
+                        <p class="card-text"><strong>Nickname:</strong> {{ user.nickname }}</p>
+                        <p class="card-text"><small class="text-muted">User ID: {{ user.sub }}</small></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <p>User data not found. Please log in.</p>
+    {% endif %}
+</div>
+{% endblock %}

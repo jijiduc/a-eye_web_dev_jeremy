@@ -1,10 +1,9 @@
 import os
 import secrets
-from main import getSegmentation, clear_logs, delete_files_in_folder, delete_subfolders
+from main import getSegmentation, clear_logs, delete_files_in_folder, delete_subfolders, copy_folder
 from flask import Flask, jsonify, render_template, request, redirect, url_for, flash, send_file, send_from_directory, make_response, session
 import logging
 import zipfile
-import json
 from authlib.integrations.flask_client import OAuth
 from authlib.integrations.base_client.errors import OAuthError, MismatchingStateError
 from urllib.parse import urlencode, quote_plus
@@ -13,10 +12,12 @@ import requests
 import pandas as pd
 import plotly.express as px
 import pycountry
-import subprocess
 from flask_mail import Mail, Message
 from werkzeug.utils import secure_filename
 from werkzeug.middleware.proxy_fix import ProxyFix
+import threading
+from datetime import datetime
+from functools import wraps
 
 
 UPLOAD_FOLDER = "./static/upload"
@@ -24,6 +25,7 @@ DOWNLOAD_FOLDER = "/app/nnUNet/nnUNet_inference/output"
 LOGS_FOLDER = "./logs"  # needed for app.log
 OUTPUT_ZIP = "/app/nnUNet/nnUNet_inference/output.zip"
 ALLOWED_EXTENSIONS = {'gz', 'zip', '7z'}
+DATA_FOLDER = "/app/nnUNet/nnUNet_inference/data"
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -46,6 +48,14 @@ def get_management_api_token():
     response = requests.post(url, json=payload, headers=headers)
     response.raise_for_status()
     return response.json()['access_token']
+
+def requires_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if "user" not in session:
+            return redirect(url_for("login"))
+        return f(*args, **kwargs)
+    return decorated
 
 def get_user_data():
     auth0_domain = app.config['AUTH0_DOMAIN']
@@ -88,7 +98,23 @@ def convert_country_to_iso3(country_code):
         country = pycountry.countries.get(alpha_2=country_code)
         return country.alpha_3
     except AttributeError:
-        return None             
+        return None
+
+def copy_segmentation_data(user_email, upload_folder, download_folder):
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+    safe_email = user_email.replace("@", "_at_").replace(".", "_")
+    dest_dir = f"{DATA_FOLDER}/{safe_email}_{timestamp}"
+
+    os.makedirs(dest_dir, exist_ok=True)
+    
+    input_dest = os.path.join(dest_dir, "input")
+    output_dest = os.path.join(dest_dir, "output")
+
+    copy_folder(upload_folder, input_dest)
+    copy_folder(download_folder, output_dest)
+    
+    print(f"Copied segmentation data to {dest_dir}")
+        
 
 # Load environment variables from .env file
 load_dotenv()
@@ -204,7 +230,7 @@ def users():
     # Calculate the number of institutions
     domains = set()
     for user in users_data:
-        print(user)
+        print("User: ", user)
         email = user.get('email')
         print("User email: ", email)
         if email:
@@ -319,8 +345,23 @@ def segment():
 
     # Zip folder for download
     zip_folder(DOWNLOAD_FOLDER, OUTPUT_ZIP)
+    
+    # Get user email from session or token
+    user_email = session.get("user", {}).get("email", "unknown_user")
+    
+    # Start background thread to copy files
+    threading.Thread(target=copy_segmentation_data, args=(user_email, UPLOAD_FOLDER, DOWNLOAD_FOLDER)).start()
 
     return jsonify({"message": "Segmentation completed", "download_url": "/download"}), 200
+
+@app.route('/profile')
+@requires_auth  # Ensure only logged-in users can view this
+def profile():
+    user = session.get("user")
+    if not user:
+        return redirect(url_for("login"))
+
+    return render_template("profile.html", user=user)
 
 @app.route('/download', methods=['GET'])
 def download_files():

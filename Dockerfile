@@ -21,14 +21,6 @@ ENV FLASK_DEBUG=1
 # Expose port
 EXPOSE 5000
 
-# Run the app (development)
-# -w 4 means 4 worker processes will be created.
-# Each worker can handle requests independently, so this lets your app serve multiple requests in parallel.
-# A common formula: workers = 2 x (CPU cores) + 1
-# debi has 18 cores and pet3 has 8 => 37 and 17 workers respectively
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "app:app"]
-
-
 # ------------------------------
 # Docker utilities
 

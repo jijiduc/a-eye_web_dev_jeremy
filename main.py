@@ -1,8 +1,9 @@
-import os, glob, shutil, subprocess
+import os
+import glob
+import shutil
+import subprocess
 import dicom2nifti
-import argparse
 import logging
-from flask import redirect, url_for
 import zipfile
 import py7zr
 import fnmatch
@@ -140,10 +141,10 @@ def check_dicom_folders_names(folder):
     dicom_folders = find_dicom_folders(folder)
     # Check dicom folders names
     if not dicom_folders:
-        print_and_log('[AEye] No DICOM folders found.', 'info', LOGS_FOLDER)
+        print_and_log('[A-eye] No DICOM folders found.', 'info', LOGS_FOLDER)
         return
     else:
-        print_and_log('[AEye] Checking DICOM folders names...', 'info', LOGS_FOLDER)
+        print_and_log('[A-eye] Checking DICOM folders names...', 'info', LOGS_FOLDER)
         for dicom_folder in dicom_folders:
             dicom_folder_name = os.path.basename(dicom_folder)
             parent_folder_path = os.path.dirname(dicom_folder)
@@ -178,7 +179,7 @@ def check_filenames(folder):
 def correct_filename(file_path, file_name, file_extension):
     print_and_log('[A-eye] Changing filename to nnUNet format...', 'info', LOGS_FOLDER)
     new_file_name = f'{file_name}_0000{file_extension}' # extension for nnUNet
-    print_and_log(f'[AEye] New filename = {new_file_name}', 'info', LOGS_FOLDER)
+    print_and_log(f'[A-eye] New filename = {new_file_name}', 'info', LOGS_FOLDER)
     os.rename(file_path, os.path.join(os.path.dirname(file_path), new_file_name))
 
 def convert_to_nifti(folder):
