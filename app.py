@@ -175,6 +175,7 @@ def logout():
             quote_via=quote_plus,
         )
     )
+
 @app.route("/services")
 def services():
     return render_template("services.html")
