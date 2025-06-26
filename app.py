@@ -1,6 +1,12 @@
 import os
 import secrets
-from main import getSegmentation, clear_logs, delete_files_in_folder, delete_subfolders, copy_folder
+from main import getSegmentation
+from utils import (
+    copy_folder,
+    delete_files_in_folder,
+    delete_subfolders,
+    clear_logs
+)
 from flask import Flask, jsonify, render_template, request, redirect, url_for, flash, send_file, send_from_directory, make_response, session
 import logging
 import zipfile
@@ -17,12 +23,13 @@ from werkzeug.utils import secure_filename
 from werkzeug.middleware.proxy_fix import ProxyFix
 import threading
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from functools import wraps
+from config import LOGS_FOLDER
 
 
 UPLOAD_FOLDER = "./static/upload"
 DOWNLOAD_FOLDER = "/app/nnUNet/nnUNet_inference/output"
-LOGS_FOLDER = "./logs"  # needed for app.log
 OUTPUT_ZIP = "/app/nnUNet/nnUNet_inference/output.zip"
 ALLOWED_EXTENSIONS = {'gz', 'zip', '7z'}
 DATA_FOLDER = "/app/nnUNet/nnUNet_inference/data"
@@ -100,8 +107,9 @@ def convert_country_to_iso3(country_code):
     except AttributeError:
         return None
 
-def copy_segmentation_data(user_email, upload_folder, download_folder):
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+def copy_segmentation_data(user_email, input, output):
+    zurich_time = datetime.now(ZoneInfo("Europe/Zurich"))
+    timestamp = zurich_time.strftime("%Y%m%d_%H%M")
     safe_email = user_email.replace("@", "_at_").replace(".", "_")
     dest_dir = f"{DATA_FOLDER}/{safe_email}_{timestamp}"
 
@@ -110,8 +118,8 @@ def copy_segmentation_data(user_email, upload_folder, download_folder):
     input_dest = os.path.join(dest_dir, "input")
     output_dest = os.path.join(dest_dir, "output")
 
-    copy_folder(upload_folder, input_dest)
-    copy_folder(download_folder, output_dest)
+    copy_folder(input, input_dest)
+    copy_folder(output, output_dest)
     
     print(f"Copied segmentation data to {dest_dir}")
         
@@ -318,7 +326,8 @@ def upload_file():
     rejected_files = []
     
     clear_logs(LOGS_FOLDER)  # Clear previous logs
-    delete_files_in_folder("/app/nnUNet/nnUNet_inference")  # Clear previous inference files
+    delete_files_in_folder("/app/nnUNet/nnUNet_inference")  # Clear output.zip
+    delete_files_in_folder("/app/nnUNet/nnUNet_inference/input")  # Clear previous inference files
     delete_subfolders("/app/nnUNet/nnUNet_inference/input")  # Clear previous uploaded files
     
     for file in files:
@@ -349,8 +358,19 @@ def segment():
     # Get user email from session or token
     user_email = session.get("user", {}).get("email", "unknown_user")
     
-    # Start background thread to copy files
-    threading.Thread(target=copy_segmentation_data, args=(user_email, UPLOAD_FOLDER, DOWNLOAD_FOLDER)).start()
+    # Start background thread to copy files (only if output exists)
+    has_output = (
+        os.path.exists(DOWNLOAD_FOLDER) and
+        any(fname.endswith(".nii.gz") for fname in os.listdir(DOWNLOAD_FOLDER))
+    )
+
+    if has_output:
+        threading.Thread(
+            target=copy_segmentation_data,
+            args=(user_email, "/app/nnUNet/nnUNet_inference/input", DOWNLOAD_FOLDER)
+        ).start()
+    else:
+        print("[A-eye] Segmentation failed or no .nii.gz output found. Data not copied!")
 
     return jsonify({"message": "Segmentation completed", "download_url": "/download"}), 200
 
@@ -380,7 +400,8 @@ def send_email(to):
 
 if __name__ == '__main__':
     clear_logs(LOGS_FOLDER)  # Clear previous logs
-    delete_files_in_folder("/app/nnUNet/nnUNet_inference")  # Clear previous inference files
+    delete_files_in_folder("/app/nnUNet/nnUNet_inference")  # Clear output.zip
+    delete_files_in_folder("/app/nnUNet/nnUNet_inference/input")  # Clear previous inference files
     delete_subfolders("/app/nnUNet/nnUNet_inference/input")  # Clear previous uploaded files
     app.run(host='0.0.0.0', port=5000, debug=True)
 

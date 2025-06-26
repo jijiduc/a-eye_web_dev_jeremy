@@ -1,5 +1,7 @@
 import os
 
+LOGS_FOLDER = "./logs"
+
 class Config:
     AUTH0_CLIENT_ID = os.getenv('AUTH0_CLIENT_ID', 'YOUR_AUTH0_CLIENT_ID')
     AUTH0_CLIENT_SECRET = os.getenv('AUTH0_CLIENT_SECRET', 'YOUR_AUTH0_CLIENT_SECRET')
