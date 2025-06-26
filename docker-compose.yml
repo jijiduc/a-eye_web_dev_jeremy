@@ -10,11 +10,19 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./nnUNet:/app/nnUNet
     environment:
-      FLASK_DEBUG: "1"
+      FLASK_DEBUG: "0"
     deploy:
       resources:
         reservations:
           devices:
             - capabilities: [gpu]
     runtime: nvidia
-
+  nginx:
+    image: nginx:latest
+    container_name: nginx_aeyeweb
+    ports:
+      - "80:80"
+    depends_on:
+      - flask_app
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
