@@ -51,10 +51,30 @@ def get_user_data():
     auth0_domain = app.config['AUTH0_DOMAIN']
     access_token = get_management_api_token()
     headers = {'Authorization': f'Bearer {access_token}'}
-    response = requests.get(f'https://{auth0_domain}/api/v2/users', headers=headers)
-    response.raise_for_status()  # Raise an exception for HTTP errors
-    users_data = response.json()
-    return users_data
+
+    # Include fields you want explicitly
+    params = {
+        'fields': 'email,last_ip',
+        'include_fields': 'true',
+        'per_page': 100,
+        'page': 0
+    }
+
+    all_users = []
+    while True:
+        response = requests.get(
+            f'https://{auth0_domain}/api/v2/users',
+            headers=headers,
+            params=params
+        )
+        response.raise_for_status()
+        page_users = response.json()
+        if not page_users:
+            break
+        all_users.extend(page_users)
+        params['page'] += 1
+
+    return all_users
 
 def get_country_from_ip(ip):
     response = requests.get(f'https://ipinfo.io/{ip}/json')
@@ -144,7 +164,7 @@ def callback():
         session["user"] = userinfo
         return redirect(url_for('segmentation'))
     except OAuthError as error:
-        flash("Erreur d'authentification : " + error.description)
+        flash("Authentication failed: " + error.description)
         return redirect(url_for('welcome'))
 
 @app.route("/verify_email")
@@ -176,10 +196,6 @@ def logout():
         )
     )
 
-@app.route("/services")
-def services():
-    return render_template("services.html")
-
 @app.route('/users')
 def users():
     users_data = get_user_data()
@@ -188,11 +204,14 @@ def users():
     # Calculate the number of institutions
     domains = set()
     for user in users_data:
+        print(user)
         email = user.get('email')
+        print("User email: ", email)
         if email:
             domain = email.split('@')[-1]
             domains.add(domain)
     total_institutions = len(domains)
+    print(f"Total Users: {total_users}, Total Institutions: {total_institutions}")
     
     # Get country data from user IPs
     country_counts = {}
@@ -261,10 +280,6 @@ def segmentation():
     if 'user' in session:
         return render_template('segmentation.html')
     return redirect(url_for('login'))
-
-@app.route('/informations')
-def informations():
-    return render_template('informations.html')
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
