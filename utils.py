@@ -13,12 +13,16 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 from functools import wraps
 from flask import redirect, url_for, session
-from config import LOGS_FOLDER, ALLOWED_EXTENSIONS, DATA_FOLDER
 import threading
 import requests
 from flask import current_app
 from app import mail
 from flask_mail import Message
+from config import (
+    DATA_FOLDER,
+    LOGS_FOLDER,
+    ALLOWED_EXTENSIONS
+)
 
 
 def allowed_file(filename):

@@ -8,7 +8,7 @@ from utils import *
 from main import getSegmentation
 from app import oauth
 
-from config import UPLOAD_FOLDER, DOWNLOAD_FOLDER, OUTPUT_ZIP, LOGS_FOLDER
+from config import UPLOAD_FOLDER, DOWNLOAD_FOLDER, OUTPUT_ZIP
 
 bp = Blueprint('routes', __name__)
 cases_processed = 0

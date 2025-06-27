@@ -10,6 +10,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./nnUNet:/app/nnUNet
       - /mnt/filer01/A-eye/A-eye_web/data:/app/filer01/
+    env_file:
+      - .env
     command: gunicorn -c gunicorn.conf.py run:app  # for dev: command: flask run --host=0.0.0.0
     environment:
       FLASK_DEBUG: "0"
