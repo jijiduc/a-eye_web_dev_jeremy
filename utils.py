@@ -71,8 +71,6 @@ def copy_segmentation_data(user_email, input, output):
     copy_folder(output, output_dest)
     
     print(f"Copied segmentation data to {dest_dir}")
-    
-    clean_folders()  # Clean up folders after copying
 
 def unzip_file(file_type, source, destination):
     try:

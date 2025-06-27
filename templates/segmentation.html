@@ -5,6 +5,7 @@
 {% block content %}
 <div class="container" style="margin-top: 50px;">
     <h2 class="main-title text-center">Segmentation Tool</h2>
+
     <div class="row text-center" style="margin-top: 30px;">
         <div class="col-md-3">
             <form id="choose-file-form">
@@ -36,13 +37,17 @@
             </form>
         </div>
     </div>
+
     <div class="row text-center" style="margin-top: 30px;">
         <div class="col-md-12">
-            <div class="progress" style="height: 30px;">
-                <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+            <div id="processing-spinner" class="text-center mt-3" style="display: none;">
+                <div class="spinner-border" role="status" style="border-color: green; border-right-color: transparent;">
+                </div>
+                <div class="mt-2">Processing segmentation…</div>
             </div>
         </div>
     </div>
+
     <div class="row text-center" style="margin-top: 30px;">
         <div class="col-md-12">
             <ul id="file-list" class="list-group"></ul>
@@ -55,16 +60,16 @@
         var fileList = document.getElementById('file-list');
         var files = document.getElementById('file-input').files;
         fileList.innerHTML = ''; // Clear the list
-    
+
         var acceptedFiles = [];
         var rejectedFiles = [];
         var allowedExtensions = ['gz', 'zip', '7z']; // Adjust based on backend rules
-    
+
         for (var i = 0; i < files.length; i++) {
             var listItem = document.createElement('li');
             listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
             listItem.textContent = files[i].name;
-    
+
             var fileExtension = files[i].name.split('.').pop().toLowerCase();
             if (allowedExtensions.includes(fileExtension)) {
                 listItem.style.color = 'green'; // ✅ Accepted (green)
@@ -75,10 +80,10 @@
                 listItem.innerHTML += ' <span class="badge bg-danger">Rejected ❌</span>';
                 rejectedFiles.push(files[i].name);
             }
-    
+
             fileList.appendChild(listItem);
         }
-    
+
         // Display summary
         var summaryMessage = document.createElement('p');
         summaryMessage.className = 'mt-2 fw-bold';
@@ -89,9 +94,9 @@
         } else if (rejectedFiles.length > 0) {
             summaryMessage.innerHTML = `❌ <span class="text-danger">${rejectedFiles.length} rejected</span>`;
         }
-    
+
         fileList.appendChild(summaryMessage);
-    
+
         // Enable upload button only if there are accepted files
         var uploadButton = document.getElementById('upload-button');
         if (acceptedFiles.length > 0) {
@@ -104,7 +109,7 @@
             uploadButton.disabled = true;
         }
     }
-    
+
     function uploadFiles() {
         var formData = new FormData();
         var files = document.getElementById('file-input').files;
@@ -117,10 +122,9 @@
             method: 'POST',
             body: formData
         })
-        .then(response => response.json())  // Parse JSON response
+        .then(response => response.json())
         .then(data => {
-            alert(data.message);  // Display custom message from Flask
-            
+            alert(data.message);
             if (data.status === 'success') {
                 var segmentButton = document.getElementById('segment-button');
                 segmentButton.classList.remove('btn-secondary');
@@ -135,62 +139,41 @@
     }
 
     function segmentFiles() {
-        var progressBar = document.getElementById('progress-bar');
-        var downloadButton = document.getElementById('download-button');
-        var segmentButton = document.getElementById('segment-button');
-        var uploadButton = document.getElementById('upload-button');
-        var progress = 0;
-    
-        // Disable Segment and Upload buttons
+        const spinner = document.getElementById('processing-spinner');
+        const downloadButton = document.getElementById('download-button');
+        const segmentButton = document.getElementById('segment-button');
+        const uploadButton = document.getElementById('upload-button');
+
+        // Disable buttons
         segmentButton.disabled = true;
         uploadButton.disabled = true;
         segmentButton.classList.add('btn-secondary');
         segmentButton.classList.remove('btn-success');
         uploadButton.classList.add('btn-secondary');
         uploadButton.classList.remove('btn-success');
-    
-        // Simulate progress for demonstration purposes
-        var interval = setInterval(function () {
-            if (progress >= 100) {
-                clearInterval(interval);
-                progressBar.style.width = '100%';
-                progressBar.setAttribute('aria-valuenow', 100);
-                progressBar.innerHTML = '100%';
-            } else {
-                progress += 10;
-                progressBar.style.width = progress + '%';
-                progressBar.setAttribute('aria-valuenow', progress);
-                progressBar.innerHTML = progress + '%';
-            }
-        }, 1000);
-    
+
+        // Show spinner
+        spinner.style.display = 'block';
+
         fetch('/segment', { method: 'POST' })
             .then(response => response.json())
             .then(data => {
-                clearInterval(interval);
-                progressBar.style.width = '100%';
-                progressBar.setAttribute('aria-valuenow', 100);
-                progressBar.innerHTML = '100%';
-    
-                // Enable the Download button
+                spinner.style.display = 'none';
+
+                downloadButton.disabled = false;
                 downloadButton.classList.remove('btn-secondary');
                 downloadButton.classList.add('btn-success');
-                downloadButton.disabled = false;
-    
-                // Store the download URL for manual download
                 downloadButton.setAttribute('data-download-url', data.download_url);
-    
+
                 alert('Segmentation completed successfully.');
-    
-                // Trigger automatic download
                 window.location.href = data.download_url;
             })
             .catch(error => {
+                spinner.style.display = 'none';
                 alert('Failed to complete segmentation.');
             });
-    }    
-    
-    // Add event listener to the download button
+    }
+
     document.getElementById('download-button').addEventListener('click', function () {
         var downloadUrl = this.getAttribute('data-download-url');
         if (downloadUrl) {
@@ -199,7 +182,5 @@
             alert('No file available for download. Please run segmentation first.');
         }
     });
-    
-    
 </script>
 {% endblock %}
