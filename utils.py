@@ -7,8 +7,62 @@ import logging
 import zipfile
 import py7zr
 import fnmatch
+import requests
+import pycountry
+from datetime import datetime
+from zoneinfo import ZoneInfo
+from functools import wraps
+from flask import redirect, url_for, session
+import app
+from config import LOGS_FOLDER, ALLOWED_EXTENSIONS, DATA_FOLDER
 
-from config import LOGS_FOLDER
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def zip_folder(folder_path, output_path):
+    with zipfile.ZipFile(output_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for root, dirs, files in os.walk(folder_path):
+            for file in files:
+                zipf.write(os.path.join(root, file), os.path.relpath(os.path.join(root, file), folder_path))
+
+def requires_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if "user" not in session:
+            return redirect(url_for("login"))
+        return f(*args, **kwargs)
+    return decorated
+
+def get_country_from_ip(ip):
+    response = requests.get(f'https://ipinfo.io/{ip}/json')
+    data = response.json()
+    country = data.get('country')
+    print(f"IP: {ip}, Country: {country}")  # Debugging: Print IP and country
+    return country
+
+def convert_country_to_iso3(country_code):
+    try:
+        country = pycountry.countries.get(alpha_2=country_code)
+        return country.alpha_3
+    except AttributeError:
+        return None
+
+def copy_segmentation_data(user_email, input, output):
+    zurich_time = datetime.now(ZoneInfo("Europe/Zurich"))
+    timestamp = zurich_time.strftime("%Y%m%d_%H%M")
+    safe_email = user_email.replace("@", "_at_").replace(".", "_")
+    dest_dir = f"{DATA_FOLDER}/{safe_email}_{timestamp}"
+
+    os.makedirs(dest_dir, exist_ok=True)
+    
+    input_dest = os.path.join(dest_dir, "input")
+    output_dest = os.path.join(dest_dir, "output")
+
+    copy_folder(input, input_dest)
+    copy_folder(output, output_dest)
+    
+    print(f"Copied segmentation data to {dest_dir}")
 
 def unzip_file(file_type, source, destination):
     try:

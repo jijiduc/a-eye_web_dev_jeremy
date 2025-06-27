@@ -1,128 +1,40 @@
 import os
 import secrets
-from main import getSegmentation
-from utils import (
-    copy_folder,
-    delete_files_in_folder,
-    delete_subfolders,
-    clear_logs
-)
-from flask import Flask, jsonify, render_template, request, redirect, url_for, flash, send_file, send_from_directory, make_response, session
+from flask import Flask, jsonify, render_template, request, redirect, url_for, flash, send_file, session
+import requests
 import logging
-import zipfile
 from authlib.integrations.flask_client import OAuth
 from authlib.integrations.base_client.errors import OAuthError, MismatchingStateError
 from urllib.parse import urlencode, quote_plus
 from dotenv import load_dotenv
-import requests
 import pandas as pd
 import plotly.express as px
-import pycountry
 from flask_mail import Mail, Message
 from werkzeug.utils import secure_filename
 from werkzeug.middleware.proxy_fix import ProxyFix
 import threading
-from datetime import datetime
-from zoneinfo import ZoneInfo
-from functools import wraps
-from config import LOGS_FOLDER
 
+from main import getSegmentation
 
-UPLOAD_FOLDER = "./static/upload"
-DOWNLOAD_FOLDER = "/app/nnUNet/nnUNet_inference/output"
-OUTPUT_ZIP = "/app/nnUNet/nnUNet_inference/output.zip"
-ALLOWED_EXTENSIONS = {'gz', 'zip', '7z'}
-DATA_FOLDER = "/app/nnUNet/nnUNet_inference/data"
+from utils import (
+    delete_files_in_folder,
+    delete_subfolders,
+    clear_logs,
+    allowed_file,
+    copy_segmentation_data,
+    get_country_from_ip,
+    convert_country_to_iso3,
+    requires_auth,
+    zip_folder
+)
 
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+from config import (
+    LOGS_FOLDER,
+    UPLOAD_FOLDER, 
+    DOWNLOAD_FOLDER,
+    OUTPUT_ZIP, 
+)
 
-def zip_folder(folder_path, output_path):
-    with zipfile.ZipFile(output_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-        for root, dirs, files in os.walk(folder_path):
-            for file in files:
-                zipf.write(os.path.join(root, file), os.path.relpath(os.path.join(root, file), folder_path))
-
-def get_management_api_token():
-    url = f'https://{app.config["AUTH0_DOMAIN"]}/oauth/token'
-    payload = {
-        'client_id': app.config['AUTH0_CLIENT_ID'],
-        'client_secret': app.config['AUTH0_CLIENT_SECRET'],
-        'audience': f'https://{app.config["AUTH0_DOMAIN"]}/api/v2/',
-        'grant_type': 'client_credentials'
-    }
-    headers = {'Content-Type': 'application/json'}
-    response = requests.post(url, json=payload, headers=headers)
-    response.raise_for_status()
-    return response.json()['access_token']
-
-def requires_auth(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        if "user" not in session:
-            return redirect(url_for("login"))
-        return f(*args, **kwargs)
-    return decorated
-
-def get_user_data():
-    auth0_domain = app.config['AUTH0_DOMAIN']
-    access_token = get_management_api_token()
-    headers = {'Authorization': f'Bearer {access_token}'}
-
-    # Include fields you want explicitly
-    params = {
-        'fields': 'email,last_ip',
-        'include_fields': 'true',
-        'per_page': 100,
-        'page': 0
-    }
-
-    all_users = []
-    while True:
-        response = requests.get(
-            f'https://{auth0_domain}/api/v2/users',
-            headers=headers,
-            params=params
-        )
-        response.raise_for_status()
-        page_users = response.json()
-        if not page_users:
-            break
-        all_users.extend(page_users)
-        params['page'] += 1
-
-    return all_users
-
-def get_country_from_ip(ip):
-    response = requests.get(f'https://ipinfo.io/{ip}/json')
-    data = response.json()
-    country = data.get('country')
-    print(f"IP: {ip}, Country: {country}")  # Debugging: Print IP and country
-    return country
-
-def convert_country_to_iso3(country_code):
-    try:
-        country = pycountry.countries.get(alpha_2=country_code)
-        return country.alpha_3
-    except AttributeError:
-        return None
-
-def copy_segmentation_data(user_email, input, output):
-    zurich_time = datetime.now(ZoneInfo("Europe/Zurich"))
-    timestamp = zurich_time.strftime("%Y%m%d_%H%M")
-    safe_email = user_email.replace("@", "_at_").replace(".", "_")
-    dest_dir = f"{DATA_FOLDER}/{safe_email}_{timestamp}"
-
-    os.makedirs(dest_dir, exist_ok=True)
-    
-    input_dest = os.path.join(dest_dir, "input")
-    output_dest = os.path.join(dest_dir, "output")
-
-    copy_folder(input, input_dest)
-    copy_folder(output, output_dest)
-    
-    print(f"Copied segmentation data to {dest_dir}")
-        
 
 # Load environment variables from .env file
 load_dotenv()
@@ -172,6 +84,52 @@ auth0 = oauth.register(
     },
     server_metadata_url=f"https://{app.config['AUTH0_DOMAIN']}/.well-known/openid-configuration"
 )
+
+
+# ----------------------------------------------------------------------------------------------
+# DEFS
+
+def get_management_api_token():
+    url = f'https://{app.config["AUTH0_DOMAIN"]}/oauth/token'
+    payload = {
+        'client_id': app.config['AUTH0_CLIENT_ID'],
+        'client_secret': app.config['AUTH0_CLIENT_SECRET'],
+        'audience': f'https://{app.config["AUTH0_DOMAIN"]}/api/v2/',
+        'grant_type': 'client_credentials'
+    }
+    headers = {'Content-Type': 'application/json'}
+    response = requests.post(url, json=payload, headers=headers)
+    response.raise_for_status()
+    return response.json()['access_token']
+
+def get_user_data():
+    auth0_domain = app.config['AUTH0_DOMAIN']
+    access_token = get_management_api_token()
+    headers = {'Authorization': f'Bearer {access_token}'}
+
+    # Include fields you want explicitly
+    params = {
+        'fields': 'email,last_ip',
+        'include_fields': 'true',
+        'per_page': 100,
+        'page': 0
+    }
+
+    all_users = []
+    while True:
+        response = requests.get(
+            f'https://{auth0_domain}/api/v2/users',
+            headers=headers,
+            params=params
+        )
+        response.raise_for_status()
+        page_users = response.json()
+        if not page_users:
+            break
+        all_users.extend(page_users)
+        params['page'] += 1
+
+    return all_users
 
 
 # ----------------------------------------------------------------------------------------------
@@ -240,7 +198,6 @@ def users():
     for user in users_data:
         print("User: ", user)
         email = user.get('email')
-        print("User email: ", email)
         if email:
             domain = email.split('@')[-1]
             domains.add(domain)
@@ -262,8 +219,6 @@ def users():
                         else:
                             country_counts[country_iso3] = 1
     
-    print(f"Country Counts: {country_counts}")  # Debugging: Print country counts
-    
     # Create a DataFrame for the country data
     df = pd.DataFrame(list(country_counts.items()), columns=['Country', 'Count'])
     print(df)  # Debugging: Print DataFrame
@@ -280,8 +235,8 @@ def users():
             showcoastlines=False,
             projection_type='equirectangular',
             # Center the map
-                                lataxis=dict(range=[-90, 90]),  # Adjust latitude range to exclude Antarctica
-                                lonaxis=dict(range=[-180, 180])  # Adjust longitude range to show the whole world
+            lataxis=dict(range=[-90, 90]),  # Adjust latitude range to exclude Antarctica
+            lonaxis=dict(range=[-180, 180])  # Adjust longitude range to show the whole world
         )
     )
     

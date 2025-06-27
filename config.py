@@ -1,6 +1,11 @@
 import os
 
+UPLOAD_FOLDER = "./static/upload"
+DOWNLOAD_FOLDER = "/app/nnUNet/nnUNet_inference/output"
+OUTPUT_ZIP = "/app/nnUNet/nnUNet_inference/output.zip"
+DATA_FOLDER = "/app/nnUNet/nnUNet_inference/data"
 LOGS_FOLDER = "./logs"
+ALLOWED_EXTENSIONS = {'gz', 'zip', '7z'}
 
 class Config:
     AUTH0_CLIENT_ID = os.getenv('AUTH0_CLIENT_ID', 'YOUR_AUTH0_CLIENT_ID')
