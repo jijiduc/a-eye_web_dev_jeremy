@@ -1,6 +1,7 @@
 import os
 import secrets
 from flask import Flask, jsonify, render_template, request, redirect, url_for, flash, send_file, session
+from flask_mail import Mail, Message
 import requests
 import logging
 from authlib.integrations.flask_client import OAuth
@@ -9,7 +10,6 @@ from urllib.parse import urlencode, quote_plus
 from dotenv import load_dotenv
 import pandas as pd
 import plotly.express as px
-from flask_mail import Mail, Message
 from werkzeug.utils import secure_filename
 from werkzeug.middleware.proxy_fix import ProxyFix
 import threading
@@ -25,7 +25,8 @@ from utils import (
     get_country_from_ip,
     convert_country_to_iso3,
     requires_auth,
-    zip_folder
+    zip_folder,
+    send_email_async
 )
 
 from config import (
@@ -51,6 +52,8 @@ high_scale_nb_users = 100  # Set the maximum number of users for the color scale
 # ----------------------------------------------------------------------------------------------
 # FLASK
 
+mail = Mail()
+
 app = Flask(__name__, static_folder="static")
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -62,9 +65,9 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)  # for https
 app.config['PREFERRED_URL_SCHEME'] = 'https'
 
 # Flask-Mail configuration
-app.config['MAIL_SERVER'] = 'smtp.example.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
+app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT'))
+app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS') == 'True'
 app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER')
@@ -320,11 +323,13 @@ def segment():
     )
 
     if has_output:
+        send_email_async(user_email, "A-eye segmentation task completed successfully. You can download the results.")
         threading.Thread(
             target=copy_segmentation_data,
             args=(user_email, "/app/nnUNet/nnUNet_inference/input", DOWNLOAD_FOLDER)
         ).start()
     else:
+        send_email_async(user_email, "A-eye segmentation task failed or no output found.")
         print("[A-eye] Segmentation failed or no .nii.gz output found. Data not copied!")
 
     return jsonify({"message": "Segmentation completed", "download_url": "/download"}), 200
@@ -344,11 +349,16 @@ def download_files():
         return send_file(OUTPUT_ZIP, as_attachment=True)
     return "File not found", 404
 
-def send_email(to):
-    msg = Message('Segmentation Task Completed', recipients=[to])
-    msg.body = 'Your segmentation task has been completed successfully. You can now download the results from the AEye platform.'
-    mail.send(msg)
+def send_email_async(to, body):
+    threading.Thread(target=send_email, args=(to, body)).start()
 
+def send_email(to, body):
+    msg = Message(
+        subject='Segmentation Task Completed',
+        recipients=[to],
+        body=body
+    )
+    mail.send(msg)
 
 # ----------------------------------------------------------------------------------------------
 # MAIN

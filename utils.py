@@ -13,7 +13,6 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 from functools import wraps
 from flask import redirect, url_for, session
-import app
 from config import LOGS_FOLDER, ALLOWED_EXTENSIONS, DATA_FOLDER
 
 
