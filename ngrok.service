@@ -1,0 +1,14 @@
+# in /etc/systemd/system/ngrok.service
+
+[Unit]
+Description=Ngrok HTTP tunnel
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/ngrok http http://localhost:5000
+Restart=on-failure
+User=your-debi
+Environment=NGROK_AUTHTOKEN=your_authtoken
+
+[Install]
+WantedBy=multi-user.target
