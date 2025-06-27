@@ -14,6 +14,11 @@ from zoneinfo import ZoneInfo
 from functools import wraps
 from flask import redirect, url_for, session
 from config import LOGS_FOLDER, ALLOWED_EXTENSIONS, DATA_FOLDER
+import threading
+import requests
+from flask import current_app
+from app import mail
+from flask_mail import Message
 
 
 def allowed_file(filename):
@@ -62,6 +67,8 @@ def copy_segmentation_data(user_email, input, output):
     copy_folder(output, output_dest)
     
     print(f"Copied segmentation data to {dest_dir}")
+    
+    clean_folders()  # Clean up folders after copying
 
 def unzip_file(file_type, source, destination):
     try:
@@ -252,3 +259,62 @@ def run_command_and_print_output(command):
         console_errors = console_errors.decode('utf-8')
         for line in console_errors.splitlines():
             print_console(line, LOGS_FOLDER)
+
+def clean_folders():
+    clear_logs(LOGS_FOLDER)  # Clear previous logs
+    delete_files_in_folder("/app/nnUNet/nnUNet_inference")  # Clear output.zip
+    delete_files_in_folder("/app/nnUNet/nnUNet_inference/input")  # Clear previous inference files
+    delete_subfolders("/app/nnUNet/nnUNet_inference/input")  # Clear previous uploaded files
+
+def get_management_api_token():
+    url = f'https://{current_app.config["AUTH0_DOMAIN"]}/oauth/token'
+    payload = {
+        'client_id': current_app.config['AUTH0_CLIENT_ID'],
+        'client_secret': current_app.config['AUTH0_CLIENT_SECRET'],
+        'audience': f'https://{current_app.config["AUTH0_DOMAIN"]}/api/v2/',
+        'grant_type': 'client_credentials'
+    }
+    headers = {'Content-Type': 'application/json'}
+    response = requests.post(url, json=payload, headers=headers)
+    response.raise_for_status()
+    return response.json()['access_token']
+
+def get_user_data():
+    auth0_domain = current_app.config['AUTH0_DOMAIN']
+    access_token = get_management_api_token()
+    headers = {'Authorization': f'Bearer {access_token}'}
+
+    # Include fields you want explicitly
+    params = {
+        'fields': 'email,last_ip',
+        'include_fields': 'true',
+        'per_page': 100,
+        'page': 0
+    }
+
+    all_users = []
+    while True:
+        response = requests.get(
+            f'https://{auth0_domain}/api/v2/users',
+            headers=headers,
+            params=params
+        )
+        response.raise_for_status()
+        page_users = response.json()
+        if not page_users:
+            break
+        all_users.extend(page_users)
+        params['page'] += 1
+
+    return all_users
+
+def send_email_async(to, body):
+    threading.Thread(target=send_email, args=(to, body)).start()
+
+def send_email(to, body):
+    msg = Message(
+        subject='Segmentation Task Completed',
+        recipients=[to],
+        body=body
+    )
+    mail.send(msg)

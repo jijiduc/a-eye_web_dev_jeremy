@@ -3,7 +3,7 @@ import os
 UPLOAD_FOLDER = "./static/upload"
 DOWNLOAD_FOLDER = "/app/nnUNet/nnUNet_inference/output"
 OUTPUT_ZIP = "/app/nnUNet/nnUNet_inference/output.zip"
-DATA_FOLDER = "/app/nnUNet/nnUNet_inference/data"  # "smb://filer01.hevs.ch/fs_projets/MatTechLab/A-eye/A-eye_web/data" is not a good path, filer01 needs to be mounted
+DATA_FOLDER = "/app/filer01"  # "smb://filer01.hevs.ch/fs_projets/MatTechLab/A-eye/A-eye_web/data" is not a good path, filer01 needs to be mounted
 LOGS_FOLDER = "./logs"
 ALLOWED_EXTENSIONS = {'gz', 'zip', '7z'}
 
