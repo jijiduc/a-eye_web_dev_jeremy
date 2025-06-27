@@ -163,7 +163,7 @@ def upload_file():
     for file in files:
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)  # Use this werkzeug method to secure filename.
-            filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+            filepath = os.path.join(UPLOAD_FOLDER, filename)
             file.save(filepath)
             uploaded_files.append(filename)
         else:
