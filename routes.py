@@ -159,7 +159,7 @@ def upload_file():
     uploaded_files = []
     rejected_files = []
     
-    # clean_folders()  # Clear previous logs and files before uploading new ones
+    clean_folders()  # Clear previous logs and files before uploading new ones
     
     for file in files:
         if file and allowed_file(file.filename):
@@ -180,15 +180,15 @@ def upload_file():
 
 @bp.route('/segment', methods=['POST'])
 def segment():
-    # Run segmentation function
-    getSegmentation(UPLOAD_FOLDER, DOWNLOAD_FOLDER)
-
-    # Zip folder for download
-    zip_folder(DOWNLOAD_FOLDER, OUTPUT_ZIP)
-    
     # Get user email from session or token
     user_email = session.get("user", {}).get("email", "unknown_user")
     
+    # Run segmentation function
+    getSegmentation(user_email)
+
+    # Zip folder for download
+    zip_folder(DOWNLOAD_FOLDER, OUTPUT_ZIP)
+        
     # Start background thread to copy files (only if output exists)
     has_output = (
         os.path.exists(DOWNLOAD_FOLDER) and

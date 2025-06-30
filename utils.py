@@ -18,6 +18,7 @@ import threading
 import requests
 from app import mail
 from flask_mail import Message
+from string import Template
 from config import (
     DATA_FOLDER,
     LOGS_FOLDER,
@@ -118,6 +119,12 @@ def copy_folder(source, destination):
 def copy_file(source, destination):
     os.makedirs(destination, exist_ok=True)
     shutil.copy(source, destination)
+
+def copy_file_hpc(source, destination):
+    os.system(f'scp {source} {destination}')
+
+def copy_folder_hpc(source, destination):
+    os.system(f'scp -r {source} {destination}')
 
 def delete_files_in_folder(folder):
     for root, dirs, files in os.walk(folder):
@@ -338,3 +345,12 @@ def increment_cases_processed():
 
 def get_cases_processed():
     return load_stats()["cases_processed"]
+
+def modify_jobfile(job_path, user_email):
+    with open("job_template.sh", "r") as f:
+        template = Template(f.read())
+
+    job_script = template.substitute(MAIL_USER=user_email)
+
+    with open(job_path, "w") as f:
+        f.write(job_script)

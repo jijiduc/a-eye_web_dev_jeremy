@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()  # load env variables once
 
 # Paths
-UPLOAD_FOLDER = "./static/upload"
+UPLOAD_FOLDER = "/app/nnUNet/nnUNet_inference/input"
 DOWNLOAD_FOLDER = "/app/nnUNet/nnUNet_inference/output"
 OUTPUT_ZIP = "/app/nnUNet/nnUNet_inference/output.zip"
 DATA_FOLDER = "/app/filer01"
