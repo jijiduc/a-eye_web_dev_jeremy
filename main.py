@@ -28,7 +28,7 @@ def getSegmentation(user_email):
         if ext in ['.zip', '.7z']:
             unzip_file(ext[1:], input, input_hpc)  # ext[1:] removes the dot
         else:  # .nii.gz or other compressed files
-            copy_file_hpc(input, input_hpc)
+            copy_file_hpc(input, input_hpc)  # TODO scp from host to hpc, not from container to hpc
     elif os.path.isdir(input):
         copy_folder_hpc(input, input_hpc)
 
