@@ -11,7 +11,7 @@ from app import oauth
 from config import UPLOAD_FOLDER, DOWNLOAD_FOLDER, OUTPUT_ZIP
 
 bp = Blueprint('routes', __name__)
-cases_processed = 0
+
 high_scale_nb_users = 100
 
 @bp.route("/")
@@ -70,6 +70,7 @@ def logout():
 def users():
     users_data = get_user_data()
     total_users = len(users_data)
+    cases_processed = get_cases_processed()
     
     # Calculate the number of institutions
     domains = set()
@@ -158,7 +159,7 @@ def upload_file():
     uploaded_files = []
     rejected_files = []
     
-    clean_folders()  # Clear previous logs and files before uploading new ones
+    # clean_folders()  # Clear previous logs and files before uploading new ones
     
     for file in files:
         if file and allowed_file(file.filename):
@@ -195,13 +196,14 @@ def segment():
     )
 
     if has_output:
-        # send_email_async(user_email, "A-eye segmentation task completed successfully. You can download the results.")
+        increment_cases_processed()
+        # send_email(user_email, "A-eye segmentation task completed successfully. You can download the results.")
         threading.Thread(
             target=copy_segmentation_data,
             args=(user_email, "/app/nnUNet/nnUNet_inference/input", DOWNLOAD_FOLDER)
         ).start()
     else:
-        # send_email_async(user_email, "A-eye segmentation task failed or no output found.")
+        # send_email(user_email, "A-eye segmentation task failed. Check the logs for details.")
         print("[A-eye] Segmentation failed or no .nii.gz output found. Data not copied!")
 
     return jsonify({"message": "Segmentation completed", "download_url": "/download"}), 200
@@ -220,3 +222,21 @@ def download_files():
     if os.path.exists(OUTPUT_ZIP):
         return send_file(OUTPUT_ZIP, as_attachment=True)
     return "File not found", 404
+
+@bp.route("/test-email")
+def test_email():
+    # Get user email from session or token
+    user_email = session.get("user", {}).get("email", "unknown_user")
+    to = user_email  # use your real address
+    body = "This is a test email from A-eye."
+
+    try:
+        msg = Message(
+            subject="Test Email",
+            recipients=[to],
+            body=body
+        )
+        mail.send(msg)
+        return "Email sent successfully!", 200
+    except Exception as e:
+        return f"Failed to send email: {e}", 500

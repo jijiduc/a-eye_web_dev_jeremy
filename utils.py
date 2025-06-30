@@ -1,5 +1,6 @@
 import os
 import glob
+import json
 import shutil
 import subprocess
 import dicom2nifti
@@ -12,10 +13,9 @@ import pycountry
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from functools import wraps
-from flask import redirect, url_for, session
+from flask import redirect, url_for, session, current_app
 import threading
 import requests
-from flask import current_app
 from app import mail
 from flask_mail import Message
 from config import (
@@ -24,6 +24,8 @@ from config import (
     ALLOWED_EXTENSIONS
 )
 
+
+STATS_FILE = "/app/data/stats.json"
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -310,13 +312,29 @@ def get_user_data():
 
     return all_users
 
-def send_email_async(to, body):
-    threading.Thread(target=send_email, args=(to, body)).start()
+# def send_email_async(to, body):
+#     threading.Thread(target=send_email, args=(to, body)).start()
 
 def send_email(to, body):
-    msg = Message(
-        subject='Segmentation Task Completed',
-        recipients=[to],
-        body=body
-    )
-    mail.send(msg)
+    with current_app.app_context():
+        msg = Message(
+            subject='Segmentation Task Completed',
+            recipients=[to],
+            body=body
+        )
+        mail.send(msg)
+
+def load_stats():
+    if not os.path.exists(STATS_FILE):
+        return {"cases_processed": 0}
+    with open(STATS_FILE, "r") as f:
+        return json.load(f)
+
+def increment_cases_processed():
+    stats = load_stats()
+    stats["cases_processed"] += 1
+    with open(STATS_FILE, "w") as f:
+        json.dump(stats, f)
+
+def get_cases_processed():
+    return load_stats()["cases_processed"]
