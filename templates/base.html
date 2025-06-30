@@ -3,48 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}A-Eye Web Platform{% endblock %}</title>
+    <title>{% block title %}A-eye web platform{% endblock %}</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/A-eye_logo_square_wobg.ico') }}">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-success fixed-top">
-        <a class="navbar-brand" href="{{ url_for('routes.welcome') }}" style="color: #ffffff;">A-Eye</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('routes.welcome') }}">HOME</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('routes.segmentation') }}">SEGMENTATION</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('routes.users') }}">USERS</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('routes.about') }}">ABOUT</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('routes.faq') }}">FAQ</a>
-                </li>
-                {% if session.get('user') %}
+    <nav class="navbar navbar-expand-lg fixed-top custom-header">
+        <div class="container d-flex justify-content-between align-items-center">
+            <!-- Logo -->
+            <div class="logo_container d-flex align-items-center">
+                <a class="navbar-brand" href="{{ url_for('routes.welcome') }}">
+                    <img src="https://fondation-gelbert.ch/wp-content/uploads/2019/08/logo-entete.png"
+                        alt="Fondation Gelbert Logo"
+                        class="gelbert-logo">
+                </a>
+            </div>
+
+            <!-- Navbar toggler (for mobile) -->
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Menu Items -->
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ml-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('routes.profile') }}">PROFILE</a>
+                        <a class="nav-link {% if request.path == url_for('routes.welcome') %}active{% endif %}" href="{{ url_for('routes.welcome') }}">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link logout" href="{{ url_for('routes.logout') }}">LOGOUT</a>
+                        <a class="nav-link {% if request.path == url_for('routes.segmentation') %}active{% endif %}" href="{{ url_for('routes.segmentation') }}">Segmentation</a>
                     </li>
-                {% else %}
                     <li class="nav-item">
-                        <a class="nav-link login" href="{{ url_for('routes.login') }}">LOGIN</a>
+                        <a class="nav-link {% if request.path == url_for('routes.users') %}active{% endif %}" href="{{ url_for('routes.users') }}">Users</a>
                     </li>
-                {% endif %}
-            </ul>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == url_for('routes.about') %}active{% endif %}" href="{{ url_for('routes.about') }}">About</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == url_for('routes.faq') %}active{% endif %}" href="{{ url_for('routes.faq') }}">FAQ</a>
+                    </li>
+                    {% if session.get('user') %}
+                        <li class="nav-item"><a class="nav-link {% if request.path == url_for('routes.profile') %}active{% endif %}" href="{{ url_for('routes.profile') }}">Profile</a></li>
+                        <li class="nav-item"><a class="nav-link logout" href="{{ url_for('routes.logout') }}">Logout</a></li>
+                    {% else %}
+                        <li class="nav-item"><a class="nav-link login" href="{{ url_for('routes.login') }}">Login</a></li>
+                    {% endif %}
+                </ul>
+            </div>
         </div>
     </nav>
     <div class="container">

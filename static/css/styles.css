@@ -3,40 +3,47 @@ body {
     margin: 0;
     padding: 0;
     overflow-x: hidden;
+    padding-top: 80px; /* Match navbar height */
 }
 
 .navbar {
-    height: 170%; /* Augmente la hauteur de l'entête de 70% */
-    background-color: #007849; /* Change la couleur de fond de l'entête */
+    background-color: #007849; /* Green background */
+    height: 80px; /* Corrected fixed height */
 }
 
-.navbar-brand, .navbar-nav .nav-link {
-    line-height: 170%; /* Ajuste la hauteur de ligne pour centrer le texte verticalement */
-    color: #ffffff; /* Change la couleur du texte des liens de navigation */
+.navbar-brand {
+    padding: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
 }
 
-.navbar-nav .nav-item .nav-link {
-    color: #ffffff; /* Change la couleur du texte des liens de navigation */
-    margin-right: 15px; /* Augmente la distance entre les boutons */
+.navbar-nav .nav-link {
+    line-height: 80px; /* Align vertically in navbar */
+    color: #ffffff;
+    font-weight: 500;
+    margin-right: 15px;
+    padding: 0 1rem;
 }
 
-.navbar-nav .nav-item .nav-link.login, .navbar-nav .nav-item .nav-link.logout {
-    font-weight: bold; /* Met le texte en gras pour les boutons LOGIN / LOGOUT */
+.navbar-nav .nav-item .nav-link.login,
+.navbar-nav .nav-item .nav-link.logout {
+    font-weight: bold;
 }
 
 .partner-card {
-    border: 1px solid #ddd; /* Ajoute une bordure grise */
-    padding: 10px; /* Ajoute un padding autour de l'image */
-    text-align: center; /* Centre l'image horizontalement */
-    height: 200px; /* Définit une hauteur fixe pour les cadres */
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: center;
+    height: 200px;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 .partner-card img {
-    max-height: 100%; /* Assure que l'image ne dépasse pas la hauteur du cadre */
-    max-width: 100%; /* Assure que l'image ne dépasse pas la largeur du cadre */
+    max-height: 100%;
+    max-width: 100%;
 }
 
 .animated-background {
@@ -83,25 +90,25 @@ body {
 }
 
 .title-container {
-    background-color: #ffffff; /* Couleur de fond blanche */
-    height: 150px; /* Hauteur fixe pour centrer verticalement */
+    background-color: #ffffff;
+    height: 150px;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
 }
 
-/* Styles pour les éléments de la FAQ */
+/* FAQ */
 .faq-item {
-    width: 100vw; /* Utilise la largeur totale de la fenêtre */
+    width: 100vw;
     padding: 50px;
     box-sizing: border-box;
-    margin-left: calc(-50vw + 50%); /* Centre l'élément */
+    margin-left: calc(-50vw + 50%);
 }
 
 .faq-item .faq-content {
-    max-width: 1125px; /* Limite la largeur du texte */
-    margin: 0 auto; /* Centre le texte horizontalement */
+    max-width: 1125px;
+    margin: 0 auto;
 }
 
 .faq-item p {
@@ -109,32 +116,33 @@ body {
 }
 
 .faq-item p strong {
-    font-size: 1.5em; /* Augmente la taille de la police des questions */
+    font-size: 1.5em;
 }
 
 .faq-item p:not(strong) {
     font-size: 1em;
 }
 
+/* Collaborators */
 .collaborator-card {
-    border: 1px solid #ddd; /* Ajoute une bordure grise */
-    padding: 15px; /* Ajoute un padding autour du contenu */
-    text-align: center; /* Centre le texte horizontalement */
-    height: 350px; /* Définit une hauteur fixe pour les cadres */
+    border: 1px solid #ddd;
+    padding: 15px;
+    text-align: center;
+    height: 350px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    margin-bottom: 20px; /* Ajoute une marge en bas */
+    margin-bottom: 20px;
     background-color: #c1e1be;
     border-radius: 5px;
     align-items: center;
 }
 
 .collaborator-card img {
-    width: 150px; /* Largeur fixe pour les images */
-    height: 150px; /* Hauteur fixe pour les images */
-    object-fit: cover; /* Pour s'assurer que l'image couvre entièrement l'espace */
-    border-radius: 50%; /* Optionnel : pour des images circulaires */
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 50%;
     margin-right: 15px;
 }
 
@@ -142,36 +150,29 @@ body {
     flex: 1;
 }
 
-.collaborator-card .name-section {
-    height: 50px; /* Hauteur fixe pour la section du nom */
-    line-height: 50px; /* Aligne le texte verticalement */
-    border-bottom: 1px solid #ddd; /* Ajoute une bordure en bas */
-    text-align: center; /* Centre le texte horizontalement */
-}
-
+.collaborator-card .name-section,
 .collaborator-card .email-section {
-    height: 50px; /* Hauteur fixe pour la section de l'email */
-    line-height: 50px; /* Aligne le texte verticalement */
-    border-bottom: 1px solid #ddd; /* Ajoute une bordure en bas */
-    text-align: center; /* Centre le texte horizontalement */
+    height: 50px;
+    line-height: 50px;
+    border-bottom: 1px solid #ddd;
+    text-align: center;
 }
 
 .collaborator-card .description-section {
-    height: 150px; /* Hauteur fixe pour la section de la description */
-    overflow: auto; /* Ajoute une barre de défilement si le contenu dépasse */
-    text-align: justify; /* Justifie le texte */
-    text-align: center; /* Centre le texte horizontalement */
+    height: 150px;
+    overflow: auto;
+    text-align: center;
 }
 
-
+/* User stats */
 .user-title {
-    font-size: 2.5em; /* Taille de la police pour le titre */
-    margin-bottom: 20px; /* Marge en bas du titre */
+    font-size: 2.5em;
+    margin-bottom: 20px;
 }
 
 .user-count {
-    font-size: 1.5em; /* Taille de la police pour le nombre d'utilisateurs */
-    color: #007849; /* Couleur du texte */
+    font-size: 1.5em;
+    color: #007849;
 }
 
 .user-container {
@@ -188,20 +189,10 @@ body {
 
 .map-container {
     width: 100%;
-    height: 100vh; /* Adjust the height to be relative to the viewport height */
-    margin: 0 auto; /* Center the map */
+    height: 100vh;
+    margin: 0 auto;
 }
 
-/* Assurez-vous que ce fichier est inclus dans vos pages HTML */
-.navbar {
-    height: 60px; /* Ajustez cette valeur selon la hauteur souhaitée */
-}
-
-body {
-    padding-top: 60px; /* Ajustez cette valeur selon la hauteur de votre barre de navigation */
-}
-
-/* Page users */
 .statistic {
     display: flex;
     flex-direction: column;
@@ -218,6 +209,7 @@ body {
     font-size: 0.8em;
 }
 
+/* Buttons */
 .btn-success {
     background-color: #28a745;
     border-color: #28a745;
@@ -248,6 +240,7 @@ body {
 .list-group-item {
     text-align: left;
 }
+
 .progress {
     width: 100%;
     background-color: #e9ecef;
@@ -264,3 +257,30 @@ body {
     font-weight: bold;
 }
 
+/* Header / Logo */
+.custom-header {
+    background-color: #007849;
+    height: 80px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s ease;
+}
+
+.logo_container img {
+    max-height: 60px;
+}
+
+.navbar-nav .nav-link:hover {
+    color: #000000 !important;
+}
+
+.navbar-nav .nav-link.active {
+    color: #000000 !important; /* Same as hover color */
+    font-weight: bold; /* Optional: to emphasize the active link */
+}
+
+.gelbert-logo {
+    height: auto;
+    max-height: 70px;
+    width: 300px;
+    object-fit: contain;
+}
