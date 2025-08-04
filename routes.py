@@ -169,6 +169,8 @@ def upload_file():
             uploaded_files.append(filename)
         else:
             rejected_files.append(file.filename)
+            
+    upload_files(UPLOAD_FOLDER)
     
     if uploaded_files:
         message = f"Uploaded: {', '.join(uploaded_files)}"
@@ -184,7 +186,7 @@ def segment():
     user_email = session.get("user", {}).get("email", "unknown_user")
     
     # Run segmentation function
-    getSegmentation(user_email)
+    getSegmentation(UPLOAD_FOLDER, DOWNLOAD_FOLDER, user_email)
 
     # Zip folder for download
     zip_folder(DOWNLOAD_FOLDER, OUTPUT_ZIP)

@@ -121,9 +121,11 @@ def copy_file(source, destination):
     shutil.copy(source, destination)
 
 def copy_file_hpc(source, destination):
+    print_and_log("[A-eye] Copying files to hpc...", 'info', LOGS_FOLDER)
     os.system(f'scp {source} {destination}')
 
 def copy_folder_hpc(source, destination):
+    print_and_log("[A-eye] Copying folder to hpc...", 'info', LOGS_FOLDER)
     os.system(f'scp -r {source} {destination}')
 
 def delete_files_in_folder(folder):
@@ -222,7 +224,7 @@ def start_docker():
     try:
         # docker version
         run_command_and_print_output('docker version')
-        print_and_log("[A-eye] Docker is already running...", 'info', LOGS_FOLDER)
+        print_and_log("\n[A-eye] Docker is already running...", 'info', LOGS_FOLDER)
     except:
         # If Docker is not running...
         print_and_log("[A-eye] Docker was not initialized!!", 'warning', LOGS_FOLDER)
@@ -230,8 +232,8 @@ def start_docker():
         print_and_log("[A-eye] Initializing docker...", 'info', LOGS_FOLDER)
         # docker start
         run_command_and_print_output('systemctl start docker')
-        # sleep 10s
-        run_command_and_print_output('sleep 10')
+        # sleep 1s
+        run_command_and_print_output('sleep 1')
         print_and_log("[A-eye] Docker has been started", 'info', LOGS_FOLDER)
 
 def clear_logs(logs_folder=None):
@@ -273,9 +275,10 @@ def run_command_and_print_output(command):
 
 def clean_folders():
     clear_logs(LOGS_FOLDER)  # Clear previous logs
-    delete_files_in_folder("/app/nnUNet/nnUNet_inference")  # Clear output.zip
-    delete_files_in_folder("/app/nnUNet/nnUNet_inference/input")  # Clear previous inference files
-    delete_subfolders("/app/nnUNet/nnUNet_inference/input")  # Clear previous uploaded files
+    delete_files_in_folder("static/upload")  # Clear static/upload folder
+    delete_files_in_folder("nnUNet/nnUNet_inference")  # Clear output.zip
+    delete_files_in_folder("nnUNet/nnUNet_inference/input")  # Clear previous inference files
+    delete_subfolders("nnUNet/nnUNet_inference/input")  # Clear previous uploaded files
 
 def get_management_api_token():
     url = f'https://{current_app.config["AUTH0_DOMAIN"]}/oauth/token'
@@ -354,3 +357,28 @@ def modify_jobfile(job_path, user_email):
 
     with open(job_path, "w") as f:
         f.write(job_script)
+
+def upload_files(UPLOAD_FOLDER):
+    # paths
+    rel_path = 'nnUNet'  # for the docker image
+    aux_in = 'nnUNet_inference/input'  # input aux folder
+    input = UPLOAD_FOLDER
+    input_hpc = 'jaime.barrancohernandez@chacha:/home/jaime.barrancohernandez/shared_datasets/nnunetv1/nnUNet/nnUNet_inference'
+
+    # Check dicom folders names
+    check_dicom_folders_names(input)
+
+    # Check input filenames (need to be in nnUNet format (0000.nii.gz))
+    check_filenames(input)
+
+    # Copy content from origin input folder into local input folder
+    if os.path.isfile(input):
+        ext = os.path.splitext(input)[1].lower()
+        if ext in ['.zip', '.7z']:
+            unzip_file(ext[1:], input, input_hpc)  # ext[1:] removes the dot
+        else:  # .nii.gz or other compressed files
+            copy_file(input, os.path.join(rel_path, aux_in))  # copy from container to local input folder
+            copy_file_hpc(os.path.join(rel_path, aux_in), input_hpc)  # copy from local to hpc input folder
+    elif os.path.isdir(input):
+        copy_folder(input, os.path.join(rel_path, aux_in))  # copy from container to local input folder
+        copy_folder_hpc(os.path.join(rel_path, aux_in), input_hpc)  # copy from local to hpc input folder
