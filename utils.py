@@ -170,23 +170,23 @@ def check_dicom_folders_names(folder):
             convert_to_nifti(folder)
 
 def check_filenames(folder):
-    file_paths = glob.glob(f'{folder}/*.nii.gz')
-    for file_path in file_paths:
-        file_extensions = []
-        while True:
-            file_path, ext = os.path.splitext(file_path)
-            if ext:
-                file_extensions.insert(0, ext)
-            else:
-                break
-        file_extension = ''.join(file_extensions)
-        file_name = os.path.basename(file_path)
-        file_path = f'{file_path}{file_extension}'
-        print_and_log(f'[A-eye] file name: {file_name}', 'info', LOGS_FOLDER)
+    for file_path in glob.glob(os.path.join(folder, '*')):   # catch any case; we'll filter below
+        # only operate on files that end with .nii.gz (case-insensitive)
+        if not file_path.lower().endswith('.nii.gz'):
+            continue
+
+        original_basename = os.path.basename(file_path)   # e.g. "x_...1.000.nii.gz"
+        base_no_ext = original_basename[:-len('.nii.gz')] # e.g. "x_...1.000"
+        file_extension = '.nii.gz'
+
+        print_and_log(f'[A-eye] file name: {original_basename}', 'info', LOGS_FOLDER)
+        print_and_log(f'[A-eye] file base (no ext): {base_no_ext}', 'info', LOGS_FOLDER)
         print_and_log(f'[A-eye] file extension: {file_extension}', 'info', LOGS_FOLDER)
         print_and_log(f'[A-eye] absolute file path: {file_path}', 'info', LOGS_FOLDER)
-        if not str(file_name).endswith('_0000'):
-            correct_filename(file_path, file_name, file_extension)
+
+        if not base_no_ext.endswith('_0000'):
+            # pass base without extension so correct_filename can build: base_no_ext + '_0000' + '.nii.gz'
+            correct_filename(file_path, base_no_ext, file_extension)
 
 def correct_filename(file_path, file_name, file_extension):
     print_and_log('[A-eye] Changing filename to nnUNet format...', 'info', LOGS_FOLDER)
@@ -368,7 +368,7 @@ def upload_files(UPLOAD_FOLDER):
     # Check dicom folders names
     check_dicom_folders_names(input)
 
-    # Check input filenames (need to be in nnUNet format (0000.nii.gz))
+    # Check input filenames (need to be in nnUNet format (_0000.nii.gz))
     check_filenames(input)
 
     # Copy content from origin input folder into local input folder
