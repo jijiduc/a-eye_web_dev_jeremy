@@ -186,7 +186,7 @@ def segment():
     user_email = session.get("user", {}).get("email", "unknown_user")
     
     # Run segmentation function
-    getSegmentation(UPLOAD_FOLDER, DOWNLOAD_FOLDER, user_email)
+    getSegmentation(DOWNLOAD_FOLDER, user_email)
 
     # Zip folder for download
     zip_folder(DOWNLOAD_FOLDER, OUTPUT_ZIP)

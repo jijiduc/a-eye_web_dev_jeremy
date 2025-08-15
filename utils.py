@@ -22,11 +22,10 @@ from string import Template
 from config import (
     DATA_FOLDER,
     LOGS_FOLDER,
-    ALLOWED_EXTENSIONS
+    ALLOWED_EXTENSIONS,
+    STATS_FILE
 )
 
-
-STATS_FILE = "/app/data/stats.json"
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -349,13 +348,13 @@ def increment_cases_processed():
 def get_cases_processed():
     return load_stats()["cases_processed"]
 
-def modify_jobfile(job_path, user_email):
-    with open("job_template.sh", "r") as f:
+def modify_jobfile(jobfile, user_email): # TODO: fix this
+    with open(jobfile, "r") as f:
         template = Template(f.read())
 
     job_script = template.substitute(MAIL_USER=user_email)
 
-    with open(job_path, "w") as f:
+    with open(jobfile, "w") as f:
         f.write(job_script)
 
 def upload_files(UPLOAD_FOLDER):
