@@ -136,3 +136,4 @@ nnUNet/
 nnUNetv2/
 *.err
 *.out
+.jobfiles/nnunet_inference.sh

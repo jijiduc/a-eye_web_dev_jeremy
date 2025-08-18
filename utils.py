@@ -20,6 +20,7 @@ import requests
 from app import mail
 from flask_mail import Message
 from string import Template
+import gzip
 from config import (
     DATA_FOLDER,
     LOGS_FOLDER,
@@ -193,6 +194,14 @@ def check_dicom_folders_names(folder):
                 os.rename(dicom_folder, new_folder_path)
             # Convert to nifti
             convert_to_nifti(folder)
+
+
+def check_nifti_files(folder):
+    for file_path in glob.glob(os.path.join(folder, '*.nii')):
+        gz_path = file_path + '.gz'
+        with open(file_path, 'rb') as f_in, gzip.open(gz_path, 'wb') as f_out:
+            shutil.copyfileobj(f_in, f_out)
+        os.remove(file_path)
 
 
 def check_filenames(folder):
@@ -439,6 +448,9 @@ def upload_files(UPLOAD_FOLDER):
 
     # Check dicom folders names
     check_dicom_folders_names(input)
+    
+    # Check nifti files
+    check_nifti_files(input)
 
     # Check input filenames (need to be in nnUNet format (_0000.nii.gz))
     check_filenames(input)

@@ -139,15 +139,18 @@ def users():
 def about():
     return render_template("about.html")
 
+
 @bp.route("/faq")
 def faq():
     return render_template("faq.html")
+
 
 @bp.route("/segmentation")
 def segmentation():
     if 'user' in session:
         return render_template('segmentation.html')
     return redirect(url_for('routes.login'))
+
 
 @bp.route('/upload', methods=['POST'])
 def upload_file():
@@ -180,6 +183,7 @@ def upload_file():
     else:
         return jsonify({'message': 'No valid files uploaded', 'status': 'error'}), 400
 
+
 @bp.route('/segment', methods=['POST'])
 def segment():
     # Get user email from session or token
@@ -210,6 +214,7 @@ def segment():
 
     return jsonify({"message": "Segmentation completed", "download_url": "/download"}), 200
 
+
 @bp.route('/profile')
 @requires_auth  # Ensure only logged-in users can view this
 def profile():
@@ -219,11 +224,13 @@ def profile():
 
     return render_template("profile.html", user=user)
 
+
 @bp.route('/download', methods=['GET'])
 def download_files():
     if os.path.exists(OUTPUT_ZIP):
         return send_file(OUTPUT_ZIP, as_attachment=True)
     return "File not found", 404
+
 
 @bp.route("/test-email")
 def test_email():

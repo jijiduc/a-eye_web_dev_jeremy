@@ -9,7 +9,7 @@ DOWNLOAD_FOLDER = "./nnUNet/nnUNet_inference/output"
 OUTPUT_ZIP = "./nnUNet/nnUNet_inference/output.zip"
 DATA_FOLDER = "/mnt/filer01/MatTechLab/A-eye/A-eye_web/data"
 LOGS_FOLDER = "./logs"
-ALLOWED_EXTENSIONS = {'gz', 'zip', '7z'}
+ALLOWED_EXTENSIONS = {'gz', 'zip', '7z', 'nii'}
 STATS_FILE = "./data/stats.json"
 
     
