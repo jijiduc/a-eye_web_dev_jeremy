@@ -202,7 +202,7 @@ def segment():
         # send_email(user_email, "A-eye segmentation task completed successfully. You can download the results.")
         threading.Thread(
             target=copy_segmentation_data,
-            args=(user_email, "/app/nnUNet/nnUNet_inference/input", DOWNLOAD_FOLDER)
+            args=(user_email, "./nnUNet/nnUNet_inference/input", DOWNLOAD_FOLDER)
         ).start()
     else:
         # send_email(user_email, "A-eye segmentation task failed. Check the logs for details.")
