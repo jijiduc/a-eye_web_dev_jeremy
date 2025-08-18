@@ -129,6 +129,12 @@ def copy_file(source, destination):
     shutil.copy(source, destination)
 
 
+def move_file(pattern, destination):
+    os.makedirs(destination, exist_ok=True)
+    for file_path in glob.glob(pattern):
+        shutil.move(file_path, destination)
+
+
 def copy_file_hpc(source, destination):
     print_and_log(f"[A-eye] Copying files from {source} to {destination}...", 'info', LOGS_FOLDER)
     os.system(f'scp {source} {destination}')
@@ -137,6 +143,11 @@ def copy_file_hpc(source, destination):
 def copy_folder_hpc(source, destination):
     print_and_log(f"[A-eye] Copying files from {source} to {destination}...", 'info', LOGS_FOLDER)
     os.system(f'scp -r {source} {destination}')
+
+
+def copy_files_in_folder_hpc(source, destination):
+    print_and_log(f"[A-eye] Copying files from {source} to {destination}...", 'info', LOGS_FOLDER)
+    os.system(f'scp {source}/* {destination}')
 
 
 def delete_files_in_folder(folder):
@@ -299,13 +310,12 @@ def run_command_and_print_output(command):
 
 def clean_folders():
     clear_logs(LOGS_FOLDER)  # Clear previous logs
-    clear_logs(f'{DOWNLOAD_FOLDER}/logs')  # Clear previous logs in download folder
+    delete_files_in_folder(f'{DOWNLOAD_FOLDER}/logs')  # Clear previous logs in download folder
     delete_files_in_folder("static/upload")  # Clear static/upload folder
     delete_files_in_folder("nnUNet/nnUNet_inference")  # Clear output.zip
     delete_files_in_folder("nnUNet/nnUNet_inference/input")  # Clear previous inference files
     delete_subfolders("nnUNet/nnUNet_inference/input")  # Clear previous uploaded files
-    delete_files_in_folder("nnUNet/nnUNet_inference/output/nnunet")  # Clear previous inference output
-    delete_subfolders("nnUNet/nnUNet_inference/output/nnunet")  # Clear previous inference output subfolders
+    delete_files_in_folder("nnUNet/nnUNet_inference/output")  # Clear previous inference output
 
 
 def get_management_api_token():
@@ -384,32 +394,32 @@ def get_cases_processed():
     return load_stats()["cases_processed"]
 
 
-def modify_jobfile(template_file, user_email, timestamp, output_file="jobfile.sh"):
+def modify_jobfile(template_file, user_email, timestamp, output_file):
+
     # Make the email safe for paths
     safe_email = re.sub(r'[@.]', '_', user_email)
 
     # Base results dir (from your template)
     base_results_dir = "/home/jaime.barrancohernandez/results/nnunet"
 
-    # Custom subdir
-    user_dir = os.path.join(base_results_dir, f"{safe_email}_{timestamp}")
-
     # Read the template
     with open(template_file, "r") as f:
         template = Template(f.read())
+        job_script = template.safe_substitute(MAIL_USER=user_email)
 
-    # Substitute MAIL_USER
-    # job_script = template.substitute(MAIL_USER=user_email)  # only works for hevs accounts
+    # Construct filenames (no subdir, just safe_email and timestamp in name)
+    out_file = f"{base_results_dir}/nnUNet_predict_{safe_email}_{timestamp}.%N.%j.%a.out"
+    err_file = f"{base_results_dir}/nnUNet_predict_{safe_email}_{timestamp}.%N.%j.%a.err"
 
-    # Replace output/error lines with new folder
+    # Replace output/error lines
     job_script = re.sub(
         r'(#SBATCH --output=).+\.out',
-        rf'\1{user_dir}/nnUNet_predict.%N.%j.%a.out',
+        rf'\1{out_file}',
         job_script
     )
     job_script = re.sub(
         r'(#SBATCH --error=).+\.err',
-        rf'\1{user_dir}/nnUNet_predict.%N.%j.%a.err',
+        rf'\1{err_file}',
         job_script
     )
 

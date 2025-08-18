@@ -6,8 +6,8 @@
 #SBATCH --mem=64gb             # total memory (--mem-per-cpu per cpu-core 4G is default)
 #SBATCH --time=1-23:59:00      # total run time limit (HH:MM:SS)
 #SBATCH --gres=gpu:1           # number of gpus per node
-#SBATCH --output=/home/jaime.barrancohernandez/results/nnunetv1/jaime_barrancohernandez_unil_ch_20250818_115726/nnUNet_predict.%N.%j.%a.out  # output log
-#SBATCH --error=/home/jaime.barrancohernandez/results/nnunetv1/jaime_barrancohernandez_unil_ch_20250818_115726/nnUNet_predict.%N.%j.%a.err   # error log
+#SBATCH --output=/home/jaime.barrancohernandez/results/nnunet/nnUNet_predict_jaime_barrancohernandez_unil_ch_20250818_142357.%N.%j.%a.out  # output log
+#SBATCH --error=/home/jaime.barrancohernandez/results/nnunet/nnUNet_predict_jaime_barrancohernandez_unil_ch_20250818_142357.%N.%j.%a.err   # error log
 #SBATCH --mail-type=BEGIN,END  # send email when job begins and ends
 #SBATCH --mail-user=jaime.barrancohernandez@hevs.ch # email address to send notifications
 

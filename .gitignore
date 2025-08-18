@@ -132,6 +132,7 @@ dmypy.json
 
 # Others
 static/
-
 nnUNet/
 nnUNetv2/
+*.err
+*.out
