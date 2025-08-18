@@ -348,7 +348,7 @@ def increment_cases_processed():
 def get_cases_processed():
     return load_stats()["cases_processed"]
 
-def modify_jobfile(jobfile, user_email): # TODO: fix this
+def modify_jobfile(jobfile, user_email):
     with open(jobfile, "r") as f:
         template = Template(f.read())
 
