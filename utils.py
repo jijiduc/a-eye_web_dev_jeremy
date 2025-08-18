@@ -395,35 +395,37 @@ def get_cases_processed():
 
 
 def modify_jobfile(template_file, user_email, timestamp, output_file):
-
+    """Modify the jobfile template with user-specific information."""
+    
     # Make the email safe for paths
     safe_email = re.sub(r'[@.]', '_', user_email)
 
-    # Base results dir (from your template)
+    # Base results dir
     base_results_dir = "/home/jaime.barrancohernandez/results/nnunet"
+
+    # Create unique folder for this user + timestamp
+    user_dir = os.path.join(base_results_dir, f"{safe_email}_{timestamp}")
+    os.system(f"ssh jaime.barrancohernandez@chacha 'mkdir -p {user_dir}'")
 
     # Read the template
     with open(template_file, "r") as f:
         template = Template(f.read())
         job_script = template.safe_substitute(MAIL_USER=user_email)
 
-    # Construct filenames (no subdir, just safe_email and timestamp in name)
-    out_file = f"{base_results_dir}/nnUNet_predict_{safe_email}_{timestamp}.%N.%j.%a.out"
-    err_file = f"{base_results_dir}/nnUNet_predict_{safe_email}_{timestamp}.%N.%j.%a.err"
+    # Update SBATCH output/error paths
+    out_file = f"{user_dir}/{safe_email}_{timestamp}_nnUNet_predict.%N.%j.%a.out"
+    err_file = f"{user_dir}/{safe_email}_{timestamp}_nnUNet_predict.%N.%j.%a.err"
+    job_script = re.sub(r'(#SBATCH --output=).+\.out', rf'\1{out_file}', job_script)
+    job_script = re.sub(r'(#SBATCH --error=).+\.err', rf'\1{err_file}', job_script)
 
-    # Replace output/error lines
+    # Update the specific --bind line
     job_script = re.sub(
-        r'(#SBATCH --output=).+\.out',
-        rf'\1{out_file}',
-        job_script
-    )
-    job_script = re.sub(
-        r'(#SBATCH --error=).+\.err',
-        rf'\1{err_file}',
+        r'--bind\s+/home/jaime\.barrancohernandez/results/nnunet:/output',
+        f"--bind {user_dir}:/output",
         job_script
     )
 
-    # Write to new jobfile
+    # Write modified jobfile
     with open(output_file, "w") as f:
         f.write(job_script)
 
