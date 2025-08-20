@@ -3,16 +3,34 @@ from dotenv import load_dotenv
 
 load_dotenv()  # load env variables once
 
-# Paths
-UPLOAD_FOLDER = "./static/upload"
-DOWNLOAD_FOLDER = "./nnUNet/nnUNet_inference/output"
-OUTPUT_ZIP = "./nnUNet/nnUNet_inference/output.zip"
-DATA_FOLDER = "/mnt/filer01/MatTechLab/A-eye/A-eye_web/data"
-LOGS_FOLDER = "./logs"
+# PATHS
+
+# configs
 ALLOWED_EXTENSIONS = {'gz', 'zip', '7z', 'nii'}
 STATS_FILE = "./data/stats.json"
 
-    
+# local
+UPLOAD_FOLDER = "./static/upload"
+AUX_BASE_FOLDER = "./nnUNet/nnUNet_inference"
+AUX_INPUT_FOLDER = "./nnUNet/nnUNet_inference/input"
+DOWNLOAD_FOLDER = "./nnUNet/nnUNet_inference/output"
+OUTPUT_ZIP = "./nnUNet/nnUNet_inference/output.zip"
+LOGS_FOLDER = "./logs"
+JOBFILE_TEMPLATE = "./jobfiles/nnunet_inference_template.sh"
+JOBFILE = "./jobfiles/nnunet_inference.sh"
+
+# HPC
+SSH_USER = "jaime.barrancohernandez@chacha"
+BASE_INPUT_HPC = "/home/jaime.barrancohernandez/shared_datasets/nnunet/nnUNet/nnUNet_inference"
+INPUT_HPC = "/home/jaime.barrancohernandez/shared_datasets/nnunet/nnUNet/nnUNet_inference/input"
+OUTPUT_HPC = "/home/jaime.barrancohernandez/results/nnunet"
+JOBFILE_HPC = "/home/jaime.barrancohernandez/shared_datasets/nnunet/nnunet_inference.sh"
+
+# mount
+DATA_FOLDER = "/mnt/filer01/MatTechLab/A-eye/A-eye_web/data"
+
+
+# Flask configuration
 class Config:
     # Flask secret key
     SECRET_KEY = os.getenv('SECRET_KEY')

@@ -21,13 +21,7 @@ from app import mail
 from flask_mail import Message
 from string import Template
 import gzip
-from config import (
-    DATA_FOLDER,
-    LOGS_FOLDER,
-    DOWNLOAD_FOLDER,
-    ALLOWED_EXTENSIONS,
-    STATS_FILE
-)
+from config import *
 
 
 def allowed_file(filename):
@@ -155,19 +149,19 @@ def move_file(pattern, destination):
         shutil.move(file_path, destination)
 
 
-def copy_file_hpc(source, destination):
+def copy_file_to_hpc(source, destination):
     print_and_log(f"[A-eye] Copying files from {source} to {destination}...", 'info', LOGS_FOLDER)
-    os.system(f'scp {source} {destination}')
+    os.system(f'scp {source} "{SSH_USER}:{destination}"')
 
 
-def copy_folder_hpc(source, destination):
+def copy_folder_to_hpc(source, destination):
     print_and_log(f"[A-eye] Copying files from {source} to {destination}...", 'info', LOGS_FOLDER)
-    os.system(f'scp -r {source} {destination}')
+    os.system(f'scp -r {source} "{SSH_USER}:{destination}"')
 
 
-def copy_files_in_folder_hpc(source, destination):
+def copy_files_from_hpc(source, destination):
     print_and_log(f"[A-eye] Copying files from {source} to {destination}...", 'info', LOGS_FOLDER)
-    os.system(f'scp {source}/* {destination}')
+    os.system(f'scp "{SSH_USER}:{source}/*" {destination}')
 
 
 def delete_files_in_folder(folder):
@@ -177,6 +171,17 @@ def delete_files_in_folder(folder):
                 os.remove(os.path.join(root, file))
             except Exception as e:
                 print_and_log(f"[A-eye] Failed to delete {folder}. Reason: {e}", 'error', LOGS_FOLDER)
+
+def clean_folder_hpc(folder):
+    """
+    Cleans the specified folder on the HPC by deleting all files and subfolders.
+    """
+    print_and_log(f"[A-eye] Cleaning folder {folder} on HPC...", 'info', LOGS_FOLDER)
+    try:
+        os.system(f'ssh {SSH_USER} "rm -rf {folder}/*"')
+        print_and_log(f"[A-eye] Folder {folder} cleaned successfully.", 'info', LOGS_FOLDER)
+    except Exception as e:
+        print_and_log(f"[A-eye] Failed to clean folder {folder}. Reason: {e}", 'error', LOGS_FOLDER)
 
 
 def delete_folder(folder):
@@ -339,13 +344,14 @@ def run_command_and_print_output(command):
 def clean_folders():
     clear_logs(LOGS_FOLDER)  # Clear previous logs
     delete_files_in_folder(f'{DOWNLOAD_FOLDER}/logs')  # Clear previous logs in download folder
-    delete_files_in_folder("static/upload")  # Clear static/upload folder
-    delete_subfolders("static/upload") # Clear previous uploaded files
-    delete_files_in_folder("nnUNet/nnUNet_inference")  # Clear output.zip
-    delete_files_in_folder("nnUNet/nnUNet_inference/input")  # Clear previous inference files
-    delete_subfolders("nnUNet/nnUNet_inference/input")  # Clear previous uploaded files
-    delete_files_in_folder("nnUNet/nnUNet_inference/output")  # Clear previous inference output
-    
+    delete_files_in_folder(UPLOAD_FOLDER)  # Clear static/upload folder
+    delete_subfolders(UPLOAD_FOLDER) # Clear previous uploaded files
+    delete_files_in_folder(AUX_BASE_FOLDER)  # Clear output.zip
+    delete_files_in_folder(AUX_INPUT_FOLDER)  # Clear previous inference files
+    delete_subfolders(AUX_INPUT_FOLDER)  # Clear previous uploaded files
+    delete_files_in_folder(DOWNLOAD_FOLDER)  # Clear previous inference output
+    clean_folder_hpc(INPUT_HPC)  # Clear previous input files on HPC
+    clean_folder_hpc(OUTPUT_HPC)  # Clear previous inference output on HPC
 
 
 def get_management_api_token():
@@ -462,11 +468,8 @@ def modify_jobfile(template_file, user_email, timestamp, output_file):
 
 def upload_files(UPLOAD_FOLDER):
     # paths
-    rel_path = './nnUNet'  # for the docker image
-    aux_in = 'nnUNet_inference/input'  # input aux folder (inside rel_path)
-    input_hpc = 'jaime.barrancohernandez@chacha:/home/jaime.barrancohernandez/shared_datasets/nnunet/nnUNet/nnUNet_inference'
-    
-    local_aux_in = os.path.join(rel_path, aux_in)
+    aux_in = AUX_INPUT_FOLDER
+    base_input_hpc = BASE_INPUT_HPC  # input folder on HPC
 
     # 1. Check if input folder contains zip/7z files and unzip them
     if os.path.isdir(UPLOAD_FOLDER):
@@ -486,8 +489,8 @@ def upload_files(UPLOAD_FOLDER):
     # 4. Check filenames
     check_filenames(UPLOAD_FOLDER)
 
-    # 5. Copy the final results to rel_path+aux_in
-    copy_clean_files(UPLOAD_FOLDER, local_aux_in)
+    # 5. Copy the final results to aux_in
+    copy_clean_files(UPLOAD_FOLDER, aux_in)
 
-    # 6. Copy rel_path+aux_in to input_hpc
-    copy_folder_hpc(local_aux_in, input_hpc)
+    # 6. Copy aux_in to base_input_hpc
+    copy_folder_to_hpc(aux_in, base_input_hpc)
