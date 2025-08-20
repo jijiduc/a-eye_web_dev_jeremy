@@ -86,15 +86,17 @@ def copy_segmentation_data(user_email, input, output):
 def unzip_file(file_type, source, destination):
     try:
         os.makedirs(destination, exist_ok=True)
-        
+
         if file_type == 'zip':
             print_and_log(f'[A-eye] Unzipping ZIP file: {source}', 'info', LOGS_FOLDER)
             with zipfile.ZipFile(source, 'r') as zip_ref:
-                # Prevent Zip Slip vulnerability
+                abs_dest = os.path.abspath(destination)
+
                 for member in zip_ref.namelist():
-                    member_path = os.path.normpath(os.path.join(destination, member))
-                    if not member_path.startswith(os.path.abspath(destination)):
-                        raise Exception("Unsafe path in zip file!")
+                    member_path = os.path.abspath(os.path.join(destination, member))
+                    if not os.path.commonpath([abs_dest, member_path]) == abs_dest:
+                        raise Exception(f"Unsafe path in zip file: {member}")
+
                 zip_ref.extractall(destination)
 
         elif file_type == '7z':
@@ -118,11 +120,28 @@ def copy_folder(source, destination):
         if os.path.isdir(s):
             shutil.copytree(s, d)
         else:
-            type = s.split('.')[-1].lower()
-            if type == 'zip' or type == '7z':
-                unzip_file(type, s, destination)
-            else:
-                shutil.copy2(s, d)
+            shutil.copy2(s, d)
+
+
+def copy_clean_files(src_folder, dst_folder):
+    """
+    Copy only *_0000.nii.gz files from src_folder (and subfolders)
+    into dst_folder (flat, no subfolder structure).
+    """
+    os.makedirs(dst_folder, exist_ok=True)
+
+    for root, _, files in os.walk(src_folder):
+        for f in files:
+            if f.endswith("_0000.nii.gz"):
+                src_path = os.path.join(root, f)
+                dest_path = os.path.join(dst_folder, f)
+
+                # Avoid overwriting if two files have the same name
+                if os.path.exists(dest_path):
+                    base, ext = os.path.splitext(f)
+                    dest_path = os.path.join(dst_folder, f"{base}_dup{ext}")
+
+                shutil.copy2(src_path, dest_path)
 
 
 def copy_file(source, destination):
@@ -197,7 +216,7 @@ def check_dicom_folders_names(folder):
 
 
 def check_nifti_files(folder):
-    for file_path in glob.glob(os.path.join(folder, '*.nii')):
+    for file_path in glob.glob(os.path.join(folder, '**', '*.nii'), recursive=True):
         gz_path = file_path + '.gz'
         with open(file_path, 'rb') as f_in, gzip.open(gz_path, 'wb') as f_out:
             shutil.copyfileobj(f_in, f_out)
@@ -205,7 +224,7 @@ def check_nifti_files(folder):
 
 
 def check_filenames(folder):
-    for file_path in glob.glob(os.path.join(folder, '*')):   # catch any case; we'll filter below
+    for file_path in glob.glob(os.path.join(folder, '**', '*'), recursive=True):   # catch any case; we'll filter below
         # only operate on files that end with .nii.gz (case-insensitive)
         if not file_path.lower().endswith('.nii.gz'):
             continue
@@ -321,10 +340,12 @@ def clean_folders():
     clear_logs(LOGS_FOLDER)  # Clear previous logs
     delete_files_in_folder(f'{DOWNLOAD_FOLDER}/logs')  # Clear previous logs in download folder
     delete_files_in_folder("static/upload")  # Clear static/upload folder
+    delete_subfolders("static/upload") # Clear previous uploaded files
     delete_files_in_folder("nnUNet/nnUNet_inference")  # Clear output.zip
     delete_files_in_folder("nnUNet/nnUNet_inference/input")  # Clear previous inference files
     delete_subfolders("nnUNet/nnUNet_inference/input")  # Clear previous uploaded files
     delete_files_in_folder("nnUNet/nnUNet_inference/output")  # Clear previous inference output
+    
 
 
 def get_management_api_token():
@@ -441,28 +462,32 @@ def modify_jobfile(template_file, user_email, timestamp, output_file):
 
 def upload_files(UPLOAD_FOLDER):
     # paths
-    rel_path = 'nnUNet'  # for the docker image
-    aux_in = 'nnUNet_inference/input'  # input aux folder
-    input = UPLOAD_FOLDER
+    rel_path = './nnUNet'  # for the docker image
+    aux_in = 'nnUNet_inference/input'  # input aux folder (inside rel_path)
     input_hpc = 'jaime.barrancohernandez@chacha:/home/jaime.barrancohernandez/shared_datasets/nnunet/nnUNet/nnUNet_inference'
-
-    # Check dicom folders names
-    check_dicom_folders_names(input)
     
-    # Check nifti files
-    check_nifti_files(input)
+    local_aux_in = os.path.join(rel_path, aux_in)
 
-    # Check input filenames (need to be in nnUNet format (_0000.nii.gz))
-    check_filenames(input)
+    # 1. Check if input folder contains zip/7z files and unzip them
+    if os.path.isdir(UPLOAD_FOLDER):
+        for file in os.listdir(UPLOAD_FOLDER):
+            fpath = os.path.join(UPLOAD_FOLDER, file)
+            if os.path.isfile(fpath):
+                ext = os.path.splitext(file)[1].lower()
+                if ext in ['.zip', '.7z']:
+                    unzip_file(ext[1:], fpath, UPLOAD_FOLDER)  # unzip into the same input folder
 
-    # Copy content from origin input folder into local input folder
-    if os.path.isfile(input):
-        ext = os.path.splitext(input)[1].lower()
-        if ext in ['.zip', '.7z']:
-            unzip_file(ext[1:], input, input_hpc)  # ext[1:] removes the dot
-        else:  # .nii.gz or other compressed files
-            copy_file(input, os.path.join(rel_path, aux_in))  # copy from container to local input folder
-            copy_file_hpc(os.path.join(rel_path, aux_in), input_hpc)  # copy from local to hpc input folder
-    elif os.path.isdir(input):
-        copy_folder(input, os.path.join(rel_path, aux_in))  # copy from container to local input folder
-        copy_folder_hpc(os.path.join(rel_path, aux_in), input_hpc)  # copy from local to hpc input folder
+    # 2. Check dicom folders
+    check_dicom_folders_names(UPLOAD_FOLDER)
+
+    # 3. Check nifti files
+    check_nifti_files(UPLOAD_FOLDER)
+
+    # 4. Check filenames
+    check_filenames(UPLOAD_FOLDER)
+
+    # 5. Copy the final results to rel_path+aux_in
+    copy_clean_files(UPLOAD_FOLDER, local_aux_in)
+
+    # 6. Copy rel_path+aux_in to input_hpc
+    copy_folder_hpc(local_aux_in, input_hpc)
