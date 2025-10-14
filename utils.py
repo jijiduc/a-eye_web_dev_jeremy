@@ -74,7 +74,7 @@ def copy_segmentation_data(user_email, input, output):
     copy_folder(input, input_dest)
     copy_folder(output, output_dest)
     
-    print(f"Copied segmentation data to {dest_dir}")
+    print_and_log(f"Copied segmentation data to {dest_dir}", 'info', LOGS_FOLDER)
 
 
 def unzip_file(file_type, source, destination):
@@ -150,17 +150,17 @@ def move_file(pattern, destination):
 
 
 def copy_file_to_hpc(source, destination):
-    print_and_log(f"[A-eye] Copying files from {source} to {destination}...", 'info', LOGS_FOLDER)
+    print_and_log(f"[A-eye] Copying files from local {source} to HPC {destination}...", 'info', LOGS_FOLDER)
     os.system(f'scp {source} "{SSH_USER}:{destination}"')
 
 
 def copy_folder_to_hpc(source, destination):
-    print_and_log(f"[A-eye] Copying files from {source} to {destination}...", 'info', LOGS_FOLDER)
+    print_and_log(f"[A-eye] Copying files from local {source} to HPC {destination}...", 'info', LOGS_FOLDER)
     os.system(f'scp -r {source} "{SSH_USER}:{destination}"')
 
 
 def copy_files_from_hpc(source, destination):
-    print_and_log(f"[A-eye] Copying files from {source} to {destination}...", 'info', LOGS_FOLDER)
+    print_and_log(f"[A-eye] Copying files from HPC {source} to local {destination}...", 'info', LOGS_FOLDER)
     os.system(f'scp "{SSH_USER}:{source}/*" {destination}')
 
 
