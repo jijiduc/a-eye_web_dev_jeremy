@@ -131,7 +131,10 @@ dmypy.json
 .vscode/
 
 # Others
-static/
+# Ignore everything under static/ except the images directory and its contents
+static/*
+!static/images/
+!static/images/**
 nnUNet/
 nnUNetv2/
 *.err
