@@ -1,7 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=nnv1_inf    # job name
 #SBATCH --nodes=1              # number of nodes to use
-#SBATCH --partition=Dance      # partition to run the job on. Default is 'Dance'. For specific one, write --nodelist=chacha or disco
 #SBATCH --ntasks=1             # total number of tasks across all nodes
 #SBATCH --cpus-per-task=10     # cpu-cores per task (>1 if multi-threaded tasks)
 #SBATCH --mem=64gb             # total memory (--mem-per-cpu per cpu-core 4G is default)
