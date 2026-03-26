@@ -9,7 +9,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./nnUNet:/app/nnUNet
-      - /mnt/filer01/MatTechLab/A-eye/A-eye_web/data:/app/filer01/
+      - /mnt/filer01/MatTechLab/jaime.barranco/A-eye/A-eye_web/data:/app/filer01/
       - ./data:/app/data  # for stats
     env_file:
       - .env
