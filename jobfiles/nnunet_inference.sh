@@ -1,14 +1,13 @@
 #!/bin/bash
-#SBATCH --job-name=nnv1_inf    # job name
-#SBATCH --nodes=1              # number of nodes to use
-#SBATCH --partition=Dance      # partition to run the job on. Default is 'Dance'. For specific one, write --nodelist=chacha or disco
-#SBATCH --ntasks=1             # total number of tasks across all nodes
-#SBATCH --cpus-per-task=10     # cpu-cores per task (>1 if multi-threaded tasks)
-#SBATCH --mem=64gb             # total memory (--mem-per-cpu per cpu-core 4G is default)
-#SBATCH --time=1-23:59:00      # total run time limit (HH:MM:SS)
-#SBATCH --gres=gpu:1           # number of gpus per node
-#SBATCH --output=/home/jaime.barrancohernandez/results/nnunet/jaime_barrancohernandez_unil_ch_20250820_152248/jaime_barrancohernandez_unil_ch_20250820_152248_nnUNet_predict.%N.%j.%a.out  # output log
-#SBATCH --error=/home/jaime.barrancohernandez/results/nnunet/jaime_barrancohernandez_unil_ch_20250820_152248/jaime_barrancohernandez_unil_ch_20250820_152248_nnUNet_predict.%N.%j.%a.err   # error log
+#SBATCH --job-name=nnUNetv1_inf  # job name
+#SBATCH --nodes=1                # number of nodes to use
+#SBATCH --ntasks=1               # total number of tasks across all nodes
+#SBATCH --cpus-per-task=4        # moderate CPU headroom for multi-image preprocessing and inference
+#SBATCH --mem=16gb               # scaled from the 3.65 GB single-image run with room for batch variation
+#SBATCH --time=04:00:00          # sized for batches of normal images instead of a single ~1 min case
+#SBATCH --gres=gpu:1             # number of gpus per node
+#SBATCH --output=/home/jaime.barrancohernandez/results/nnunet/jaime_barranco_hes-so_ch_20260326_154447/jaime_barranco_hes-so_ch_20260326_154447_nnUNet_predict.%N.%j.%a.out  # output log
+#SBATCH --error=/home/jaime.barrancohernandez/results/nnunet/jaime_barranco_hes-so_ch_20260326_154447/jaime_barranco_hes-so_ch_20260326_154447_nnUNet_predict.%N.%j.%a.err   # error log
 #SBATCH --mail-type=BEGIN,END  # send email when job begins and ends
 #SBATCH --mail-user=jaime.barrancohernandez@hevs.ch # email address to send notifications
 
@@ -16,7 +15,7 @@ apptainer exec \
     --nv \
     --bind /home/jaime.barrancohernandez/shared_datasets/nnunet/nnUNet:/opt/nnunet_resources \
     --bind /home/jaime.barrancohernandez/shared_datasets/nnunet/nnUNet/nnUNet_inference/input:/input \
-    --bind /home/jaime.barrancohernandez/results/nnunet/jaime_barrancohernandez_unil_ch_20250820_152248:/output \
+    --bind /home/jaime.barrancohernandez/results/nnunet/jaime_barranco_hes-so_ch_20260326_154447:/output \
     /home/jaime.barrancohernandez/shared_datasets/nnunet/nnunet.sif \
     nnUNet_predict \
     -i /input \

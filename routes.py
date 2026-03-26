@@ -191,16 +191,20 @@ def segment():
     
     # Run segmentation function
     getSegmentation(DOWNLOAD_FOLDER, user_email)
-
-    # Zip folder for download
-    zip_folder(DOWNLOAD_FOLDER, OUTPUT_ZIP)
-        
-    # Start background thread to copy files (only if output exists)
     has_output = (
         os.path.exists(DOWNLOAD_FOLDER) and
         any(fname.endswith(".nii.gz") for fname in os.listdir(DOWNLOAD_FOLDER))
     )
 
+    if has_output:
+        print_and_log("[A-eye] Copying segmentation data to filer in background...", 'info', LOGS_FOLDER)
+        sync_logs_to_output(DOWNLOAD_FOLDER)
+
+    # Zip folder for download
+    zip_folder(DOWNLOAD_FOLDER, OUTPUT_ZIP)
+        
+    # Start background thread to copy files (only if output exists)
+    
     if has_output:
         increment_cases_processed()
         # send_email(user_email, "A-eye segmentation task completed successfully. You can download the results.")
@@ -211,6 +215,7 @@ def segment():
     else:
         # send_email(user_email, "A-eye segmentation task failed. Check the logs for details.")
         print_and_log("[A-eye] Segmentation failed or no .nii.gz output found. Data not copied!", 'error', LOGS_FOLDER)
+        sync_logs_to_output(DOWNLOAD_FOLDER)
 
     return jsonify({"message": "Segmentation completed", "download_url": "/download"}), 200
 

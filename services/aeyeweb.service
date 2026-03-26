@@ -1,4 +1,4 @@
-# in /etc/systemd/system/aeyeweb.service
+# /etc/systemd/system/aeyeweb.service
 
 [Unit]
 Description=A-eye web app
@@ -7,4 +7,6 @@ After=network.target
 [Service]
 Type=exec
 WorkingDirectory=/home/debi/jaime/repos/a-eye/a-eye_web
-Environment="FLASK_APP=run.py"
+# Environment="FLASK_APP=run.py"
+ExecStart=/usr/bin/docker compose up --build 
+Restart=no
