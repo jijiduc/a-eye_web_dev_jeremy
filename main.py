@@ -35,10 +35,14 @@ def getSegmentation(output=None, user_email=None):
     
     # copy output folder from hpc
     copy_files_from_hpc(f'{output_hpc}/{safe_email}_{timestamp}', output)
-    move_file(f'{output}/*.err', os.path.join(output, 'logs'))  # move error files to logs folder
-    move_file(f'{output}/*.out', os.path.join(output, 'logs'))  # move output files to logs folder
+    output_logs = os.path.join(output, 'logs')
+    if os.path.exists(output_logs):
+        shutil.rmtree(output_logs)
+    os.makedirs(output_logs, exist_ok=True)
+    move_file(f'{output}/*.err', output_logs)  # move error files to logs folder
+    move_file(f'{output}/*.out', output_logs)  # move output files to logs folder
     
     # Copy logs
-    copy_folder(LOGS_FOLDER, os.path.join(output, 'logs'))  # needed for app.log
+    copy_folder(LOGS_FOLDER, output_logs)  # needed for app.log
 
     return '\nInference finished!!'

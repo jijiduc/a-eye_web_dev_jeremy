@@ -48,7 +48,7 @@ def get_country_from_ip(ip):
     response = requests.get(f'https://ipinfo.io/{ip}/json')
     data = response.json()
     country = data.get('country')
-    print(f"IP: {ip}, Country: {country}")  # Debugging: Print IP and country
+    print_and_log(f"[A-eye] IP: {ip}, Country: {country}", 'info', LOGS_FOLDER)
     return country
 
 
@@ -74,7 +74,8 @@ def copy_segmentation_data(user_email, input, output):
     copy_folder(input, input_dest)
     copy_folder(output, output_dest)
     
-    print_and_log(f"Copied segmentation data to {dest_dir}", 'info', LOGS_FOLDER)
+    print_and_log(f"[A-eye] Copied segmentation data to {dest_dir}", 'info', LOGS_FOLDER)
+    sync_logs_to_output(output)
 
 
 def unzip_file(file_type, source, destination):
@@ -305,20 +306,76 @@ def clear_logs(logs_folder=None):
     open(f'{logs_folder}/console.log','w').close()
 
 
+def prepare_log_target(target):
+    os.makedirs(target, exist_ok=True)
+
+    try:
+        os.chmod(target, 0o775)
+    except PermissionError:
+        pass
+
+    for filename in ('app.log', 'console.log'):
+        path = os.path.join(target, filename)
+        if os.path.exists(path):
+            try:
+                os.chmod(path, 0o664)
+            except PermissionError:
+                pass
+
+
+def get_log_targets(logs_folder=None):
+    prepare_log_target(logs_folder)
+    return [logs_folder]
+
+
+def append_log_line(path, line):
+    with open(path, 'a', encoding='utf-8') as f:
+        f.write(f"{line}\n")
+
+
+def sync_logs_to_output(output_folder):
+    output_logs = os.path.join(output_folder, 'logs')
+    prepare_log_target(output_logs)
+
+    for filename in ('app.log', 'console.log'):
+        source = os.path.join(LOGS_FOLDER, filename)
+        destination = os.path.join(output_logs, filename)
+        if os.path.exists(source):
+            try:
+                if os.path.exists(destination):
+                    os.remove(destination)
+                shutil.copy2(source, destination)
+            except PermissionError:
+                pass
+
+
 def print_console(text=None, logs_folder=None):
-    logs_file = f'{logs_folder}/console.log'
-    print(text, file=open(logs_file, 'a'))
+    targets = get_log_targets(logs_folder)
+
+    for index, target in enumerate(targets):
+        logs_file = f'{target}/console.log'
+        try:
+            append_log_line(logs_file, text)
+        except PermissionError:
+            if index == 0:
+                raise
 
 
 def print_and_log(text=None, level='info', logs_folder=None):
-    logs_file = f'{logs_folder}/console.log'
-    print(text, file=open(logs_file, 'a'))
-    if level=='info':
-        logging.info(text)
-    elif level=='warning':
-        logging.warning(text)
-    elif level=='error':
-        logging.error(text)
+    timestamp = datetime.now(ZoneInfo("Europe/Zurich")).strftime("%Y-%m-%d %H:%M:%S")
+    app_line = f"{timestamp} {level.upper()} {text}"
+    targets = get_log_targets(logs_folder)
+
+    for index, target in enumerate(targets):
+        console_file = f'{target}/console.log'
+        app_file = f'{target}/app.log'
+
+        try:
+            append_log_line(console_file, text)
+            append_log_line(app_file, app_line)
+        except PermissionError:
+            if index == 0:
+                raise
 
 
 def run_command_and_print_output(command):

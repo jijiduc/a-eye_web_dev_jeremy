@@ -8,7 +8,7 @@ from utils import *
 from main import getSegmentation
 from app import oauth
 
-from config import UPLOAD_FOLDER, DOWNLOAD_FOLDER, OUTPUT_ZIP
+from config import UPLOAD_FOLDER, DOWNLOAD_FOLDER, OUTPUT_ZIP, AUX_INPUT_FOLDER
 
 bp = Blueprint('routes', __name__)
 
@@ -206,11 +206,11 @@ def segment():
         # send_email(user_email, "A-eye segmentation task completed successfully. You can download the results.")
         threading.Thread(
             target=copy_segmentation_data,
-            args=(user_email, "./nnUNet/nnUNet_inference/input", DOWNLOAD_FOLDER)
+            args=(user_email, AUX_INPUT_FOLDER, DOWNLOAD_FOLDER)
         ).start()
     else:
         # send_email(user_email, "A-eye segmentation task failed. Check the logs for details.")
-        print("[A-eye] Segmentation failed or no .nii.gz output found. Data not copied!")
+        print_and_log("[A-eye] Segmentation failed or no .nii.gz output found. Data not copied!", 'error', LOGS_FOLDER)
 
     return jsonify({"message": "Segmentation completed", "download_url": "/download"}), 200
 
