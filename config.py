@@ -27,7 +27,7 @@ OUTPUT_HPC = "/home/jaime.barrancohernandez/results/nnunet"
 JOBFILE_HPC = "/home/jaime.barrancohernandez/shared_datasets/nnunet/nnunet_inference.sh"
 
 # mount
-DATA_FOLDER = "/mnt/filer01/MatTechLab/A-eye/A-eye_web/data"
+DATA_FOLDER = "/mnt/filer01/MatTechLab/jaime.barranco/A-eye/A-eye_web/data"
 
 
 # Flask configuration
