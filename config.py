@@ -20,7 +20,7 @@ JOBFILE_TEMPLATE = "./jobfiles/nnunet_inference_template.sh"
 JOBFILE = "./jobfiles/nnunet_inference.sh"
 
 # HPC
-SSH_USER = "jaime.barrancohernandez@chacha"
+SSH_USER = "jaime.barrancohernandez@10.130.2.72" # chacha
 BASE_INPUT_HPC = "/home/jaime.barrancohernandez/shared_datasets/nnunet/nnUNet/nnUNet_inference"
 INPUT_HPC = "/home/jaime.barrancohernandez/shared_datasets/nnunet/nnUNet/nnUNet_inference/input"
 OUTPUT_HPC = "/home/jaime.barrancohernandez/results/nnunet"

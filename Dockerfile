@@ -12,6 +12,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN apt-get update && apt-get install -y docker.io \
     && rm -rf /var/lib/apt/lists/*
 
+RUN mkdir -p /root/.ssh && chmod 700 /root/.ssh
+
 # Copy the rest of the application
 COPY . .
 

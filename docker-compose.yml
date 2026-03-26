@@ -11,6 +11,8 @@ services:
       - ./nnUNet:/app/nnUNet
       - /mnt/filer01/MatTechLab/jaime.barranco/A-eye/A-eye_web/data:/app/filer01/
       - ./data:/app/data  # for stats
+      - /home/debi/.ssh/id_rsa:/root/.ssh/id_rsa:ro
+      - /home/debi/.ssh/known_hosts:/root/.ssh/known_hosts:ro
     env_file:
       - .env
     command: gunicorn -c gunicorn.conf.py run:app  # for dev: command: flask run --host=0.0.0.0

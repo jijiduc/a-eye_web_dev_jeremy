@@ -441,7 +441,7 @@ def modify_jobfile(template_file, user_email, timestamp, output_file):
 
     # Create unique folder for this user + timestamp
     user_dir = os.path.join(base_results_dir, f"{safe_email}_{timestamp}")
-    os.system(f"ssh jaime.barrancohernandez@chacha 'mkdir -p {user_dir}'")
+    os.system(f"ssh {SSH_USER} 'mkdir -p {user_dir}'")
 
     # Read the template
     with open(template_file, "r") as f:
