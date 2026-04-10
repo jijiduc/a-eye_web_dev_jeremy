@@ -47,8 +47,9 @@ def login():
     state = secrets.token_urlsafe()
     session['nonce'] = nonce
     session['state'] = state
+    redirect_uri = current_app.config.get("AUTH0_CALLBACK_URL") or url_for("routes.callback", _external=True)
     return oauth.auth0.authorize_redirect(
-        redirect_uri=url_for("routes.callback", _external=True),
+        redirect_uri=redirect_uri,
         nonce=nonce,
         state=state
     )
@@ -56,10 +57,11 @@ def login():
 @bp.route("/logout")
 def logout():
     session.clear()
+    return_to = current_app.config.get("AUTH0_LOGOUT_URL") or url_for("routes.welcome", _external=True)
     return redirect(
         "https://" + current_app.config['AUTH0_DOMAIN'] + "/v2/logout?" + urlencode(
             {
-                "returnTo": url_for("routes.welcome", _external=True),
+                "returnTo": return_to,
                 "client_id": current_app.config['AUTH0_CLIENT_ID'],
             },
             quote_via=quote_plus,
@@ -188,9 +190,15 @@ def upload_file():
 def segment():
     # Get user email from session or token
     user_email = session.get("user", {}).get("email", "unknown_user")
-    
-    # Run segmentation function
-    getSegmentation(DOWNLOAD_FOLDER, user_email)
+
+    try:
+        # Run segmentation function
+        getSegmentation(DOWNLOAD_FOLDER, user_email)
+    except Exception as error:
+        print_and_log(f"[A-eye] Segmentation failed: {error}", 'error', LOGS_FOLDER)
+        sync_logs_to_output(DOWNLOAD_FOLDER)
+        return jsonify({"message": "Segmentation failed", "error": str(error)}), 500
+
     has_output = (
         os.path.exists(DOWNLOAD_FOLDER) and
         any(fname.endswith(".nii.gz") for fname in os.listdir(DOWNLOAD_FOLDER))

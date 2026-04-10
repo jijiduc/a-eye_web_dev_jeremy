@@ -41,6 +41,7 @@ class Config:
     AUTH0_DOMAIN = os.getenv('AUTH0_DOMAIN')
     AUTH0_AUDIENCE = os.getenv('AUTH0_AUDIENCE')
     AUTH0_CALLBACK_URL = os.getenv('AUTH0_CALLBACK_URL')
+    AUTH0_LOGOUT_URL = os.getenv('AUTH0_LOGOUT_URL')
 
     # Mail config
     MAIL_SERVER = os.getenv('MAIL_SERVER')

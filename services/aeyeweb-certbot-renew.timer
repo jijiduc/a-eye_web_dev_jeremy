@@ -1,0 +1,10 @@
+[Unit]
+Description=Twice-daily Let's Encrypt renewal check for A-eye
+
+[Timer]
+OnCalendar=*-*-* 03,15:00:00
+Persistent=true
+Unit=aeyeweb-certbot-renew.service
+
+[Install]
+WantedBy=timers.target

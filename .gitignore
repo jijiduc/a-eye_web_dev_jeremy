@@ -141,3 +141,5 @@ nnUNetv2/
 *.out
 .jobfiles/nnunet_inference.sh
 filer01/
+.codex/
+.codex

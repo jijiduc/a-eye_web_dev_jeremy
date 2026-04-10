@@ -1,4 +1,5 @@
 import os
+import subprocess
 from datetime import datetime
 from utils import *
 from config import *
@@ -10,7 +11,7 @@ def getSegmentation(output=None, user_email=None):
     ''' Main function: performs inference on input folder and saves output in output folder. '''
 
     # paths
-    output = DOWNLOAD_FOLDER
+    output = output or DOWNLOAD_FOLDER
     output_hpc = OUTPUT_HPC
     template = JOBFILE_TEMPLATE
     jobfile = JOBFILE
@@ -31,13 +32,13 @@ def getSegmentation(output=None, user_email=None):
     # inference command terminal (nnUNet)
     inference_command = f'ssh {SSH_USER} "sbatch --wait {jobfile_hpc}"'
     print_and_log("[A-eye] Submitted batch job to HPC...", 'info', LOGS_FOLDER)
-    os.system(inference_command)
+    subprocess.run(inference_command, shell=True, check=True)
     
     # copy output folder from hpc
     copy_files_from_hpc(f'{output_hpc}/{safe_email}_{timestamp}', output)
     output_logs = os.path.join(output, 'logs')
     if os.path.exists(output_logs):
-        shutil.rmtree(output_logs)
+        safe_rmtree(output_logs)
     os.makedirs(output_logs, exist_ok=True)
     move_file(f'{output}/*.err', output_logs)  # move error files to logs folder
     move_file(f'{output}/*.out', output_logs)  # move output files to logs folder

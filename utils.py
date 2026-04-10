@@ -21,6 +21,7 @@ from app import mail
 from flask_mail import Message
 from string import Template
 import gzip
+import stat
 from config import *
 
 
@@ -39,7 +40,7 @@ def requires_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         if "user" not in session:
-            return redirect(url_for("login"))
+            return redirect(url_for("routes.login"))
         return f(*args, **kwargs)
     return decorated
 
@@ -152,26 +153,31 @@ def move_file(pattern, destination):
 
 def copy_file_to_hpc(source, destination):
     print_and_log(f"[A-eye] Copying files from local {source} to HPC {destination}...", 'info', LOGS_FOLDER)
-    os.system(f'scp {source} "{SSH_USER}:{destination}"')
+    subprocess.run(["scp", source, f"{SSH_USER}:{destination}"], check=True)
 
 
 def copy_folder_to_hpc(source, destination):
     print_and_log(f"[A-eye] Copying files from local {source} to HPC {destination}...", 'info', LOGS_FOLDER)
-    os.system(f'scp -r {source} "{SSH_USER}:{destination}"')
+    subprocess.run(["scp", "-r", source, f"{SSH_USER}:{destination}"], check=True)
 
 
 def copy_files_from_hpc(source, destination):
     print_and_log(f"[A-eye] Copying files from HPC {source} to local {destination}...", 'info', LOGS_FOLDER)
-    os.system(f'scp "{SSH_USER}:{source}/*" {destination}')
+    os.makedirs(destination, exist_ok=True)
+    subprocess.run(["scp", "-r", f"{SSH_USER}:{source}/.", destination], check=True)
 
 
 def delete_files_in_folder(folder):
+    if not os.path.exists(folder):
+        return
+
     for root, dirs, files in os.walk(folder):
         for file in files:
+            file_path = os.path.join(root, file)
             try:
-                os.remove(os.path.join(root, file))
+                safe_remove_file(file_path)
             except Exception as e:
-                print_and_log(f"[A-eye] Failed to delete {folder}. Reason: {e}", 'error', LOGS_FOLDER)
+                print_and_log(f"[A-eye] Failed to delete {file_path}. Reason: {e}", 'error', LOGS_FOLDER)
 
 def clean_folder_hpc(folder):
     """
@@ -186,7 +192,7 @@ def clean_folder_hpc(folder):
 
 
 def delete_folder(folder):
-    shutil.rmtree(folder)
+    safe_rmtree(folder)
     
 
 def delete_subfolders(folder):
@@ -194,9 +200,34 @@ def delete_subfolders(folder):
         item_path = os.path.join(folder, item)
         if os.path.isdir(item_path):
             try:
-                shutil.rmtree(item_path)
+                safe_rmtree(item_path)
             except Exception as e:
                 print_and_log(f"[A-eye] Failed to delete {item_path}. Reason: {e}", 'error', LOGS_FOLDER)
+
+
+def _handle_remove_readonly(func, path, exc_info):
+    try:
+        os.chmod(path, stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+        func(path)
+    except Exception:
+        raise exc_info[1]
+
+
+def safe_remove_file(path):
+    if not os.path.exists(path):
+        return
+
+    try:
+        os.chmod(path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH)
+    except Exception:
+        pass
+
+    os.remove(path)
+
+
+def safe_rmtree(path):
+    if os.path.exists(path):
+        shutil.rmtree(path, onerror=_handle_remove_readonly)
 
 
 def check_dicom_folders_names(folder):
@@ -400,13 +431,13 @@ def run_command_and_print_output(command):
 
 def clean_folders():
     clear_logs(LOGS_FOLDER)  # Clear previous logs
-    delete_files_in_folder(f'{DOWNLOAD_FOLDER}/logs')  # Clear previous logs in download folder
     delete_files_in_folder(UPLOAD_FOLDER)  # Clear static/upload folder
     delete_subfolders(UPLOAD_FOLDER) # Clear previous uploaded files
     delete_files_in_folder(AUX_BASE_FOLDER)  # Clear output.zip
     delete_files_in_folder(AUX_INPUT_FOLDER)  # Clear previous inference files
     delete_subfolders(AUX_INPUT_FOLDER)  # Clear previous uploaded files
-    delete_files_in_folder(DOWNLOAD_FOLDER)  # Clear previous inference output
+    safe_rmtree(DOWNLOAD_FOLDER)
+    os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
     clean_folder_hpc(INPUT_HPC)  # Clear previous input files on HPC
     clean_folder_hpc(OUTPUT_HPC)  # Clear previous inference output on HPC
 

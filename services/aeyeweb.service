@@ -1,12 +1,18 @@
-# /etc/systemd/system/aeyeweb.service
-
 [Unit]
-Description=A-eye web app
-After=network.target
+Description=A-eye web stack
+Requires=docker.service network-online.target
+After=docker.service network-online.target
 
 [Service]
-Type=exec
+Type=oneshot
 WorkingDirectory=/home/debi/jaime/repos/a-eye/a-eye_web
-# Environment="FLASK_APP=run.py"
-ExecStart=/usr/bin/docker compose up --build 
-Restart=no
+RemainAfterExit=yes
+Environment=COMPOSE_PROJECT_NAME=aeyeweb
+ExecStartPre=-/usr/bin/docker compose pull nginx certbot
+ExecStart=/usr/bin/docker compose up -d --build
+ExecStop=/usr/bin/docker compose down
+TimeoutStartSec=0
+TimeoutStopSec=120
+
+[Install]
+WantedBy=multi-user.target
