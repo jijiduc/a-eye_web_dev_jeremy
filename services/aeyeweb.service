@@ -8,9 +8,9 @@ Type=oneshot
 WorkingDirectory=/home/debi/jaime/repos/a-eye/a-eye_web
 RemainAfterExit=yes
 Environment=COMPOSE_PROJECT_NAME=aeyeweb
-ExecStartPre=-/usr/bin/docker compose pull nginx certbot
-ExecStart=/usr/bin/docker compose up -d --build
-ExecStop=/usr/bin/docker compose down
+ExecStartPre=-/usr/bin/docker compose -f docker-compose.vm.yml pull nginx certbot
+ExecStart=/usr/bin/docker compose -f docker-compose.vm.yml up -d --build
+ExecStop=/usr/bin/docker compose -f docker-compose.vm.yml down
 TimeoutStartSec=0
 TimeoutStopSec=120
 

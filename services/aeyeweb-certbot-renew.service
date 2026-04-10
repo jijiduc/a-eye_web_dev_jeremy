@@ -6,5 +6,5 @@ After=docker.service aeyeweb.service
 [Service]
 Type=oneshot
 WorkingDirectory=/home/debi/jaime/repos/a-eye/a-eye_web
-ExecStart=/usr/bin/docker compose run --rm certbot renew --webroot -w /var/www/certbot
-ExecStartPost=/usr/bin/docker compose exec -T nginx nginx -s reload
+ExecStart=/usr/bin/docker compose -f docker-compose.vm.yml run --rm certbot renew --webroot -w /var/www/certbot
+ExecStartPost=/usr/bin/docker compose -f docker-compose.vm.yml exec -T nginx nginx -s reload
