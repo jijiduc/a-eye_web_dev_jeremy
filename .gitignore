@@ -142,4 +142,5 @@ nnUNetv2/
 .jobfiles/nnunet_inference.sh
 filer01/
 .codex/
+local-certs/
 .codex

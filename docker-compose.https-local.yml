@@ -1,0 +1,12 @@
+services:
+  flask_app:
+    environment:
+      AUTH0_CALLBACK_URL: ${AUTH0_CALLBACK_URL_HTTPS_LOCAL:-https://aeye.local:8443/callback}
+      AUTH0_LOGOUT_URL: ${AUTH0_LOGOUT_URL_HTTPS_LOCAL:-https://aeye.local:8443/}
+
+  nginx:
+    ports:
+      - "8443:443"
+    volumes:
+      - ./nginx.https-local.conf:/etc/nginx/nginx.conf:ro
+      - ./local-certs:/etc/nginx/local-certs:ro
