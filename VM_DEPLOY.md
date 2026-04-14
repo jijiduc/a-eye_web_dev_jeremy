@@ -2,8 +2,8 @@
 
 ## 1. Prerequisites
 
-- Ubuntu Server 24.04 VM reachable as `jaime.barranco@vlenpaeye.hevs.ch`
-- DNS `aeye.hevs.ch` pointing to the VM public IP
+- Ubuntu Server 24.04 VM reachable as `jaime.barranco@vlenpvlenpaeye.hevs.ch`
+- DNS `vlenpaeye.hevs.ch` pointing to the VM public IP
 - Ports `80/tcp` and `443/tcp` open to the internet
 - Outbound SSH from the VM to:
   - `10.130.2.72:22`
@@ -73,13 +73,13 @@ AUTH0_DOMAIN=dev-efo7i5wwqsmfsqvt.eu.auth0.com
 AUTH0_CLIENT_ID=...
 AUTH0_CLIENT_SECRET=...
 AUTH0_AUDIENCE=https://dev-efo7i5wwqsmfsqvt.eu.auth0.com/api/v2/
-AUTH0_CALLBACK_URL=https://aeye.hevs.ch/callback
-AUTH0_LOGOUT_URL=https://aeye.hevs.ch/
-AUTH0_CALLBACK_URL_PROD=https://aeye.hevs.ch/callback
-AUTH0_LOGOUT_URL_PROD=https://aeye.hevs.ch/
+AUTH0_CALLBACK_URL=https://vlenpaeye.hevs.ch/callback
+AUTH0_LOGOUT_URL=https://vlenpaeye.hevs.ch/
+AUTH0_CALLBACK_URL_PROD=https://vlenpaeye.hevs.ch/callback
+AUTH0_LOGOUT_URL_PROD=https://vlenpaeye.hevs.ch/
 
 SECRET_KEY=...
-A_EYE_SSH_DIR_PROD=/home/jaime.barranco@hevs.ch/.ssh
+A_EYE_SSH_DIR_PROD=/etc/aeye/ssh
 
 MAIL_SERVER=mail.hevs.ch
 MAIL_PORT=25
@@ -96,7 +96,7 @@ Start the stack without HTTPS first if needed, or ensure DNS already resolves to
 docker compose -f docker-compose.vm.yml up -d --build nginx flask_app
 docker compose -f docker-compose.vm.yml run --rm certbot certonly \
   --webroot -w /var/www/certbot \
-  -d aeye.hevs.ch \
+  -d vlenpaeye.hevs.ch \
   --email jaime.barrancohernandez@hevs.ch \
   --agree-tos \
   --no-eff-email
@@ -120,15 +120,15 @@ sudo systemctl enable --now aeyeweb-certbot-renew.timer
 docker compose -f docker-compose.vm.yml ps
 docker compose -f docker-compose.vm.yml logs nginx
 docker compose -f docker-compose.vm.yml logs flask_app
-curl -I http://aeye.hevs.ch
-curl -I https://aeye.hevs.ch
+curl -I http://vlenpaeye.hevs.ch
+curl -I https://vlenpaeye.hevs.ch
 ```
 
 ## 10. Auth0 production settings
 
 - Allowed Callback URLs:
-  - `https://aeye.hevs.ch/callback`
+  - `https://vlenpaeye.hevs.ch/callback`
 - Allowed Logout URLs:
-  - `https://aeye.hevs.ch/`
+  - `https://vlenpaeye.hevs.ch/`
 - Allowed Web Origins:
-  - `https://aeye.hevs.ch`
+  - `https://vlenpaeye.hevs.ch`
