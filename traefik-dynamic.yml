@@ -1,0 +1,16 @@
+http:
+  routers:
+    aeye:
+      rule: Host(`aeye.hevs.ch`)
+      entryPoints:
+        - websecure
+      service: flask-app
+      tls:
+        certResolver: tlsresolver
+
+  services:
+    flask-app:
+      loadBalancer:
+        servers:
+          - url: http://flask_app:5000
+        passHostHeader: true
