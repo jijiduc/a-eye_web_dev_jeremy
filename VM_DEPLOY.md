@@ -79,7 +79,7 @@ AUTH0_CALLBACK_URL_PROD=https://aeye.hevs.ch/callback
 AUTH0_LOGOUT_URL_PROD=https://aeye.hevs.ch/
 
 SECRET_KEY=...
-A_EYE_SSH_DIR_PROD=/etc/aeye/ssh
+A_EYE_SSH_DIR_PROD=/home/jaime.barranco@hevs.ch/.ssh
 
 MAIL_SERVER=mail.hevs.ch
 MAIL_PORT=25

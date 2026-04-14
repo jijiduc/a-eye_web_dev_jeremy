@@ -20,7 +20,7 @@ services:
       - ./logs:/app/logs
       - ./static/upload:/app/static/upload
       - /mnt/filer01/MatTechLab/jaime.barranco/A-eye/A-eye_web/data:/app/filer01
-      - ${A_EYE_SSH_DIR_PROD:-/etc/aeye/ssh}:/root/.ssh:ro
+      - ${A_EYE_SSH_DIR_PROD:-/home/jaime.barranco@hevs.ch/.ssh}:/root/.ssh:ro
     networks:
       - backend
 
