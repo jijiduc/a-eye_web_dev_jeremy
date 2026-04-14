@@ -153,18 +153,18 @@ def move_file(pattern, destination):
 
 def copy_file_to_hpc(source, destination):
     print_and_log(f"[A-eye] Copying files from local {source} to HPC {destination}...", 'info', LOGS_FOLDER)
-    subprocess.run(["scp", source, f"{SSH_USER}:{destination}"], check=True)
+    subprocess.run(["scp", "-o", "ConnectTimeout=8", source, f"{SSH_USER}:{destination}"], check=True, timeout=20)
 
 
 def copy_folder_to_hpc(source, destination):
     print_and_log(f"[A-eye] Copying files from local {source} to HPC {destination}...", 'info', LOGS_FOLDER)
-    subprocess.run(["scp", "-r", source, f"{SSH_USER}:{destination}"], check=True)
+    subprocess.run(["scp", "-o", "ConnectTimeout=8", "-r", source, f"{SSH_USER}:{destination}"], check=True, timeout=30)
 
 
 def copy_files_from_hpc(source, destination):
     print_and_log(f"[A-eye] Copying files from HPC {source} to local {destination}...", 'info', LOGS_FOLDER)
     os.makedirs(destination, exist_ok=True)
-    subprocess.run(["scp", "-r", f"{SSH_USER}:{source}/.", destination], check=True)
+    subprocess.run(["scp", "-o", "ConnectTimeout=8", "-r", f"{SSH_USER}:{source}/.", destination], check=True, timeout=30)
 
 
 def delete_files_in_folder(folder):
@@ -184,11 +184,12 @@ def clean_folder_hpc(folder):
     Cleans the specified folder on the HPC by deleting all files and subfolders.
     """
     print_and_log(f"[A-eye] Cleaning folder {folder} on HPC...", 'info', LOGS_FOLDER)
-    try:
-        os.system(f'ssh {SSH_USER} "rm -rf {folder}/*"')
-        print_and_log(f"[A-eye] Folder {folder} cleaned successfully.", 'info', LOGS_FOLDER)
-    except Exception as e:
-        print_and_log(f"[A-eye] Failed to clean folder {folder}. Reason: {e}", 'error', LOGS_FOLDER)
+    subprocess.run(
+        ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=8", SSH_USER, f"rm -rf {folder}/*"],
+        check=True,
+        timeout=20,
+    )
+    print_and_log(f"[A-eye] Folder {folder} cleaned successfully.", 'info', LOGS_FOLDER)
 
 
 def delete_folder(folder):
@@ -196,6 +197,9 @@ def delete_folder(folder):
     
 
 def delete_subfolders(folder):
+    if not os.path.exists(folder):
+        return
+
     for item in os.listdir(folder):
         item_path = os.path.join(folder, item)
         if os.path.isdir(item_path):
@@ -430,6 +434,11 @@ def run_command_and_print_output(command):
 
 
 def clean_folders():
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+    os.makedirs(AUX_BASE_FOLDER, exist_ok=True)
+    os.makedirs(AUX_INPUT_FOLDER, exist_ok=True)
+    os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
+
     clear_logs(LOGS_FOLDER)  # Clear previous logs
     delete_files_in_folder(UPLOAD_FOLDER)  # Clear static/upload folder
     delete_subfolders(UPLOAD_FOLDER) # Clear previous uploaded files

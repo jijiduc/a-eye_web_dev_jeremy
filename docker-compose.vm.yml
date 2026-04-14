@@ -13,14 +13,24 @@ services:
       FLASK_DEBUG: "0"
       AUTH0_CALLBACK_URL: ${AUTH0_CALLBACK_URL_PROD:-https://aeye.hevs.ch/callback}
       AUTH0_LOGOUT_URL: ${AUTH0_LOGOUT_URL_PROD:-https://aeye.hevs.ch/}
-    command: gunicorn -c gunicorn.conf.py run:app
+    command:
+      - sh
+      - -c
+      - |
+        rm -rf /root/.ssh
+        mkdir -p /root/.ssh
+        cp -r /ssh-src/. /root/.ssh/
+        chmod 700 /root/.ssh
+        chmod 600 /root/.ssh/*
+        chmod 644 /root/.ssh/*.pub 2>/dev/null || true
+        exec gunicorn -c gunicorn.conf.py run:app
     volumes:
       - ./nnUNet:/app/nnUNet
       - ./data:/app/data
       - ./logs:/app/logs
       - ./static/upload:/app/static/upload
       - /mnt/filer01/MatTechLab/jaime.barranco/A-eye/A-eye_web/data:/app/filer01
-      - ${A_EYE_SSH_DIR_PROD:-/home/jaime.barranco@hevs.ch/.ssh}:/root/.ssh:ro
+      - ${A_EYE_SSH_DIR_PROD:-/home/jaime.barranco@hevs.ch/.ssh}:/ssh-src:ro
     networks:
       - backend
 

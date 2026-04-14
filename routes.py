@@ -1,5 +1,5 @@
 from flask import Blueprint, current_app, session, render_template, redirect, url_for, request, flash, jsonify, send_file
-import secrets, os, threading, pandas as pd, plotly.express as px
+import secrets, os, threading, subprocess, pandas as pd, plotly.express as px
 from urllib.parse import urlencode, quote_plus
 from authlib.integrations.base_client.errors import OAuthError, MismatchingStateError
 from werkzeug.utils import secure_filename
@@ -77,13 +77,11 @@ def users():
     # Calculate the number of institutions
     domains = set()
     for user in users_data:
-        print("User: ", user)
         email = user.get('email')
         if email:
             domain = email.split('@')[-1]
             domains.add(domain)
     total_institutions = len(domains)
-    print(f"Total Users: {total_users}, Total Institutions: {total_institutions}")
     
     # Get country data from user IPs
     country_counts = {}
@@ -102,7 +100,6 @@ def users():
     
     # Create a DataFrame for the country data
     df = pd.DataFrame(list(country_counts.items()), columns=['Country', 'Count'])
-    print(df)  # Debugging: Print DataFrame
     
     # Generate the choropleth map
     fig = px.choropleth(df, locations="Country", locationmode='ISO-3', color="Count",
@@ -164,8 +161,16 @@ def upload_file():
     uploaded_files = []
     rejected_files = []
     
-    clean_folders()  # Clear previous logs and files before uploading new ones
-    
+    try:
+        clean_folders()  # Clear previous logs and files before uploading new ones
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as error:
+        current_app.logger.exception("Could not prepare HPC folders for upload")
+        return jsonify({
+            'message': 'Could not reach the HPC over SSH to prepare the upload. Please try again once chacha/disco SSH access is available.',
+            'status': 'error',
+            'error': str(error)
+        }), 503
+
     for file in files:
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)  # Use this werkzeug method to secure filename.
@@ -175,7 +180,15 @@ def upload_file():
         else:
             rejected_files.append(file.filename)
             
-    upload_files(UPLOAD_FOLDER)
+    try:
+        upload_files(UPLOAD_FOLDER)
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as error:
+        current_app.logger.exception("Could not copy uploaded files to HPC")
+        return jsonify({
+            'message': 'Files were received locally, but could not be copied to the HPC over SSH. Please try again once chacha/disco SSH access is available.',
+            'status': 'error',
+            'error': str(error)
+        }), 503
     
     if uploaded_files:
         message = f"Uploaded: {', '.join(uploaded_files)}"
