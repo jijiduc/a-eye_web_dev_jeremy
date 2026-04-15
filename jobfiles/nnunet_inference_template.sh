@@ -1,5 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=nnUNetv1_inf  # job name
+#SBATCH --partition=Dance         # cluster partition
+#SBATCH --account=mattech         # Slurm account/association
+#SBATCH --qos=normal              # avoid jobs landing with QOS=(null)
 #SBATCH --nodes=1                # number of nodes to use
 #SBATCH --ntasks=1               # total number of tasks across all nodes
 #SBATCH --cpus-per-task=4        # moderate CPU headroom for multi-image preprocessing and inference

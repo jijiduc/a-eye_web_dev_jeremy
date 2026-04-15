@@ -30,7 +30,7 @@ def getSegmentation(output=None, user_email=None):
     copy_file_to_hpc(jobfile, os.path.dirname(jobfile_hpc))
 
     # inference command terminal (nnUNet)
-    inference_command = f'ssh {SSH_USER} "sbatch --wait {jobfile_hpc}"'
+    inference_command = f'ssh {SSH_USER} "sbatch --wait --partition=Dance --account=mattech --qos=normal {jobfile_hpc}"'
     print_and_log("[A-eye] Submitted batch job to HPC...", 'info', LOGS_FOLDER)
     subprocess.run(inference_command, shell=True, check=True)
     
