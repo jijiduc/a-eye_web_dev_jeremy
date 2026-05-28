@@ -145,3 +145,7 @@ filer01/
 .codex/
 local-certs/
 .codex
+
+# Test datas
+data/simple-sample/*
+data/test-webplatform/*

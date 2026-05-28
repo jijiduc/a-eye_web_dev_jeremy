@@ -26,6 +26,15 @@ from config import *
 
 
 def allowed_file(filename):
+    """Wether the file type is allowed or not (allowd type : .nii.gz / .zip /
+    .7z / .nii))
+
+    Args:
+        filename (_type_): The name of the file
+
+    Returns:
+        Bool: True if allowed, else False
+    """
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
@@ -434,6 +443,7 @@ def run_command_and_print_output(command):
 
 
 def clean_folders():
+    """Clear all folders used in the segmentation process from old remaining datas"""
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
     os.makedirs(AUX_BASE_FOLDER, exist_ok=True)
     os.makedirs(AUX_INPUT_FOLDER, exist_ok=True)
@@ -564,6 +574,16 @@ def modify_jobfile(template_file, user_email, timestamp, output_file):
 
 
 def upload_files(UPLOAD_FOLDER):
+    """Upload files into HPC folder after some operations
+        1. Unzip if needed 
+        2. If .dcm, then convert to .nii
+        3. Compress .nii to nii.gz
+        4. Rename to expected format (*_0000.nii.gz) for HPC
+        5. Copy the results into the HPC folder
+
+    Args:
+        UPLOAD_FOLDER (String): the upload folder path
+    """
     # paths
     aux_in = AUX_INPUT_FOLDER
     base_input_hpc = BASE_INPUT_HPC  # input folder on HPC
