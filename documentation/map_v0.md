@@ -1,19 +1,15 @@
 # Initial map of the repo/website state 
 
-## A-eye web
-This is a web platform for external medical specialist in eye to share, get processed and retrieve eye MRI data. 
-After an Auth0 authentication, MRI data can be uploaded. These can be used in the automated eye segmentation module (running on chacha : HPC cluster). After the segmentation, the resulting NIfTIs can be be downloaded. The results are also saved on a mat-tech lab shared HEVS storage server : Filer01.
+## Architecture
 
-## Python files
+In the production environnement, the website run in a Docker container called `aeyewb` coupled with Traefik (v3.3) reverse proxy in a second docker container `Traefik_aeyeweb` (c.f. `docker-compose.vm.yml`).
 
-| file | usage |
-|---|---|
-| `app.py` | initialise the Flask app, register modules (Aut0, Mail) and the routes |
-| `config.py` | the one place for hardcoded values |
-| `routes.py` | HTTP routes endpoints |
-| `main.py` | `getSegmentation()` — segmentation process using slurm on chacha server|
-| `utils.py` | helpers functions (i.e. DICOM to NIfTI, Auth0, log, docker,...) |
-| `run.py` | entry point to create Flask instance |
+### Flow
+From internet, access on port :443 to the `Traefik_aeyeweb` container. This container act as a reverse proxy and handle SSL/TLS with Let's Encrypt.
+
+Traefik then act to redirect to port :5000 for the `aeyeweb` container. IT is based on Flask + Gunicorn.
+`aeyeweb` has ssh access to the HEVS "chacha" server for HPC in the segmentation process. HPC is handled by Slurm.
+Also `aeyeweb` mount the `/mnt/filer01` Filer01 volume from the HEVS server for data and logs storage.
 
 ## URL routes
 
@@ -37,7 +33,6 @@ After an Auth0 authentication, MRI data can be uploaded. These can be used in th
 `/upload`, `/segment`, `/download` aren't requiring authentication as their triggering is only possible if previous authentication was made to access the `/segmentation` dashboard. 
 
 **Remark** : This doesn't prevent direct HTTP requests to access those endpoints. Also `/test-email` is in this case.
-
 
 ## Authentication Flow (using Auth0)
 
@@ -85,17 +80,18 @@ The pipeline is :
 4. The results are at disposal for download in the `/download` route
 
 ### Inference command 
+For reference : 
 ```bash
-inference_command = f'ssh {SSH_USER} "sbatch --wait --partition=Dance --account=mattech --qos=normal {jobfile_hpc}"'
+ssh {SSH_USER} "sbatch --wait --partition=Dance --account=mattech --qos=normal {jobfile_hpc}"
 ```
 
-## Architecture
+## Python files
 
-In the production environnement, the website run in a Docker container called `aeyewb` coupled with Traefik (v3.3) reverse proxy in a second docker container `Traefik_aeyeweb` (c.f. `docker-compose.vm.yml`).
-
-### Flow
-From internet, access on port :443 to the `Traefik_aeyeweb` container. This container act as a reverse proxy and handle SSL/TLS with Let's Encrypt.
-
-Traefik then act to redirect to port :5000 for the `aeyeweb` container. IT is based on Flask + Gunicorn.
-`aeyeweb` has ssh access to the HEVS "chacha" server for HPC in the segmentation process. HPC is handled by Slurm.
-Also `aeyeweb` mount the `/mnt/filer01` Filer01 volume from the HEVS server for data and logs storage.
+| file | usage |
+|---|---|
+| `app.py` | initialise the Flask app, register modules (Aut0, Mail) and the routes |
+| `config.py` | the one place for hardcoded values |
+| `routes.py` | HTTP routes endpoints |
+| `main.py` | `getSegmentation()` — segmentation process using slurm on chacha server|
+| `utils.py` | helpers functions (i.e. DICOM to NIfTI, Auth0, log, docker,...) |
+| `run.py` | entry point to create Flask instance |
