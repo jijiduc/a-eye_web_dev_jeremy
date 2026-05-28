@@ -17,7 +17,7 @@ After an Auth0 authentification, MRI datas can be uploaded. Thoses can be used i
 
 ## URL routes
 
-| HTTP method | Path | Auth required | Description |
+| HTTP method | Path | Authentification required | Description |
 |---|---|---|---|
 | GET | `/` | No | Welcome page |
 | GET | `/callback` | No | Auth0 callback |
@@ -27,12 +27,14 @@ After an Auth0 authentification, MRI datas can be uploaded. Thoses can be used i
 | GET | `/users` | No | Global stats page from all the website usage datas |
 | GET | `/about` | No | About page (fund, team and partners) |
 | GET | `/faq` | No | FAQ page |
-| GET | `/segmentation` | No | Route to Segmentation tool page if user is logged in, else to `/login`|
+| GET | `/segmentation` | Yes | Route to Segmentation tool page if user is logged in, else to `/login`|
 | POST | `/upload` | No | When `Upload` button pressed : get the files, check and copy them to HPC upload folder|
 | POST | `/segment` | No |  When `Segment` button pressed : Launch Slurm job from the uploaded datas, wait for completion and get the results |
 | GET | `/profile` | Yes | Show user info |
 | GET | `/download` | No | When `Download` button pressed : Send the contents of a file to the client |
 | GET | `/test-email` | No | send test email to a user |
+
+`/upload`, `/segment`, `/download` aren't requiring authentification as their triggering is only possible if previous authentification was made to access the `/segmentation` dashboard.
 
 
 ## Authentication Flow (using Auth0)
@@ -47,7 +49,7 @@ After an Auth0 authentification, MRI datas can be uploaded. Thoses can be used i
 
 3. User Authentication
 
-    The hosted Auth0 page appear to log with email and password credentials.
+    The hosted Auth0 page appear to log with email and password credentials. (Only certains domains are approved for registration (i.e. hevs.ch, chuv.ch,...))
 
     If no account, the user can sign in, wich then require email verification (`/verify_email` route).
 
@@ -59,3 +61,28 @@ After an Auth0 authentification, MRI datas can be uploaded. Thoses can be used i
 
 5. Logout Flow (`/logout`)
     The local user's session is cleared and redirection to the Auth0 /v2/logout endpoint, which then lead to the  `/` homepage.
+
+## Segmentation
+
+The segmentation process is handled by `getSegmentation` function in `main.py`.
+
+The pipeline is : 
+1. Uploading a file with MRI data (supported format : (.nii.gz / .zip /
+    .7z / .nii)) in the segmentation page. 
+
+2. This call the `/upload` route to :
+    - Clear previous logs and files before uploading new ones
+    - upload the files after some conversion, compression and renaming to the HPC
+
+3. The cleaned datas are then used in the `/segment` route as :
+        - Update the jobfile template and copy it in HPC folder
+        - launch the inference (nnUNet) and wait for result
+        - Copy output folder from HPC
+        - Copy the logs
+
+4. The results are at disposal for download in the `/download` route
+
+### Inference command 
+```bash
+inference_command = f'ssh {SSH_USER} "sbatch --wait --partition=Dance --account=mattech --qos=normal {jobfile_hpc}"'
+```
