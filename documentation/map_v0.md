@@ -1,8 +1,8 @@
 # Initial map of the repo/website state 
 
 ## A-eye web
-This is a web platform (Flask) for external medical specialist in eye to share, get processed and retrieve eye MRI datas. 
-After an Auth0 authentification, MRI datas can be uploaded. Thoses can be used in the automated eye segmentation module (running on chacha : HPC cluster). After the segmentation, the resulting NIfTIs can be be downloaded. The results are also savec on a mat-tech lab shared HEVS storage server : Filer01.
+This is a web platform for external medical specialist in eye to share, get processed and retrieve eye MRI data. 
+After an Auth0 authentication, MRI data can be uploaded. These can be used in the automated eye segmentation module (running on chacha : HPC cluster). After the segmentation, the resulting NIfTIs can be be downloaded. The results are also saved on a mat-tech lab shared HEVS storage server : Filer01.
 
 ## Python files
 
@@ -17,24 +17,26 @@ After an Auth0 authentification, MRI datas can be uploaded. Thoses can be used i
 
 ## URL routes
 
-| HTTP method | Path | Authentification required | Description |
+| HTTP method | Path | authentication required | Description |
 |---|---|---|---|
 | GET | `/` | No | Welcome page |
 | GET | `/callback` | No | Auth0 callback |
 | GET | `/verify_email` | No | Should only appear after a sign up (email known but not verified) |
 | GET | `/login` | No | When `Login` button pressed : generate nonce and state for session then redirects to Auth0 authorize URL |
 | GET | `/logout` | No | When `Logout` button pressed : clears session then redirects to Auth0 logout |
-| GET | `/users` | No | Global stats page from all the website usage datas |
+| GET | `/users` | No | Global stats page from all the website usage data |
 | GET | `/about` | No | About page (fund, team and partners) |
 | GET | `/faq` | No | FAQ page |
 | GET | `/segmentation` | Yes | Route to Segmentation tool page if user is logged in, else to `/login`|
 | POST | `/upload` | No | When `Upload` button pressed : get the files, check and copy them to HPC upload folder|
-| POST | `/segment` | No |  When `Segment` button pressed : Launch Slurm job from the uploaded datas, wait for completion and get the results |
+| POST | `/segment` | No |  When `Segment` button pressed : Launch Slurm job from the uploaded data, wait for completion and get the results |
 | GET | `/profile` | Yes | Show user info |
 | GET | `/download` | No | When `Download` button pressed : Send the contents of a file to the client |
 | GET | `/test-email` | No | send test email to a user |
 
-`/upload`, `/segment`, `/download` aren't requiring authentification as their triggering is only possible if previous authentification was made to access the `/segmentation` dashboard.
+`/upload`, `/segment`, `/download` aren't requiring authentication as their triggering is only possible if previous authentication was made to access the `/segmentation` dashboard. 
+
+**Remark** : This doesn't prevent direct HTTP requests to access those endpoints. Also `/test-email` is in this case.
 
 
 ## Authentication Flow (using Auth0)
@@ -51,11 +53,11 @@ After an Auth0 authentification, MRI datas can be uploaded. Thoses can be used i
 
     The hosted Auth0 page appear to log with email and password credentials. (Only certains domains are approved for registration (i.e. hevs.ch, chuv.ch,...))
 
-    If no account, the user can sign in, wich then require email verification (`/verify_email` route).
+    If no account, the user can sign up, wich then require email verification (`/verify_email` route).
 
 4. Authentication Callback (`/callback` route)
 
-    After succesful authentification, the `/callback` route is used. A state and nonce validation is made. The temporary authorization code is exchange for an access token and an ID token. The ID token is parsed to get the user's profile information. The `/segmentation` route is called.
+    After successful authentication, the `/callback` route is used. A state and nonce validation is made. The temporary authorization code is exchange for an access token and an ID token. The ID token is parsed to get the user's profile information. The `/segmentation` route is called.
 
     If email is not verified: `/verify_email` route
 
@@ -74,7 +76,7 @@ The pipeline is :
     - Clear previous logs and files before uploading new ones
     - upload the files after some conversion, compression and renaming to the HPC
 
-3. The cleaned datas are then used in the `/segment` route as :
+3. The cleaned data are then used in the `/segment` route as :
         - Update the jobfile template and copy it in HPC folder
         - launch the inference (nnUNet) and wait for result
         - Copy output folder from HPC
@@ -86,3 +88,14 @@ The pipeline is :
 ```bash
 inference_command = f'ssh {SSH_USER} "sbatch --wait --partition=Dance --account=mattech --qos=normal {jobfile_hpc}"'
 ```
+
+## Architecture
+
+In the production environnement, the website run in a Docker container called `aeyewb` coupled with Traefik (v3.3) reverse proxy in a second docker container `Traefik_aeyeweb` (c.f. `docker-compose.vm.yml`).
+
+### Flow
+From internet, access on port :443 to the `Traefik_aeyeweb` container. This container act as a reverse proxy and handle SSL/TLS with Let's Encrypt.
+
+Traefik then act to redirect to port :5000 for the `aeyeweb` container. IT is based on Flask + Gunicorn.
+`aeyeweb` has ssh access to the HEVS "chacha" server for HPC in the segmentation process. HPC is handled by Slurm.
+Also `aeyeweb` mount the `/mnt/filer01` Filer01 volume from the HEVS server for data and logs storage.
