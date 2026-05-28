@@ -14,7 +14,8 @@ bp = Blueprint('routes', __name__)
 
 high_scale_nb_users = 100
 
-@bp.route("/")
+@bp.route("/") # In flask, by default a route only answer to GET request. 
+# Need to use the methods arguments of the route() decorator to handlie different/multiple HTTP methods.
 def welcome():
     return render_template("welcomepage.html")
 
@@ -31,7 +32,7 @@ def callback():
         if not userinfo.get('email_verified'):
             return redirect(url_for('routes.verify_email'))
 
-        session["user"] = userinfo
+        session["user"] = userinfo # stores user in session
         return redirect(url_for('routes.segmentation'))
     except OAuthError as error:
         flash("Authentication failed: " + error.description)
