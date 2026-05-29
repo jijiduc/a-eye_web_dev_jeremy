@@ -4,9 +4,9 @@ The MUS aim to enable multiple users to use the segmentation pipeline in paralle
 
 Slurm informations are documented [in the initial map.](map_v0.md#L87)
 
-## Initial assesment
+## Initial assesment on MUS
 
-Race concurrence and data loss issues are present and need to be fixed :
+Race concurrence and data loss issues in MUS context are present and need to be fixed :
 
 On HPC side : 
 
@@ -28,3 +28,32 @@ Using 2 differents users accounts (having 4 at disposal) , I tested the assesmen
 - `clean_folders()` does clear data on each uploads.
 
 Other suspected issues aren't testable as is, because the race concurrence issues are "prevented" by the data loss effect of `clean_folders()`.
+
+### Encountered issues 
+
+User experience :
+
+- `/segment`, because of the `--wait` argument in the batch command, block a FLask thread and provide no status information/update. The effect is that the user can't go to another page of the aeye website while waiting for the results. In case of quiting/reloading, status and job following is lost. 
+
+
+
+## Planned changes
+For MUS correction
+
++ Paths isolation 
+    - use the same logic of unique folder creation to solve the paths issues (using user email)
+    - also isolated segmentation request input on HPC
++ `clean_folders()` at user scope to only wipe it's data
+
+For UX improvements :
+
++ Async taks handling
+    - use an async task handler for the `/segment`*.
+
+
+
+
+
+
+
+*\*celery is suggestion made by Jaime Barranco*
