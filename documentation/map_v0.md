@@ -84,6 +84,17 @@ For reference :
 ```bash
 ssh {SSH_USER} "sbatch --wait --partition=Dance --account=mattech --qos=normal {jobfile_hpc}"
 ```
+### Slurm template 
+
+The ressources used for the Slurm inference are :
+- `nodes`= 1
+- `ntasks`= 1
+- `cpus-per-task`= 4
+- `mem`= 16gb
+- `time`= 04:00:00
+- `gpu`= 1
+
+*Source :* [nnunet_inference_template.sh](../jobfiles/nnunet_inference_template.sh) 
 
 ## Python files
 
