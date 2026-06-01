@@ -13,10 +13,16 @@ Stopping the VM :
 sudo docker compose -f docker-compose.vm.yml down
 ```
 
-To consult the logs live : 
+To consult the logs live of the web services: 
 ```bash
 sudo docker compose -f docker-compose.vm.yml logs -f
 ```
+
+To read logs of the aeyeweb app:
+```bash
+sudo docker exec aeyeweb cat ./logs/app.log
+```
+
 ## Chacha access
 
 To access chacha directly, connection should be made from the VM docker: 
@@ -24,11 +30,12 @@ To access chacha directly, connection should be made from the VM docker:
 # access to the VM
 ssh jeremy.duc@153.109.8.48
 
-cd apps/a-eye_web/
+
+cd apps/a-eye_web_dev_jeremy/
 
 # access to chacha
 sudo docker exec -it aeyeweb ssh chacha
 
-# To observe running/pending jobs
-squeue -u jaime.barrancohernandez
+# To observe running/pending jobs from Dance (refresh every 5s)
+ watch -n 5 squeue -p Dance -u jaime.barrancohernandez  
 ```
