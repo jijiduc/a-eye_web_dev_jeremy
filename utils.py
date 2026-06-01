@@ -3,6 +3,7 @@ import glob
 import gzip
 import json
 import os
+from os import path
 import re
 import shutil
 import stat
