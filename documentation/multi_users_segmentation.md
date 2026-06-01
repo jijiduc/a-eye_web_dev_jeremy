@@ -5,6 +5,7 @@ The MUS aim to enable multiple users to use the segmentation pipeline in paralle
 Slurm informations are documented [in the initial map.](map_v0.md#L87)
 
 ## Initial assesment on MUS
+*In this section, links were correctly referencing functions before the fixes*
 
 Race concurrence and data loss issues in MUS context are present and need to be fixed :
 
@@ -36,7 +37,6 @@ User experience :
 - `/segment`, because of the `--wait` argument in the batch command, block a FLask thread and provide no status information/update. The effect is that the user can't go to another page of the aeye website while waiting for the results. In case of quiting/reloading, status and job following is lost. 
 
 
-
 ## Planned changes
 For MUS correction
 
@@ -45,15 +45,47 @@ For MUS correction
     - also isolated segmentation request input on HPC
 + `clean_folders()` at user scope to only wipe it's data
 
+*Remark* a cleaner practice would never use path as direct reference, but derive it from a structured object (like dataclass)
+
 For UX improvements :
 
-+ Async taks handling
++ Async task handling
     - use an async task handler for the `/segment`*.
 
-
-
-
-
-
-
 *\*celery is suggestion made by Jaime Barranco*
+
+## Changes made
+
+- added `models.py` containing `UserPaths` dataclass. This to holds all user-scoped paths for a single user's pipeline run in a centralized place.
+
+### `utils.py`
+
+- added `get_user_paths(user_email)` at [utils.py:36](../utils.py#L36) : 
+    - a function to get all `UserPaths` fields from the user's email
+- added `clear_folder(folder)` at [utils.py:31](../utils.py#L31) :
+    -  a wrap of `delete_files_in_folder` and `delete_subfolders`
+- modified `clean_folders(user_email)` at [utils.py:483](../utils.py#L483) : 
+    - changed to wipes data belonging to only a given user
+- modified `modify_jobfile()` : 
+    - added the `hpc_input` parameter to isolate the HPC input bind per user
+
+### `main.py`
+
+- modified `getSegmentation(user_email, paths)` : 
+    - use a `UserPaths` object and old path reference updated
+
+### `routes.py`
+
+- modified `/upload`,  `/segment` and `/download` : 
+    - extracts `user_email` from session and update the old path to now `paths` via `get_user_paths`
+
+
+### Tests
+I conducted 3 tests on the segmentation process updated. During those I used sample datas and monitor evolution with the job in queue (in Dance) on [chacha](cheat_sheet.md#L40), the live logs from the [running docker container](cheat_sheet.md#L16-24) and verification of upload on Filer01: 
+
+- using 1 account : upload and full pipeline completed successfully
+- using 2 accounts in simul: both users uploaded concurrently. Two separate jobs submitted and completed independently. Results stored in distinct user folders — no data mixing observed
+- using 4 accounts in simul: all 4 users uploaded concurrently. Four separate HPC jobs submitted. Results came back in stages, each correctly isolated to the corresponding user's folder and filer path — no data mixing observed
+
+#### Conclusion 
+I conclude that these tests validate my implementation and successfully correct the MUS issues.

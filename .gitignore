@@ -151,3 +151,5 @@ local-certs/
 # Test datas
 data/simple-sample/*
 data/test-webplatform/*
+pyproject.toml
+uv.lock
