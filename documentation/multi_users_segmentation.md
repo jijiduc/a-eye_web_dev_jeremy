@@ -38,7 +38,6 @@ User experience :
 
 *This is not on the agenda for the moment*
 
-
 ## Planned changes
 For MUS correction
 
