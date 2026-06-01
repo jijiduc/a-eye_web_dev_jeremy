@@ -1,4 +1,5 @@
 import os
+from os import path
 import re
 import glob
 import json
@@ -7,6 +8,7 @@ import subprocess
 import dicom2nifti
 import logging
 import zipfile
+from models import UserPaths
 import py7zr
 import fnmatch
 import requests
@@ -23,7 +25,37 @@ from string import Template
 import gzip
 import stat
 from config import *
+from config import BASE_INPUT_HPC, SSH_USER, LOGS_FOLDER, AUX_INPUT_FOLDER
+from pathlib import Path
 
+def clear_folder(folder: Path|str ) -> None:
+    """"Deletes all files and subdirectories inside folder"""
+    delete_files_in_folder(folder)
+    delete_subfolders(folder)
+
+def get_user_paths(user_email: str) -> UserPaths:
+    """Generate all needed local and HPC paths for a user, based on his email
+
+    Args:
+        user_email (str): The email address of the user to process
+
+    Returns:
+        UserPaths: Dataclass holding all the Path objects and HPC path strings for the user
+    """
+
+    cleaned_email: str  = user_email.replace("@", "_at_").replace(".","_")
+    base_path: Path = Path("./nnUNet/nnUNet_inference")/cleaned_email
+
+    return UserPaths(
+        upload= Path("./static/upload")/ cleaned_email,
+        aux_base= base_path,
+        aux_input= base_path/"input",
+        output_zip= base_path/"output.zip",
+        download= base_path/"output",
+        jobfile        = Path("./jobfiles") / f"nnunet_inference_{cleaned_email}.sh",
+        hpc_base_input = f"{BASE_INPUT_HPC}/{cleaned_email}",
+        hpc_input      = f"{BASE_INPUT_HPC}/{cleaned_email}/input",
+    )
 
 def allowed_file(filename):
     """Wether the file type is allowed or not (allowd type : .nii.gz / .zip /
@@ -73,8 +105,8 @@ def convert_country_to_iso3(country_code):
 def copy_segmentation_data(user_email, input, output):
     zurich_time = datetime.now(ZoneInfo("Europe/Zurich"))
     timestamp = zurich_time.strftime("%Y%m%d_%H%M")
-    safe_email = user_email.replace("@", "_at_").replace(".", "_")
-    dest_dir = f"{DATA_FOLDER}/{safe_email}_{timestamp}"
+    user_reference_email = user_email.replace("@", "_at_").replace(".", "_")
+    dest_dir = f"{DATA_FOLDER}/{user_reference_email}_{timestamp}"
 
     os.makedirs(dest_dir, exist_ok=True)
     
@@ -100,7 +132,7 @@ def unzip_file(file_type, source, destination):
                 for member in zip_ref.namelist():
                     member_path = os.path.abspath(os.path.join(destination, member))
                     if not os.path.commonpath([abs_dest, member_path]) == abs_dest:
-                        raise Exception(f"Unsafe path in zip file: {member}")
+                        raise Exception(f"Unuser_reference path in zip file: {member}")
 
                 zip_ref.extractall(destination)
 
@@ -184,25 +216,31 @@ def delete_files_in_folder(folder):
         for file in files:
             file_path = os.path.join(root, file)
             try:
-                safe_remove_file(file_path)
+                user_reference_remove_file(file_path)
             except Exception as e:
                 print_and_log(f"[A-eye] Failed to delete {file_path}. Reason: {e}", 'error', LOGS_FOLDER)
 
 def clean_folder_hpc(folder):
     """
-    Cleans the specified folder on the HPC by deleting all files and subfolders.
+    Cleans the specified folder on the HPC by deleting all files and subfolders
     """
     print_and_log(f"[A-eye] Cleaning folder {folder} on HPC...", 'info', LOGS_FOLDER)
     subprocess.run(
-        ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=8", SSH_USER, f"rm -rf {folder}/*"],
-        check=True,
-        timeout=20,
+        ["ssh",                                         # using the ssh client
+         "-o",                                          # ssh config option n.1
+         "BatchMode=yes",                               # non-interactive mode : will fail if a password if asked
+         "-o",                                          # ssh confing option n.2
+         "ConnectTimeout=8",                            # Maximum time (in seconds) to establish the ssh connection
+         SSH_USER,                                      # ID and adress of the distant server
+         f"mkdir -p {folder} && rm -rf {folder}/*"],    # Commands executed on the server : create folders and clear it's content
+         check=True,                                    # Raise a CalledProcessError if exit code isn't 0
+         timeout=20,                                    # Raise a TimeOutException if execution time is more than the set value (in seconds)
     )
     print_and_log(f"[A-eye] Folder {folder} cleaned successfully.", 'info', LOGS_FOLDER)
 
 
 def delete_folder(folder):
-    safe_rmtree(folder)
+    user_reference_rmtree(folder)
     
 
 def delete_subfolders(folder):
@@ -213,7 +251,7 @@ def delete_subfolders(folder):
         item_path = os.path.join(folder, item)
         if os.path.isdir(item_path):
             try:
-                safe_rmtree(item_path)
+                user_reference_rmtree(item_path)
             except Exception as e:
                 print_and_log(f"[A-eye] Failed to delete {item_path}. Reason: {e}", 'error', LOGS_FOLDER)
 
@@ -226,7 +264,7 @@ def _handle_remove_readonly(func, path, exc_info):
         raise exc_info[1]
 
 
-def safe_remove_file(path):
+def user_reference_remove_file(path):
     if not os.path.exists(path):
         return
 
@@ -238,7 +276,7 @@ def safe_remove_file(path):
     os.remove(path)
 
 
-def safe_rmtree(path):
+def user_reference_rmtree(path):
     if os.path.exists(path):
         shutil.rmtree(path, onerror=_handle_remove_readonly)
 
@@ -441,25 +479,19 @@ def run_command_and_print_output(command):
         for line in console_errors.splitlines():
             print_console(line, LOGS_FOLDER)
 
-
-def clean_folders():
+def clean_folders(user_email: str) -> None:
     """Clear all folders used in the segmentation process from old remaining datas"""
-    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-    os.makedirs(AUX_BASE_FOLDER, exist_ok=True)
-    os.makedirs(AUX_INPUT_FOLDER, exist_ok=True)
-    os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
+    paths = get_user_paths(user_email)
+    paths.create_directories()
 
-    clear_logs(LOGS_FOLDER)  # Clear previous logs
-    delete_files_in_folder(UPLOAD_FOLDER)  # Clear static/upload folder
-    delete_subfolders(UPLOAD_FOLDER) # Clear previous uploaded files
-    delete_files_in_folder(AUX_BASE_FOLDER)  # Clear output.zip
-    delete_files_in_folder(AUX_INPUT_FOLDER)  # Clear previous inference files
-    delete_subfolders(AUX_INPUT_FOLDER)  # Clear previous uploaded files
-    safe_rmtree(DOWNLOAD_FOLDER)
-    os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
-    clean_folder_hpc(INPUT_HPC)  # Clear previous input files on HPC
-    clean_folder_hpc(OUTPUT_HPC)  # Clear previous inference output on HPC
+    clear_folder(paths.upload)
+    clear_folder(paths.aux_input)
+    delete_files_in_folder(paths.aux_base)
 
+    user_reference_rmtree(paths.download)
+    paths.download.mkdir(parents=True, exist_ok=True)
+
+    clean_folder_hpc(paths.hpc_input)
 
 def get_management_api_token():
     url = f'https://{current_app.config["AUTH0_DOMAIN"]}/oauth/token'
@@ -537,17 +569,17 @@ def get_cases_processed():
     return load_stats()["cases_processed"]
 
 
-def modify_jobfile(template_file, user_email, timestamp, output_file):
-    """Modify the jobfile template with user-specific information."""
+def modify_jobfile(template_file: str|Path, user_email: str, timestamp: str, output_file: str|Path, hpc_input: str) -> None:
+    """Modify the jobfile template with user-specific information"""
     
-    # Make the email safe for paths
-    safe_email = re.sub(r'[@.]', '_', user_email)
+    # Make the email user_reference for paths
+    user_reference_email = user_email.replace("@", "_at_").replace(".", "_")
 
     # Base results dir
     base_results_dir = "/home/jaime.barrancohernandez/results/nnunet"
 
     # Create unique folder for this user + timestamp
-    user_dir = os.path.join(base_results_dir, f"{safe_email}_{timestamp}")
+    user_dir = os.path.join(base_results_dir, f"{user_reference_email}_{timestamp}")
     os.system(f"ssh {SSH_USER} 'mkdir -p {user_dir}'")
 
     # Read the template
@@ -556,8 +588,8 @@ def modify_jobfile(template_file, user_email, timestamp, output_file):
         job_script = template.safe_substitute(MAIL_USER=user_email)
 
     # Update SBATCH output/error paths
-    out_file = f"{user_dir}/{safe_email}_{timestamp}_nnUNet_predict.%N.%j.%a.out"
-    err_file = f"{user_dir}/{safe_email}_{timestamp}_nnUNet_predict.%N.%j.%a.err"
+    out_file = f"{user_dir}/{user_reference_email}_{timestamp}_nnUNet_predict.%N.%j.%a.out"
+    err_file = f"{user_dir}/{user_reference_email}_{timestamp}_nnUNet_predict.%N.%j.%a.err"
     job_script = re.sub(r'(#SBATCH --output=).+\.out', rf'\1{out_file}', job_script)
     job_script = re.sub(r'(#SBATCH --error=).+\.err', rf'\1{err_file}', job_script)
 
@@ -567,13 +599,19 @@ def modify_jobfile(template_file, user_email, timestamp, output_file):
         f"--bind {user_dir}:/output",
         job_script
     )
+    # isolate HPC input bind
+    job_script = re.sub(
+        r'--bind\s+\S+:/input',
+        f"--bind {hpc_input}:/input",
+        job_script
+    )
 
     # Write modified jobfile
     with open(output_file, "w") as f:
         f.write(job_script)
 
 
-def upload_files(UPLOAD_FOLDER):
+def upload_files(upload_folder:str, aux_input:str, hpc_base_input:str) -> None:
     """Upload files into HPC folder after some operations
         1. Unzip if needed 
         2. If .dcm, then convert to .nii
@@ -582,32 +620,34 @@ def upload_files(UPLOAD_FOLDER):
         5. Copy the results into the HPC folder
 
     Args:
-        UPLOAD_FOLDER (String): the upload folder path
+        upload_folder (String):     Local path where user files are initially uploaded
+        aux_input (String):         Local directory where nnUNet inference input data is staged
+        hpc_base_input (String):    Root directory on the HPC cluster for this user's input data
     """
     # paths
-    aux_in = AUX_INPUT_FOLDER
-    base_input_hpc = BASE_INPUT_HPC  # input folder on HPC
+    aux_in = aux_input
+    base_input_hpc = hpc_base_input  # input folder on HPC
 
     # 1. Check if input folder contains zip/7z files and unzip them
-    if os.path.isdir(UPLOAD_FOLDER):
-        for file in os.listdir(UPLOAD_FOLDER):
-            fpath = os.path.join(UPLOAD_FOLDER, file)
+    if os.path.isdir(upload_folder):
+        for file in os.listdir(upload_folder):
+            fpath = os.path.join(upload_folder, file)
             if os.path.isfile(fpath):
                 ext = os.path.splitext(file)[1].lower()
                 if ext in ['.zip', '.7z']:
-                    unzip_file(ext[1:], fpath, UPLOAD_FOLDER)  # unzip into the same input folder
+                    unzip_file(ext[1:], fpath, upload_folder)  # unzip into the same input folder
 
     # 2. Check dicom folders
-    check_dicom_folders_names(UPLOAD_FOLDER)
+    check_dicom_folders_names(upload_folder)
 
     # 3. Check nifti files
-    check_nifti_files(UPLOAD_FOLDER)
+    check_nifti_files(upload_folder)
 
     # 4. Check filenames
-    check_filenames(UPLOAD_FOLDER)
+    check_filenames(upload_folder)
 
     # 5. Copy the final results to aux_in
-    copy_clean_files(UPLOAD_FOLDER, aux_in)
+    copy_clean_files(upload_folder, aux_in)
 
     # 6. Copy aux_in to base_input_hpc
     copy_folder_to_hpc(aux_in, base_input_hpc)

@@ -1,14 +1,21 @@
-from flask import Blueprint, current_app, session, render_template, redirect, url_for, request, flash, jsonify, send_file
-import secrets, os, threading, subprocess, pandas as pd, plotly.express as px
+from flask import Blueprint, current_app, session, render_template, redirect, url_for, request, flash, jsonify, send_file, Response
+import secrets
+import os
+import threading
+import subprocess
+import pandas as pd
+import plotly.express as px
 from urllib.parse import urlencode, quote_plus
 from authlib.integrations.base_client.errors import OAuthError, MismatchingStateError
 from werkzeug.utils import secure_filename
 
-from utils import *
+from utils import get_user_paths, get_user_data, get_cases_processed, get_country_from_ip, convert_country_to_iso3, clean_folders, allowed_file, upload_files, sync_logs_to_output, print_and_log, copy_segmentation_data, mail, increment_cases_processed, zip_folder, Message, requires_auth
+from pathlib import Path
 from main import getSegmentation
 from app import oauth
+from models import UserPaths
 
-from config import UPLOAD_FOLDER, DOWNLOAD_FOLDER, OUTPUT_ZIP, AUX_INPUT_FOLDER
+from config import LOGS_FOLDER
 
 bp = Blueprint('routes', __name__)
 
@@ -144,17 +151,32 @@ def segmentation():
 
 
 @bp.route('/upload', methods=['POST'])
-def upload_file():
-         
+def upload_file() -> tuple[Response, int]:
+    """File upload handling for the user logged-in
+
+      1. clear the user's previous data 
+      2. saves provided files locally 
+      3. copy them to the HPC input directory
+
+      Returns:
+          tuple[Response, int]: JSON response with upload status and HTTP status code
+      """
+    user_email: str = session.get("user", {}).get("email", "unknown_user")
+    paths: UserPaths = get_user_paths(user_email)
+
     if 'files[]' not in request.files:
-        return jsonify({'message': 'No file found', 'status': 'error'}), 400
-    
+        return jsonify({
+            'message': 'No file found',
+            'status': 'error'
+            }), 400
+
     files = request.files.getlist('files[]')
     uploaded_files = []
     rejected_files = []
-    
+
     try:
-        clean_folders()  # Clear previous logs and files before uploading new ones
+        # 1. clear the user's previous data 
+        clean_folders(user_email)
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as error:
         current_app.logger.exception("Could not prepare HPC folders for upload")
         return jsonify({
@@ -163,17 +185,19 @@ def upload_file():
             'error': str(error)
         }), 503
 
+    # 2. saves provided files locally 
     for file in files:
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)  # Use this werkzeug method to secure filename.
-            filepath = os.path.join(UPLOAD_FOLDER, filename)
+            filepath = paths.upload / filename
             file.save(filepath)
             uploaded_files.append(filename)
         else:
             rejected_files.append(file.filename)
-            
+
     try:
-        upload_files(UPLOAD_FOLDER)
+        #3. copy the provided files in the HPC input directory
+        upload_files(paths.upload, paths.aux_input, paths.hpc_base_input)
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as error:
         current_app.logger.exception("Could not copy uploaded files to HPC")
         return jsonify({
@@ -186,49 +210,64 @@ def upload_file():
         message = f"Uploaded: {', '.join(uploaded_files)}"
         if rejected_files:
             message += f" | Rejected: {', '.join(rejected_files)}"
-        return jsonify({'message': message, 'status': 'success'}), 200
+        return jsonify({
+            'message': message,
+            'status': 'success'
+            }), 200
     else:
-        return jsonify({'message': 'No valid files uploaded', 'status': 'error'}), 400
+        return jsonify({
+            'message': 'No valid files uploaded',
+            'status': 'error'
+            }), 400
 
 
 @bp.route('/segment', methods=['POST'])
-def segment():
-    # Get user email from session or token
-    user_email = session.get("user", {}).get("email", "unknown_user")
+def segment() -> tuple[Response, int]:
+    """Run the segmentation pipeline for the logged-in user.
+
+    1. submits the HPC job and waits for completion
+    2. zips the output if existing
+    3. starts a background thread to copy results to Filer01
+
+    Returns:
+        tuple[Response, int]: JSON response with status message and HTTP status code. (200 on success (with download_url), 500 if the pipeline raised anything)
+    """
+    user_email: str = session.get("user", {}).get("email", "unknown_user")
+    paths: UserPaths = get_user_paths(user_email)
 
     try:
-        # Run segmentation function
-        getSegmentation(DOWNLOAD_FOLDER, user_email)
+        # 1. submits the HPC job and waits for completion
+        getSegmentation(user_email, paths)
     except Exception as error:
         print_and_log(f"[A-eye] Segmentation failed: {error}", 'error', LOGS_FOLDER)
-        sync_logs_to_output(DOWNLOAD_FOLDER)
+        sync_logs_to_output(paths.download)
         return jsonify({"message": "Segmentation failed", "error": str(error)}), 500
 
     has_output = (
-        os.path.exists(DOWNLOAD_FOLDER) and
-        any(fname.endswith(".nii.gz") for fname in os.listdir(DOWNLOAD_FOLDER))
+        paths.download.exists() and
+        any(fname.endswith(".nii.gz") for fname in os.listdir(paths.download))
     )
 
     if has_output:
         print_and_log("[A-eye] Copying segmentation data to filer in background...", 'info', LOGS_FOLDER)
-        sync_logs_to_output(DOWNLOAD_FOLDER)
+        sync_logs_to_output(paths.download)
 
-    # Zip folder for download
-    zip_folder(DOWNLOAD_FOLDER, OUTPUT_ZIP)
+    # 2. Zip folder for download
+    zip_folder(paths.download, paths.output_zip)
         
-    # Start background thread to copy files (only if output exists)
+    # 3. Start background thread to copy files (only if output exists)
     
     if has_output:
         increment_cases_processed()
         # send_email(user_email, "A-eye segmentation task completed successfully. You can download the results.")
         threading.Thread(
             target=copy_segmentation_data,
-            args=(user_email, AUX_INPUT_FOLDER, DOWNLOAD_FOLDER)
+            args=(user_email, paths.aux_input, paths.download)
         ).start()
     else:
         # send_email(user_email, "A-eye segmentation task failed. Check the logs for details.")
         print_and_log("[A-eye] Segmentation failed or no .nii.gz output found. Data not copied!", 'error', LOGS_FOLDER)
-        sync_logs_to_output(DOWNLOAD_FOLDER)
+        sync_logs_to_output(paths.download)
 
     return jsonify({"message": "Segmentation completed", "download_url": "/download"}), 200
 
@@ -244,9 +283,17 @@ def profile():
 
 
 @bp.route('/download', methods=['GET'])
-def download_files():
-    if os.path.exists(OUTPUT_ZIP):
-        return send_file(OUTPUT_ZIP, as_attachment=True)
+def download_files() -> Response | tuple[str, int]:
+    """Download the ZIP file generated for the user logged in
+
+    Returns:
+        Response: The ZIP file
+        tuple[str, int]: A "File not found" error message with HTTP 404
+    """
+    user_email: str = session.get("user", {}).get("email", "unknown_user")
+    paths: UserPaths = get_user_paths(user_email)
+    if paths.output_zip.exists():
+        return send_file(paths.output_zip, as_attachment=True)
     return "File not found", 404
 
 
