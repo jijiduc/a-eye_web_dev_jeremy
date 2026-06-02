@@ -22,7 +22,7 @@ On the a-eye_web side :
 
 2. `clean_folders()`, in [utils.py:445](../utils.py#L445), clear every previous logs and file on each `/upload`, in [routes.py:166](../routes.py#L166). This would lead to data loss. When a second user uploads data, it clear the previous user's one.
 
-## Tests
+## Initial tests
 
 Using 2 differents users accounts (having 4 at disposal) , I tested the assesment that : 
 
@@ -35,6 +35,8 @@ Other suspected issues aren't testable as is, because the race concurrence issue
 User experience :
 
 - `/segment`, because of the `--wait` argument in the batch command, block a FLask thread and provide no status information/update. The effect is that the user can't go to another page of the aeye website while waiting for the results. In case of quiting/reloading, status and job following is lost. 
+
+*This is not on the agenda for the moment*
 
 
 ## Planned changes
@@ -80,7 +82,7 @@ For UX improvements :
     - extracts `user_email` from session and update the old path to now `paths` via `get_user_paths`
 
 
-### Tests
+### Tests of changes
 I conducted 3 tests on the segmentation process updated. During those I used sample datas and monitor evolution with the job in queue (in Dance) on [chacha](cheat_sheet.md#L40), the live logs from the [running docker container](cheat_sheet.md#L16-24) and verification of upload on Filer01: 
 
 - using 1 account : upload and full pipeline completed successfully
@@ -89,3 +91,13 @@ I conducted 3 tests on the segmentation process updated. During those I used sam
 
 #### Conclusion 
 I conclude that these tests validate my implementation and successfully correct the MUS issues.
+
+### Feedback on the changes
+After a meeting with Jaime some minors changes should be made :
+1. If an error is raised during the segmentation process (on the web side): 
+    - data should be removed and termination of the segmentation process on Slurm.
+2. There should be no data being left-over on the VM.
+
+## Planned fixes
+1. Get the Slurm job ID and send a `scancel` in cas of error
+2. Clean the VM folders on error
