@@ -99,5 +99,5 @@ After a meeting with Jaime some minors changes should be made :
 2. There should be no data being left-over on the VM.
 
 ## Planned fixes
-1. Get the Slurm job ID and send a `scancel` in cas of error
+1. Get the Slurm job ID and send a `scancel` in case of error
 2. Clean the VM folders on error

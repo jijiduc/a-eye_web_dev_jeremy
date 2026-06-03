@@ -1,9 +1,18 @@
 import os
 import subprocess
 from datetime import datetime
-from utils import modify_jobfile, print_and_log, copy_file_to_hpc, copy_files_from_hpc, user_reference_rmtree, move_file, copy_folder
-from config import JOBFILE_HPC, SSH_USER, LOGS_FOLDER, JOBFILE_TEMPLATE, OUTPUT_HPC
+
+from config import JOBFILE_HPC, JOBFILE_TEMPLATE, LOGS_FOLDER, OUTPUT_HPC, SSH_USER
 from models import UserPaths
+from utils import (
+    copy_file_to_hpc,
+    copy_files_from_hpc,
+    copy_folder,
+    modify_jobfile,
+    move_file,
+    print_and_log,
+    user_reference_rmtree,
+)
 
 # ----------------------------------------------------------------------------------------------
 # MAIN FUNCTION
