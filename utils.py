@@ -1,32 +1,37 @@
-import os
-from os import path
-import re
-import glob
-import json
-import shutil
-import subprocess
-import dicom2nifti
-import logging
-import zipfile
-from models import UserPaths
-import py7zr
 import fnmatch
-import requests
-import pycountry
-from datetime import datetime
-from zoneinfo import ZoneInfo
-from functools import wraps
-from flask import redirect, url_for, session, current_app
-import threading
-import requests
-from app import mail
-from flask_mail import Message
-from string import Template
+import glob
 import gzip
+import json
+import os
+import re
+import shutil
 import stat
-from config import *
-from config import BASE_INPUT_HPC, SSH_USER, LOGS_FOLDER, AUX_INPUT_FOLDER
+import subprocess
+import zipfile
+from datetime import datetime
+from functools import wraps
 from pathlib import Path
+from string import Template
+from zoneinfo import ZoneInfo
+
+import dicom2nifti
+import py7zr
+import pycountry
+import requests
+from flask import current_app, redirect, session, url_for
+from flask_mail import Message
+
+from app import mail
+from config import (
+    ALLOWED_EXTENSIONS,
+    BASE_INPUT_HPC,
+    DATA_FOLDER,
+    LOGS_FOLDER,
+    SSH_USER,
+    STATS_FILE,
+)
+from models import UserPaths
+
 
 def clear_folder(folder: Path|str ) -> None:
     """"Deletes all files and subdirectories inside folder"""

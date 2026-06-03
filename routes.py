@@ -1,21 +1,50 @@
-from flask import Blueprint, current_app, session, render_template, redirect, url_for, request, flash, jsonify, send_file, Response
-import secrets
 import os
-import threading
+import secrets
 import subprocess
+import threading
+from pathlib import Path
+from urllib.parse import quote_plus, urlencode
+
 import pandas as pd
 import plotly.express as px
-from urllib.parse import urlencode, quote_plus
-from authlib.integrations.base_client.errors import OAuthError, MismatchingStateError
+from authlib.integrations.base_client.errors import MismatchingStateError, OAuthError
+from flask import (
+    Blueprint,
+    Response,
+    current_app,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    send_file,
+    session,
+    url_for,
+)
 from werkzeug.utils import secure_filename
 
-from utils import get_user_paths, get_user_data, get_cases_processed, get_country_from_ip, convert_country_to_iso3, clean_folders, allowed_file, upload_files, sync_logs_to_output, print_and_log, copy_segmentation_data, mail, increment_cases_processed, zip_folder, Message, requires_auth
-from pathlib import Path
-from main import getSegmentation
 from app import oauth
-from models import UserPaths
-
 from config import LOGS_FOLDER
+from main import getSegmentation
+from models import UserPaths
+from utils import (
+    Message,
+    allowed_file,
+    clean_folders,
+    convert_country_to_iso3,
+    copy_segmentation_data,
+    get_cases_processed,
+    get_country_from_ip,
+    get_user_data,
+    get_user_paths,
+    increment_cases_processed,
+    mail,
+    print_and_log,
+    requires_auth,
+    sync_logs_to_output,
+    upload_files,
+    zip_folder,
+)
 
 bp = Blueprint('routes', __name__)
 
