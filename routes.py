@@ -2,7 +2,6 @@ import os
 import secrets
 import subprocess
 import threading
-from pathlib import Path
 from urllib.parse import quote_plus, urlencode
 
 import pandas as pd
@@ -30,6 +29,7 @@ from models import UserPaths
 from utils import (
     Message,
     allowed_file,
+    cancel_slurm_job,
     clean_folders,
     convert_country_to_iso3,
     copy_segmentation_data,
@@ -45,6 +45,25 @@ from utils import (
     upload_files,
     zip_folder,
 )
+
+
+def _cancel_job(paths: UserPaths) -> None:
+    """Internal function canceling Slurm job
+
+    Args:
+        paths (UserPaths): initialized paths for the concerned user
+    """
+    if not paths.active_job_file.exists():
+        return
+    job_id = paths.active_job_file.read_text().strip()
+    paths.active_job_file.unlink(missing_ok=True)
+    
+    if job_id:
+        print_and_log(f"[A-eye] Cancelling Slurm job {job_id}...", 'warning', LOGS_FOLDER)
+        try:
+            cancel_slurm_job(job_id)
+        except Exception:
+            current_app.logger.exception("Failed to cancel Slurm job %s", job_id)
 
 bp = Blueprint('routes', __name__)
 
@@ -175,6 +194,8 @@ def faq():
 @bp.route("/segmentation")
 def segmentation():
     if 'user' in session:
+        user_email: str = session.get("user", {}).get("email", "unknown_user")
+        _cancel_job(get_user_paths(user_email))
         return render_template('segmentation.html')
     return redirect(url_for('routes.login'))
 
@@ -192,6 +213,8 @@ def upload_file() -> tuple[Response, int]:
       """
     user_email: str = session.get("user", {}).get("email", "unknown_user")
     paths: UserPaths = get_user_paths(user_email)
+
+    _cancel_job(paths)
 
     if 'files[]' not in request.files:
         return jsonify({
@@ -264,13 +287,27 @@ def segment() -> tuple[Response, int]:
     user_email: str = session.get("user", {}).get("email", "unknown_user")
     paths: UserPaths = get_user_paths(user_email)
 
+    _cancel_job(paths)
+
+    def store_job_id(job_id: str) -> None:
+        """Store the job id
+
+        Args:
+            job_id (str): Slurm job ID
+        """
+        paths.active_job_file.parent.mkdir(parents=True, exist_ok=True)
+        paths.active_job_file.write_text(job_id)
+
     try:
-        # 1. submits the HPC job and waits for completion
-        getSegmentation(user_email, paths)
+        getSegmentation(user_email, paths, ongoing_job_id=store_job_id)
     except Exception as error:
+        paths.active_job_file.unlink(missing_ok=True)
         print_and_log(f"[A-eye] Segmentation failed: {error}", 'error', LOGS_FOLDER)
         sync_logs_to_output(paths.download)
+        clean_folders(user_email)
         return jsonify({"message": "Segmentation failed", "error": str(error)}), 500
+
+    paths.active_job_file.unlink(missing_ok=True)
 
     has_output = (
         paths.download.exists() and
@@ -297,6 +334,7 @@ def segment() -> tuple[Response, int]:
         # send_email(user_email, "A-eye segmentation task failed. Check the logs for details.")
         print_and_log("[A-eye] Segmentation failed or no .nii.gz output found. Data not copied!", 'error', LOGS_FOLDER)
         sync_logs_to_output(paths.download)
+        clean_folders(user_email)
 
     return jsonify({"message": "Segmentation completed", "download_url": "/download"}), 200
 
