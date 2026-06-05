@@ -20,7 +20,7 @@ sudo docker compose -f docker-compose.vm.yml logs -f
 
 To read logs of the aeyeweb app:
 ```bash
-sudo docker exec aeyeweb cat ./logs/app.log
+sudo docker exec aeyeweb tail -f ./logs/app.log
 ```
 
 ## Chacha access
@@ -36,6 +36,6 @@ cd apps/a-eye_web_dev_jeremy/
 # access to chacha
 sudo docker exec -it aeyeweb ssh chacha
 
-# To observe running/pending jobs from Dance (refresh every 5s)
- watch -n 5 squeue -p Dance -u jaime.barrancohernandez  
+# To observe running/pending jobs from Dance partition
+watch -n 1 squeue -p Dance -u jaime.barrancohernandez
 ```
