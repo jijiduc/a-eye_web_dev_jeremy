@@ -98,6 +98,30 @@ After a meeting with Jaime some minors changes should be made :
     - data should be removed and termination of the segmentation process on Slurm.
 2. There should be no data being left-over on the VM.
 
-## Planned fixes
-1. Get the Slurm job ID and send a `scancel` in case of error
-2. Clean the VM folders on error
+## Reload cancellation
+
+Gunicorn runs 4 different worker processes. As each worker has isolated memory, a `.txt` file on disk provide the job ID
+
+### `models.py`
+
+- added `active_job_file: Path` field to `UserPaths`:
+    - Serve to store the ongoing Slurm job ID as plain text (at `static/active_jobs/<sanitized_email>.txt`). It exists while a job is active; deleted on completion, error, or cancellation
+
+### `main.py`
+
+- modified `getSegmentation(user_email, paths, ongoing_job_id)`:
+    - added an optional `ongoing_job_id: Callable[[str], None] | None` parameter. Used if provided, with the `job_id` retrieved
+    - added `readline()`that captures the ID before `communicate()` blocks it, thus enabling cancellation mid-job
+
+### `routes.py`
+
+- added `_cancel_job(paths: UserPaths)`:
+    - called at the top of `GET /segmentation`, `POST /upload`, and `POST /segment`, it reads the job ID from `active_job_file`, delete it and call `cancel_slurm_job(job_id)`
+
+- modified `POST /segment`:
+    - added `store_job_id(job_id)` : writes the job ID to `active_job_file`
+    - delete `active_job_file` after process succeed/failed
+
+### Test
+
+Tested with different account, also in quasi-simulteanous fashion : logs and observation of the Slurm queue showed the `scancel` effect being in action.

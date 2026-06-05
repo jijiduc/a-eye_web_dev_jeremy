@@ -33,6 +33,26 @@ from config import (
 from models import UserPaths
 
 
+def cancel_slurm_job(id_job : str) -> None:
+    """Cancel a slurm job
+
+    Args:
+        id_job (str): id of the slurm job (string as is from a linux env)
+    """
+    print_and_log(f"[A-eye] Cancelling the slurm job {id_job}...", 'warning', LOGS_FOLDER)
+    subprocess.run(
+        ["ssh",
+         "-o",
+         "BatchMode=yes",
+         "-o",
+         "ConnectTimeout=8",
+         SSH_USER,
+         f"scancel {id_job}"
+        ],
+        check=True,
+        timeout=20,
+    )
+
 def clear_folder(folder: Path|str ) -> None:
     """"Deletes all files and subdirectories inside folder"""
     delete_files_in_folder(folder)
@@ -52,14 +72,15 @@ def get_user_paths(user_email: str) -> UserPaths:
     base_path: Path = Path("./nnUNet/nnUNet_inference")/cleaned_email
 
     return UserPaths(
-        upload= Path("./static/upload")/ cleaned_email,
-        aux_base= base_path,
-        aux_input= base_path/"input",
-        output_zip= base_path/"output.zip",
-        download= base_path/"output",
-        jobfile        = Path("./jobfiles") / f"nnunet_inference_{cleaned_email}.sh",
-        hpc_base_input = f"{BASE_INPUT_HPC}/{cleaned_email}",
-        hpc_input      = f"{BASE_INPUT_HPC}/{cleaned_email}/input",
+        upload          = Path("./static/upload") / cleaned_email,
+        aux_base        = base_path,
+        aux_input       = base_path / "input",
+        output_zip      = base_path / "output.zip",
+        download        = base_path / "output",
+        jobfile         = Path("./jobfiles") / f"nnunet_inference_{cleaned_email}.sh",
+        active_job_file = Path("./static/active_jobs") / f"{cleaned_email}.txt",
+        hpc_base_input  = f"{BASE_INPUT_HPC}/{cleaned_email}",
+        hpc_input       = f"{BASE_INPUT_HPC}/{cleaned_email}/input",
     )
 
 def allowed_file(filename):
@@ -495,7 +516,8 @@ def clean_folders(user_email: str) -> None:
 
     user_reference_rmtree(paths.download)
     paths.download.mkdir(parents=True, exist_ok=True)
-
+    paths.jobfile.unlink(missing_ok=True)
+    
     clean_folder_hpc(paths.hpc_input)
 
 def get_management_api_token():
