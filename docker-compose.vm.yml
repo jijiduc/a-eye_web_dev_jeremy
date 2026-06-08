@@ -35,7 +35,7 @@ services:
       - backend
 
   traefik:
-    image: traefik:v3.3
+    image: traefik:v3.7.4
     container_name: traefik_aeyeweb
     restart: unless-stopped
     depends_on:
