@@ -8,7 +8,7 @@ Here under, a list of possible improvements for the web plateform, based on my o
  - download button :
     - Changing the name of the provided file from `output.zip` to a better suited one :
       - Jaime : *"Let's use the email and timestamp like : output_email_timestamp.zip (meeting 02.06.2026)"*
- - Enhance the data consent message
+ - Enhance the data consent message, checkboxe, FAQ
    - Jaime : *"And adding a checkboxe, this will first be discussed between the supervisors (meeting 02.06.2026)"*
  - File upload is quite long, maybe chunk the file sends to optimise speed
    - Jaime : *"Could be envisaged, but it's not to do now (meeting 02.06.2026)"*
