@@ -99,8 +99,12 @@ After a meeting with Jaime some minors changes should be made :
 2. There should be no data being left-over on the VM.
 
 ## Reload cancellation
+When the user reloads the page, a new `GET /segmentation` is made at page reload.
+Using this signal, the fix works by using the internal method `_cancel_job` being called in the `/segmentation`route, thus cancelling any running job at reload.
 
-Gunicorn runs 4 different worker processes. As each worker has isolated memory, a `.txt` file on disk provide the job ID
+The current website implementation uses Gunicorn with 4 different worker processes. As each worker has isolated memory, a `.txt` file is temporarily created on disk to provide the job ID to any of them.
+
+`_cancel_job` was also added in `POST /upload` and `POST /segment` to stop any running processes from the user if a new pipeline is used.
 
 ### `models.py`
 
@@ -124,4 +128,12 @@ Gunicorn runs 4 different worker processes. As each worker has isolated memory, 
 
 ### Test
 
-Tested with different account, also in quasi-simulteanous fashion : logs and observation of the Slurm queue showed the `scancel` effect being in action.
+Tested with different accounts, also in quasi-simulteanous fashion : logs and observation of the Slurm queue showed the `scancel` effect being in action.
+
+### About the page quitting job cancellation
+
+Unlike the reload fix, quitting the page doesn't provide any usable signal on the server-side. To detect this case adding a separate background thread, constantly looking for the active jobs, would be an example of solution.
+
+However, this would require adding a lot of specific custom-made infrastructure, that wouldn't be easy to scale up later. Thus, it would be cleaner to switch to a celery + redis infrastructure, to handle the jobs.
+
+As the platform is still in alpha-testing phase, better to get reviews before making such important changes.
