@@ -60,23 +60,23 @@ For UX improvements :
 
 - added `models.py` containing `UserPaths` dataclass. This to holds all user-scoped paths for a single user's pipeline run in a centralized place.
 
-### `utils.py`
+### [utils.py](../utils.py)
 
-- added `get_user_paths(user_email)` at [utils.py:36](../utils.py#L36) : 
+- added `get_user_paths(user_email)` : 
     - a function to get all `UserPaths` fields from the user's email
-- added `clear_folder(folder)` at [utils.py:31](../utils.py#L31) :
+- added `clear_folder(folder)` :
     -  a wrap of `delete_files_in_folder` and `delete_subfolders`
-- modified `clean_folders(user_email)` at [utils.py:483](../utils.py#L483) : 
+- modified `clean_folders(user_email)` : 
     - changed to wipes data belonging to only a given user
 - modified `modify_jobfile()` : 
     - added the `hpc_input` parameter to isolate the HPC input bind per user
 
-### `main.py`
+### [main.py](../main.py)
 
 - modified `getSegmentation(user_email, paths)` : 
     - use a `UserPaths` object and old path reference updated
 
-### `routes.py`
+### [routes.py](../routes.py)
 
 - modified `/upload`,  `/segment` and `/download` : 
     - extracts `user_email` from session and update the old path to now `paths` via `get_user_paths`
@@ -106,18 +106,18 @@ The current website implementation uses Gunicorn with 4 different worker process
 
 `_cancel_job` was also added in `POST /upload` and `POST /segment` to stop any running processes from the user if a new pipeline is used.
 
-### `models.py`
+### [models.py](../models.py)
 
 - added `active_job_file: Path` field to `UserPaths`:
     - Serve to store the ongoing Slurm job ID as plain text (at `static/active_jobs/<sanitized_email>.txt`). It exists while a job is active; deleted on completion, error, or cancellation
 
-### `main.py`
+### [main.py](../main.py)
 
 - modified `getSegmentation(user_email, paths, ongoing_job_id)`:
     - added an optional `ongoing_job_id: Callable[[str], None] | None` parameter. Used if provided, with the `job_id` retrieved
     - added `readline()`that captures the ID before `communicate()` blocks it, thus enabling cancellation mid-job
 
-### `routes.py`
+### [routes.py](../routes.py)
 
 - added `_cancel_job(paths: UserPaths)`:
     - called at the top of `GET /segmentation`, `POST /upload`, and `POST /segment`, it reads the job ID from `active_job_file`, delete it and call `cancel_slurm_job(job_id)`
@@ -137,3 +137,7 @@ Unlike the reload fix, quitting the page doesn't provide any usable signal on th
 However, this would require adding a lot of specific custom-made infrastructure, that wouldn't be easy to scale up later. Thus, it would be cleaner to switch to a celery + redis infrastructure, to handle the jobs.
 
 As the platform is still in alpha-testing phase, better to get reviews before making such important changes.
+
+## Small improvement 
+
+As discussed with Jaime, the name of the provided file from `output.zip` has been changed for `output_<email>_<timestamp>.zip` 

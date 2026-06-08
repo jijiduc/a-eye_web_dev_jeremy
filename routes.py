@@ -2,6 +2,7 @@ import os
 import secrets
 import subprocess
 import threading
+from datetime import datetime
 from urllib.parse import quote_plus, urlencode
 
 import pandas as pd
@@ -360,7 +361,10 @@ def download_files() -> Response | tuple[str, int]:
     user_email: str = session.get("user", {}).get("email", "unknown_user")
     paths: UserPaths = get_user_paths(user_email)
     if paths.output_zip.exists():
-        return send_file(paths.output_zip, as_attachment=True)
+        safe_email = user_email.replace("@", "_").replace(".", "_")
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        download_name = f"output_{safe_email}_{timestamp}.zip"
+        return send_file(paths.output_zip, as_attachment=True, download_name=download_name)
     return "File not found", 404
 
 
