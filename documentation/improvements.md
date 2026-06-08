@@ -14,6 +14,7 @@ Here under, a list of possible improvements for the web plateform, based on my o
    - Jaime : *"Could be envisaged, but it's not to do now (meeting 02.06.2026)"*
  - Adding a cancel running segmentation button
    - Jaime : *"yeah that would be useful maybe, in any case, we would receive feedback from the alpha testers (teams, 06.06.2026)"*
+ - Diplaying the progress of the segmentation : in a terminal form
 ## UX
  - if Windows size if too small (wide) then no nav bar available
    - Jaime : *"A fix is already existing in my dev branch - use it (meeting 02.06.2026)"*
