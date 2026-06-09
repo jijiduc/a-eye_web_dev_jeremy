@@ -6,30 +6,34 @@
 <div class="container" style="margin-top: 50px;">
     <h2 class="main-title text-center">Segmentation Tool</h2>
 
-    <!-- Consent notice -->
+    <!-- Consent tooltip -->
     <p class="text-muted text-center mt-4" style="max-width: 800px; margin: 0 auto;">
-        By proceeding, I authorize the A-eye team to store my image data in a secure, non-public database to help improve A-eye's performance.
+        By proceeding, I authorize the A-eye team to store my image data in a secure, non-public database to help
+        improve A-eye's performance.
     </p>
 
     <div class="row text-center" style="margin-top: 30px;">
         <div class="col-md-3">
             <form id="choose-file-form">
                 <input type="file" id="file-input" style="display: none;" multiple onchange="choice()">
-                <button type="button" class="btn btn-success btn-lg btn-block" id="choose-file-button" onclick="document.getElementById('file-input').click();">
+                <button type="button" class="btn btn-success btn-lg btn-block" id="choose-file-button"
+                    onclick="document.getElementById('file-input').click();">
                     <i class="fas fa-mouse-pointer"></i> Choose file(s)
                 </button>
             </form>
         </div>
         <div class="col-md-3">
             <form id="upload-form" method="post" enctype="multipart/form-data">
-                <button type="button" class="btn btn-secondary btn-lg btn-block" id="upload-button" onclick="uploadFiles()" disabled>
+                <button type="button" class="btn btn-secondary btn-lg btn-block" id="upload-button"
+                    onclick="uploadFiles()" disabled>
                     <i class="fas fa-upload"></i> Upload
                 </button>
             </form>
         </div>
         <div class="col-md-3">
             <form id="segment-form" method="post">
-                <button type="button" class="btn btn-secondary btn-lg btn-block" id="segment-button" onclick="segmentFiles()" disabled>
+                <button type="button" class="btn btn-secondary btn-lg btn-block" id="segment-button"
+                    onclick="segmentFiles()" disabled>
                     <i class="fas fa-cogs"></i> Segment
                 </button>
             </form>
@@ -55,7 +59,8 @@
 
     <div class="row text-center" style="margin-top: 30px;">
         <div class="col-md-12">
-            <h5 id="chosen-files-title" class="text-center mb-3" style="display:none;">Chosen files</h5>
+            <div id="rejection-tooltip" class="text-danger fw-bold mb-2 fw-bold " style="display:none;"></div>
+            <h5 id="chosen-files-title" class="text-center mb-3" style="display:none;">Chosen file(s)</h5>
             <ul id="file-list" class="list-group"></ul>
         </div>
     </div>
@@ -67,21 +72,51 @@
 
     function choice() {
         var new_files = document.getElementById('file-input').files;
+        var unallowed_file_names = [];
 
         for (var i = 0; i < new_files.length; i++) {
             var file = new_files[i];
             var duplicate = chosen_file.some(function(existing) {
-                return existing.name === file.name && 
-                    existing.size === file.size && 
+                return existing.name === file.name &&
+                    existing.size === file.size &&
                     existing.lastModified === file.lastModified;
             });
             if (!duplicate) {
-             chosen_file.push(file);
+                var ext = file.name.split('.').pop().toLowerCase();
+                if (allowedExtensions.includes(ext)) {
+                    chosen_file.push(file);
+                } else {
+                    unallowed_file_names.push(file.name);
+                }
             }
         }
+
+        if (unallowed_file_names.length > 0) {
+            rejection_tooltip(unallowed_file_names);
+        }
+
         renderFileList();
     }
-    
+
+    function rejection_tooltip(fileNames) {
+        var tooltip = document.getElementById('rejection-tooltip');
+        tooltip.innerHTML = '';
+
+        fileNames.forEach(function(name) {
+            var error_message = document.createElement('div');
+            error_message.textContent = name + ' has been rejected: unsupported file format (only allowing: .nii, .nii.gz, .zip, .7z)';
+            tooltip.appendChild(error_message);
+        });
+
+        tooltip.style.display = 'block';
+        clearTimeout(window._rejectionTimer);
+
+        window._rejectionTimer = setTimeout(function() {
+            tooltip.style.display = 'none';
+        }, 4000);
+    }
+
+
     function remove_chosen_file(index) {
         chosen_file.splice(index, 1);
         renderFileList();
@@ -91,30 +126,20 @@
         var fileList = document.getElementById('file-list');
         var title = document.getElementById('chosen-files-title');
         fileList.innerHTML = '';
-        title.style.display = chosen_file.length > 0 ? 'block' : 'none';
 
-        var acceptedCount = 0;
-        var rejectedCount = 0;
+        if (chosen_file.length > 0) {
+            title.style.display = 'block';
+            title.textContent = '' + chosen_file.length + ' chosen file(s)';
+        } else {
+            title.style.display = 'none';
+        }
 
         for (var i = 0; i < chosen_file.length; i++) {
             var listItem = document.createElement('li');
             listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
-            var file_name_span  = document.createElement('span');
-            file_name_span .textContent = chosen_file[i].name;
+            var file_name_span = document.createElement('span');
+            file_name_span.textContent = chosen_file[i].name;
 
-            var badge = document.createElement('span');
-            var fileExtension = chosen_file[i].name.split('.').pop().toLowerCase();
-            if (allowedExtensions.includes(fileExtension)) {
-                listItem.style.color = 'green';
-                badge.className = 'badge bg-success';
-                badge.textContent = 'Accepted ✅';
-                acceptedCount++;
-            } else {
-                listItem.style.color = 'red';
-                badge.className = 'badge bg-danger';
-                badge.textContent = 'Rejected ❌';
-                rejectedCount++;
-            }
             var remove_file_Button = document.createElement('button');
             remove_file_Button.type = 'button';
             remove_file_Button.className = 'btn btn-danger btn-sm';
@@ -122,33 +147,19 @@
             remove_file_Button.style.cssText = 'width:30px; height:30px; padding:0; display:flex; align-items:center; justify-content:center;';
             remove_file_Button.innerHTML = '<i class="fas fa-times" style="margin:0;"></i>';
 
-            (function(idx) {
-                remove_file_Button.onclick = function() {
+            (function (idx) {
+                remove_file_Button.onclick = function () {
                     remove_chosen_file(idx);
                 };
             })(i)
 
             listItem.appendChild(file_name_span);
-            listItem.appendChild(badge);
             listItem.appendChild(remove_file_Button);
             fileList.appendChild(listItem);
         }
 
-        if  (chosen_file.length > 0) {
-            var summaryMessage = document.createElement('p');
-            summaryMessage.className = 'mt-2 fw-bold';
-            if (acceptedCount > 0 && rejectedCount > 0) {
-                summaryMessage.innerHTML = `✅ <span class="text-success">${acceptedCount} accepted</span> | ❌ <span class="text-danger">${rejectedCount} rejected</span>`;
-            } else if (acceptedCount > 0) {
-                summaryMessage.innerHTML = `✅ <span class="text-success">${acceptedCount} accepted</span>`;
-            } else {
-                summaryMessage.innerHTML = `❌ <span class="text-danger">${rejectedCount} rejected</span>`;
-            }
-            fileList.appendChild(summaryMessage);
-        }
-
         var uploadButton = document.getElementById('upload-button');
-        if (acceptedCount > 0) {
+        if (chosen_file.length > 0) {
             uploadButton.classList.remove('btn-secondary');
             uploadButton.classList.add('btn-success');
             uploadButton.disabled = false;
@@ -173,20 +184,20 @@
             method: 'POST',
             body: formData
         })
-        .then(response => response.json())
-        .then(data => {
-            alert(data.message);
-            if (data.status === 'success') {
-                var segmentButton = document.getElementById('segment-button');
-                segmentButton.classList.remove('btn-secondary');
-                segmentButton.classList.add('btn-success');
-                segmentButton.disabled = false;
-            }
-        })
-        .catch(error => {
-            alert('An error occurred while uploading files.');
-            console.error('Error:', error);
-        });
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                if (data.status === 'success') {
+                    var segmentButton = document.getElementById('segment-button');
+                    segmentButton.classList.remove('btn-secondary');
+                    segmentButton.classList.add('btn-success');
+                    segmentButton.disabled = false;
+                }
+            })
+            .catch(error => {
+                alert('An error occurred while uploading files.');
+                console.error('Error:', error);
+            });
     }
 
     function segmentFiles() {
