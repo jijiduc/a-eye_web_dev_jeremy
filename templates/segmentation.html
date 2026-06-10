@@ -62,7 +62,7 @@
         <div class="col-md-12">
             <div id="rejection-tooltip" class="text-danger fw-bold mb-2" style="display:none;">
             </div>
-            <h5 id="chosen-files-title" class="text-center mb-3" style="display:none;">Chosen file(s)</h5>
+            <h5 id="selected-files-title" class="text-center mb-3" style="display:none;">selected file(s)</h5>
             <ul id="file-list" class="list-group"></ul>
         </div>
     </div>
@@ -140,17 +140,19 @@
 
     function renderFileList() {
         let fileList = document.getElementById('file-list');
-        let title = document.getElementById('chosen-files-title');
+        let title = document.getElementById('selected-files-title');
 
         if (selection.length > 0) {
             title.style.display = 'block';
-            title.textContent = '' + selection.length + ' chosen file(s)';
+            title.textContent = '' + selection.length + ' selected file(s)';
         } else {
             title.style.display = 'none';
         }
 
         if (selection.length > 0) {
             buildFileList(fileList, selection, unselectFile);
+        } else {
+            fileList.innerHTML = '';
         }
 
         let uploadButton = document.getElementById('upload-button');
@@ -175,7 +177,7 @@
             }
         });
 
-        ['rejection-tooltip', 'chosen-files-title', 'file-list'].forEach(id => {
+        ['rejection-tooltip', 'selected-files-title', 'file-list'].forEach(id => {
             document.getElementById(id).style.display = 'none';
         });
 
@@ -202,9 +204,8 @@
 
                 if (data.status === 'success') {
                     bar.textContent = 'Upload complete';
+                    buildFileList(uploadFileList, selection, null, () => '<em class="text-muted">Futur metadata...</em>');
                     alert(data.message);
-
-                    setTimeout(() => bar.parentElement.style.display = 'none', 3000);
 
                     const segmentButton = document.getElementById('segment-button');
                     segmentButton.classList.remove('btn-secondary');
@@ -272,9 +273,10 @@
     });
 
     /*
-    *   To build the different lists of files displayed, with optional remove button
+    *   To build the different lists of files displayed,
+    *   with optional remove button / metadata dropdown
     */
-    function buildFileList(ulElement, files, onRemove = null) {
+    function buildFileList(ulElement, files, onRemove = null, onDropdown = null) {
         ulElement.innerHTML = '';
         const header = document.createElement('li');
         header.className = 'list-group-item d-flex justify-content-between align-items-center';
@@ -289,19 +291,28 @@
         if (onRemove) {
             const headerUnselect = document.createElement('span');
             headerUnselect.style.fontWeight = 'bold';
-            headerUnselect.textContent = 'unselect';
+            headerUnselect.style.color = '#bf0a0a';
+            headerUnselect.textContent = 'remove selection';
             header.appendChild(headerUnselect);
+        }
+
+        if (onDropdown) {
+            const headerMetadata = document.createElement('span');
+            headerMetadata.style.fontWeight = 'bold';
+            headerMetadata.style.color = '#0b0f80';
+            headerMetadata.textContent = 'view metadata';
+            header.appendChild(headerMetadata);
         }
 
         ulElement.appendChild(header);
 
         files.forEach((file, index) => {
-            const li = document.createElement('li');
-            li.className = 'list-group-item d-flex justify-content-between align-items-center';
+            const fileRow = document.createElement('li');
+            fileRow.className = 'list-group-item d-flex justify-content-between align-items-center';
 
             const nameSpan = document.createElement('span');
             nameSpan.textContent = file.name;
-            li.appendChild(nameSpan);
+            fileRow.appendChild(nameSpan);
 
             if (onRemove) {
                 const btn = document.createElement('button');
@@ -311,10 +322,37 @@
                 btn.style.cssText = 'width:30px; height:30px; padding:0; display:flex; align-items:center; justify-content:center;';
                 btn.innerHTML = '<i class="fas fa-times" style="margin:0;"></i>';
                 btn.onclick = () => onRemove(index);
-                li.appendChild(btn);
+                fileRow.appendChild(btn);
             }
 
-            ulElement.appendChild(li);
+            if (onDropdown) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'btn btn-primary btn-sm';
+                btn.setAttribute('aria-label', 'Show metadata');
+                btn.style.cssText = 'width:30px; height:30px; padding:0; display:flex; align-items:center; justify-content:center;';
+                btn.innerHTML = '<i class="fas fa-chevron-down" style="margin:0; color:white;"></i>';
+                fileRow.appendChild(btn);
+                ulElement.appendChild(fileRow);
+
+                const metadataRow = document.createElement('li');
+                metadataRow.className = 'list-group-item';
+                metadataRow.style.cssText = 'display:none; background-color:#f8f9fa;';
+                metadataRow.innerHTML = onDropdown(file);
+                ulElement.appendChild(metadataRow);
+
+                btn.onclick = () => {
+                    const icon = btn.querySelector('i');
+                    const collapsed = metadataRow.style.display === 'none';
+                    metadataRow.style.display = collapsed ? 'block' : 'none';
+                    icon.classList.replace(
+                        collapsed ? 'fa-chevron-down' : 'fa-chevron-up',
+                        collapsed ? 'fa-chevron-up'   : 'fa-chevron-down'
+                    );
+                };
+            } else {
+                ulElement.appendChild(fileRow);
+            }
         });
     }
 </script>
