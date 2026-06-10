@@ -15,7 +15,7 @@
     <div class="row text-center" style="margin-top: 30px;">
         <div class="col-md-3">
             <form id="choose-file-form">
-                <input type="file" id="file-input" style="display: none;" multiple onchange="choice()">
+                <input type="file" id="file-input" style="display: none;" multiple onchange="onSelectionFilter()">
                 <button type="button" class="btn btn-success btn-lg btn-block" id="choose-file-button"
                     onclick="document.getElementById('file-input').click();">
                     <i class="fas fa-mouse-pointer"></i> Choose file(s)
@@ -81,74 +81,76 @@
 </div>
 
 <script>
-    var chosen_file = [];
-    var allowedExtensions = ['gz', 'zip', '7z', 'nii'];
+    let selection = [];
+    const allowedExtensions = ['gz', 'zip', '7z', 'nii'];
 
-    function choice() {
-        var new_files = document.getElementById('file-input').files;
-        var unallowed_file_names = [];
+    // ensure no duplicate and correct file extension in the selection
+    function onSelectionFilter() {
+        let selectedFiles = document.getElementById('file-input').files;
+        let unallowedFiles = [];
 
-        for (var i = 0; i < new_files.length; i++) {
-            var file = new_files[i];
-            var duplicate = chosen_file.some(function(existing) {
+        for (let i = 0; i < selectedFiles.length; i++) {
+            let file = selectedFiles[i];
+            let duplicate = selection.some(function(existing) {
                 return existing.name === file.name &&
                     existing.size === file.size &&
                     existing.lastModified === file.lastModified;
             });
             if (!duplicate) {
-                var ext = file.name.split('.').pop().toLowerCase();
-                if (allowedExtensions.includes(ext)) {
-                    chosen_file.push(file);
+                let extension = file.name.split('.').pop().toLowerCase();
+                if (allowedExtensions.includes(extension)) {
+                    selection.push(file);
                 } else {
-                    unallowed_file_names.push(file.name);
+                    unallowedFiles.push(file.name);
                 }
             }
         }
 
-        if (unallowed_file_names.length > 0) {
-            rejection_tooltip(unallowed_file_names);
+        if (unallowedFiles.length > 0) {
+            onRejectionNotice(unallowedFiles);
         }
 
         renderFileList();
     }
 
-    function rejection_tooltip(fileNames) {
-        var tooltip = document.getElementById('rejection-tooltip');
-        tooltip.innerHTML = '';
+    // Display a notice in case of selection's rejection
+    function onRejectionNotice(fileNames) {
+        let notice = document.getElementById('rejection-tooltip');
+        notice.innerHTML = '';
 
         fileNames.forEach(function(name) {
-            var error_message = document.createElement('div');
-            error_message.textContent = name + ' has been rejected: unsupported file format (only allowing: .nii, .nii.gz, .zip, .7z)';
-            tooltip.appendChild(error_message);
+            let errorMessage = document.createElement('div');
+            errorMessage.textContent = name + ' has been rejected: unsupported file format (only allowing: .nii, .nii.gz, .zip, .7z)';
+            notice.appendChild(errorMessage);
         });
 
-        tooltip.style.display = 'block';
+        notice.style.display = 'block';
         clearTimeout(window._rejectionTimer);
 
         window._rejectionTimer = setTimeout(function() {
-            tooltip.style.display = 'none';
+            notice.style.display = 'none';
         }, 4000);
     }
 
 
-    function remove_chosen_file(index) {
-        chosen_file.splice(index, 1);
+    function unselectFile(index) {
+        selection.splice(index, 1);
         renderFileList();
     }
 
     function renderFileList() {
-        var fileList = document.getElementById('file-list');
-        var title = document.getElementById('chosen-files-title');
+        let fileList = document.getElementById('file-list');
+        let title = document.getElementById('chosen-files-title');
         fileList.innerHTML = '';
 
-        if (chosen_file.length > 0) {
+        if (selection.length > 0) {
             title.style.display = 'block';
-            title.textContent = '' + chosen_file.length + ' chosen file(s)';
+            title.textContent = '' + selection.length + ' chosen file(s)';
         } else {
             title.style.display = 'none';
         }
 
-        if (chosen_file.length > 0) {
+        if (selection.length > 0) {
 
             const header_container = document.createElement('li');
             header_container.className = 'list-group-item d-flex justify-content-between align-items-center';
@@ -167,33 +169,30 @@
             fileList.appendChild(header_container);
         }
 
-
-        for (var i = 0; i < chosen_file.length; i++) {
-            var listItem = document.createElement('li');
+        // create the diplay list with "unselect" button 
+        selection.forEach((file, index) => {
+            const listItem = document.createElement('li');
             listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
-            var file_name_span = document.createElement('span');
-            file_name_span.textContent = chosen_file[i].name;
 
-            var remove_file_Button = document.createElement('button');
+            const file_name_span = document.createElement('span');
+            file_name_span.textContent = file.name;
+
+            const remove_file_Button = document.createElement('button');
             remove_file_Button.type = 'button';
             remove_file_Button.className = 'btn btn-danger btn-sm';
             remove_file_Button.setAttribute('aria-label', 'Remove');
             remove_file_Button.style.cssText = 'width:30px; height:30px; padding:0; display:flex; align-items:center; justify-content:center;';
             remove_file_Button.innerHTML = '<i class="fas fa-times" style="margin:0;"></i>';
 
-            (function (idx) {
-                remove_file_Button.onclick = function () {
-                    remove_chosen_file(idx);
-                };
-            })(i)
+            remove_file_Button.onclick = () => unselectFile(index);
 
             listItem.appendChild(file_name_span);
             listItem.appendChild(remove_file_Button);
             fileList.appendChild(listItem);
-        }
+        });
 
-        var uploadButton = document.getElementById('upload-button');
-        if (chosen_file.length > 0) {
+        let uploadButton = document.getElementById('upload-button');
+        if (selection.length > 0) {
             uploadButton.classList.remove('btn-secondary');
             uploadButton.classList.add('btn-success');
             uploadButton.disabled = false;
@@ -205,14 +204,14 @@
     }
 
     function uploadFiles() {
-        var formData = new FormData();
+        let formData = new FormData();
 
-        for (var i = 0; i < chosen_file.length; i++) {
-            var ext = chosen_file[i].name.split('.').pop().toLowerCase();
-            if (allowedExtensions.includes(ext)) {
-                formData.append('files[]', chosen_file[i]);
+        selection.forEach((file) => {
+            let extension = file.name.split('.').pop().toLowerCase();
+            if (allowedExtensions.includes(extension)) {
+                formData.append('files[]', file);
             }
-        }
+        });
 
         ['rejection-tooltip', 'chosen-files-title', 'file-list'].forEach(id => {
             document.getElementById(id).style.display = 'none';
@@ -238,7 +237,7 @@
         headerItem.appendChild(headerSpan);
         uploadFileList.appendChild(headerItem);
 
-        chosen_file.forEach(file => {
+        selection.forEach(file => {
             const li = document.createElement('li');
             li.className = 'list-group-item d-flex align-items-center';
             const span = document.createElement('span');

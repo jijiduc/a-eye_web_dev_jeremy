@@ -179,7 +179,11 @@ def users():
 
     map_html = fig.to_html(full_html=False, config={'responsive': True})
     
-    return render_template('users.html', total_users=total_users, cases_processed=cases_processed, total_institutions=total_institutions, map_html=map_html)
+    return render_template('users.html', 
+                           total_users=total_users,
+                           cases_processed=cases_processed, 
+                           total_institutions=total_institutions, 
+                           map_html=map_html)
 
 
 @bp.route("/about")
@@ -233,7 +237,8 @@ def upload_file() -> tuple[Response, int]:
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as error:
         current_app.logger.exception("Could not prepare HPC folders for upload")
         return jsonify({
-            'message': 'Could not reach the HPC over SSH to prepare the upload. Please try again once chacha/disco SSH access is available.',
+            'message': 'Could not reach the HPC over SSH to prepare the upload.'
+                'Please try again once chacha/disco SSH access is available.',
             'status': 'error',
             'error': str(error)
         }), 503
@@ -241,7 +246,8 @@ def upload_file() -> tuple[Response, int]:
     # 2. saves provided files locally 
     for file in files:
         if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)  # Use this werkzeug method to secure filename.
+             # Use this werkzeug method to secure filename
+            filename = secure_filename(file.filename) 
             filepath = paths.upload / filename
             file.save(filepath)
             uploaded_files.append(filename)
@@ -254,7 +260,8 @@ def upload_file() -> tuple[Response, int]:
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as error:
         current_app.logger.exception("Could not copy uploaded files to HPC")
         return jsonify({
-            'message': 'Files were received locally, but could not be copied to the HPC over SSH. Please try again once chacha/disco SSH access is available.',
+            'message': 'Files were received locally, but could not be copied to the HPC over SSH.'
+            ' Please try again once chacha/disco SSH access is available.',
             'status': 'error',
             'error': str(error)
         }), 503
@@ -283,7 +290,8 @@ def segment() -> tuple[Response, int]:
     3. starts a background thread to copy results to Filer01
 
     Returns:
-        tuple[Response, int]: JSON response with status message and HTTP status code. (200 on success (with download_url), 500 if the pipeline raised anything)
+        tuple[Response, int]: JSON response with status message and code.
+        200 on success - 500 if the pipeline raised error
     """
     user_email: str = session.get("user", {}).get("email", "unknown_user")
     paths: UserPaths = get_user_paths(user_email)
@@ -364,7 +372,9 @@ def download_files() -> Response | tuple[str, int]:
         safe_email = user_email.replace("@", "_").replace(".", "_")
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         download_name = f"output_{safe_email}_{timestamp}.zip"
-        return send_file(paths.output_zip, as_attachment=True, download_name=download_name)
+        return send_file(paths.output_zip,
+                         as_attachment=True,
+                         download_name=download_name)
     return "File not found", 404
 
 
