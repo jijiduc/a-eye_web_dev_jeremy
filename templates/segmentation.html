@@ -50,7 +50,7 @@
     <div class="row text-center" style="margin-top: 30px;">
         <div class="col-md-12">
             <div id="processing-spinner" class="text-center mt-3" style="display: none;">
-                <div class="spinner-border" role="status"
+                <div class="spinner-border" role="status" 
                     style="border-color: green; border-right-color: transparent;">
                 </div>
                 <div class="mt-2">Processing segmentation…</div>
@@ -141,7 +141,6 @@
     function renderFileList() {
         let fileList = document.getElementById('file-list');
         let title = document.getElementById('chosen-files-title');
-        fileList.innerHTML = '';
 
         if (selection.length > 0) {
             title.style.display = 'block';
@@ -151,45 +150,8 @@
         }
 
         if (selection.length > 0) {
-
-            const header_container = document.createElement('li');
-            header_container.className = 'list-group-item d-flex justify-content-between align-items-center';
-            header_container.style.backgroundColor = '#e9ecef';
-            header_container.style.color = '#212529';
-
-            const header_filename = document.createElement('span');
-            header_filename.style.fontWeight = 'bold';
-            header_filename.textContent = 'filename';
-
-            const header_unselect = document.createElement('span');
-            header_unselect.style.fontWeight = 'bold';
-            header_unselect.textContent = 'unselect';
-
-            header_container.append(header_filename, header_unselect);
-            fileList.appendChild(header_container);
+            buildFileList(fileList, selection, unselectFile);
         }
-
-        // create the diplay list with "unselect" button 
-        selection.forEach((file, index) => {
-            const listItem = document.createElement('li');
-            listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
-
-            const file_name_span = document.createElement('span');
-            file_name_span.textContent = file.name;
-
-            const remove_file_Button = document.createElement('button');
-            remove_file_Button.type = 'button';
-            remove_file_Button.className = 'btn btn-danger btn-sm';
-            remove_file_Button.setAttribute('aria-label', 'Remove');
-            remove_file_Button.style.cssText = 'width:30px; height:30px; padding:0; display:flex; align-items:center; justify-content:center;';
-            remove_file_Button.innerHTML = '<i class="fas fa-times" style="margin:0;"></i>';
-
-            remove_file_Button.onclick = () => unselectFile(index);
-
-            listItem.appendChild(file_name_span);
-            listItem.appendChild(remove_file_Button);
-            fileList.appendChild(listItem);
-        });
 
         let uploadButton = document.getElementById('upload-button');
         if (selection.length > 0) {
@@ -225,26 +187,7 @@
         });
 
         const uploadFileList = document.getElementById('upload-file-list');
-        uploadFileList.innerHTML = '';
-
-        const headerItem = document.createElement('li');
-        headerItem.className = 'list-group-item d-flex align-items-center';
-        headerItem.style.backgroundColor = '#e9ecef';
-        headerItem.style.color = '#212529';
-        const headerSpan = document.createElement('span');
-        headerSpan.style.fontWeight = 'bold';
-        headerSpan.textContent = 'filename';
-        headerItem.appendChild(headerSpan);
-        uploadFileList.appendChild(headerItem);
-
-        selection.forEach(file => {
-            const li = document.createElement('li');
-            li.className = 'list-group-item d-flex align-items-center';
-            const span = document.createElement('span');
-            span.textContent = file.name;
-            li.appendChild(span);
-            uploadFileList.appendChild(li);
-        });
+        buildFileList(uploadFileList, selection);
 
         document.getElementById('upload-status').style.display = 'block';
 
@@ -327,5 +270,52 @@
             alert('No file available for download. Please run segmentation first.');
         }
     });
+
+    /*
+    *   To build the different lists of files displayed, with optional remove button
+    */
+    function buildFileList(ulElement, files, onRemove = null) {
+        ulElement.innerHTML = '';
+        const header = document.createElement('li');
+        header.className = 'list-group-item d-flex justify-content-between align-items-center';
+        header.style.backgroundColor = '#e9ecef';
+        header.style.color = '#212529';
+
+        const headerFilename = document.createElement('span');
+        headerFilename.style.fontWeight = 'bold';
+        headerFilename.textContent = 'filename';
+        header.appendChild(headerFilename);
+
+        if (onRemove) {
+            const headerUnselect = document.createElement('span');
+            headerUnselect.style.fontWeight = 'bold';
+            headerUnselect.textContent = 'unselect';
+            header.appendChild(headerUnselect);
+        }
+
+        ulElement.appendChild(header);
+
+        files.forEach((file, index) => {
+            const li = document.createElement('li');
+            li.className = 'list-group-item d-flex justify-content-between align-items-center';
+
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = file.name;
+            li.appendChild(nameSpan);
+
+            if (onRemove) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'btn btn-danger btn-sm';
+                btn.setAttribute('aria-label', 'Remove');
+                btn.style.cssText = 'width:30px; height:30px; padding:0; display:flex; align-items:center; justify-content:center;';
+                btn.innerHTML = '<i class="fas fa-times" style="margin:0;"></i>';
+                btn.onclick = () => onRemove(index);
+                li.appendChild(btn);
+            }
+
+            ulElement.appendChild(li);
+        });
+    }
 </script>
 {% endblock %}
