@@ -148,8 +148,13 @@ filer01/
 local-certs/
 .codex
 
+pyproject.toml
+uv.lock
+
 # Test datas
 data/simple-sample/*
 data/test-webplatform/*
-pyproject.toml
-uv.lock
+
+
+# example of results
+data/output_marco_caporizz_hes-so_ch_20260609_123429
