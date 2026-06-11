@@ -8,6 +8,7 @@ import re
 import shutil
 import stat
 import subprocess
+import tempfile
 import zipfile
 from datetime import datetime
 from functools import wraps
@@ -16,6 +17,8 @@ from string import Template
 from zoneinfo import ZoneInfo
 
 import dicom2nifti
+import nibabel
+import numpy as np
 import py7zr
 import pycountry
 import requests
@@ -34,30 +37,125 @@ from config import (
 from models import UserPaths
 
 
-def cancel_slurm_job(id_job : str) -> None:
+def _header_to_dict(header: nibabel.nifti1.Nifti1Header) -> dict[str, list[float | int] | float | int | str | None]:
+    """Serialize the extracted C structure (Nibabel)
+       into a dict for the JSON message for frontend display
+
+    Args:
+        header (nibabel.nifti1.Nifti1Header): NIfTI header object returned by nibabel.load().header
+
+    Returns:
+        dict[str, list[float | int] | float | int | str | None]:
+            JSON-serializable dict with header field name (key) and converted Python value
+    """
+    result: dict[str, list[float | int] | float | int | str | None] = {}
+
+    for key, value in header.items():
+        # datastructure conversion
+        if isinstance(value, np.ndarray):
+            value = value.tolist()
+        # conversion to python type
+        elif isinstance(value, (np.integer, np.floating)):
+            value = value.item()
+        # cleaning binary text
+        if isinstance(value, (bytes, bytearray)):
+            value = value.decode("utf-8", errors="replace").rstrip("\x00")
+        # excluding invalid values (Nan, Inf)
+        elif isinstance(value, float) and not np.isfinite(value):
+            value = None
+        # saving cleaned value
+        result[key] = value
+    return result
+
+
+def extract_nifti_metadata(file_path: str) -> dict:
+    """Extract the metadata from nifti file
+
+    Args:
+        file_path (str): path of the file to extract from
+
+    Returns:
+        dict: JSON-serializable dict containing :
+                - on success : metadata fields (as key) with coresponding values
+                - on failure : empty dictionnary
+    """
+    extension: str = "".join(Path(file_path).suffixes).lower()
+
+    # transform header to usable dict
+    if extension.endswith(".nii") or extension.endswith(".nii.gz"):
+        try:
+            return _header_to_dict(nibabel.load(file_path).header)
+        except Exception:
+            print_and_log(
+                f"[A-eye] Error in direct metadata extraction for {extension}...",
+                "error",
+                LOGS_FOLDER,
+            )
+            return {}
+
+    if extension in (".zip", ".7z"):
+        # extraction from the archive
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            if extension == ".zip":
+                with zipfile.ZipFile(file_path, "r") as zip_file:
+                    zip_file.extractall(tmp_dir)
+            else:
+                with py7zr.SevenZipFile(file_path, mode="r") as zip_file:
+                    zip_file.extractall(path=tmp_dir)
+
+            # if .dcm file, convert to nifti
+            dicom: Path | None = next(Path(tmp_dir).rglob("*.dcm"), None)
+            if dicom:
+                dicom2nifti.dicom_series_to_nifti(
+                    str(dicom.parent),
+                    str(Path(tmp_dir) / "converted.nii.gz"),
+                    reorient_nifti=True,
+                )
+
+            # transform header to usable dict
+            for f in Path(tmp_dir).rglob("*"):
+                if f.name.endswith(".nii") or f.name.endswith(".nii.gz"):
+                    try:
+                        return _header_to_dict(nibabel.load(f).header)
+                    except Exception:
+                        print_and_log(
+                            f"[A-eye] Error in direct metadata extraction for {extension}...",
+                            "error",
+                            LOGS_FOLDER,
+                        )
+                        return {}
+    return {}
+
+
+def cancel_slurm_job(id_job: str) -> None:
     """Cancel a slurm job
 
     Args:
         id_job (str): id of the slurm job (string as is from a linux env)
     """
-    print_and_log(f"[A-eye] Cancelling the slurm job {id_job}...", 'warning', LOGS_FOLDER)
+    print_and_log(
+        f"[A-eye] Cancelling the slurm job {id_job}...", "warning", LOGS_FOLDER
+    )
     subprocess.run(
-        ["ssh",
-         "-o",
-         "BatchMode=yes",
-         "-o",
-         "ConnectTimeout=8",
-         SSH_USER,
-         f"scancel {id_job}"
+        [
+            "ssh",
+            "-o",
+            "BatchMode=yes",
+            "-o",
+            "ConnectTimeout=8",
+            SSH_USER,
+            f"scancel {id_job}",
         ],
         check=True,
         timeout=20,
     )
 
-def clear_folder(folder: Path|str ) -> None:
-    """"Deletes all files and subdirectories inside folder"""
+
+def clear_folder(folder: Path | str) -> None:
+    """ "Deletes all files and subdirectories inside folder"""
     delete_files_in_folder(folder)
     delete_subfolders(folder)
+
 
 def get_user_paths(user_email: str) -> UserPaths:
     """Generate all needed local and HPC paths for a user, based on his email
@@ -66,23 +164,24 @@ def get_user_paths(user_email: str) -> UserPaths:
         user_email (str): The email address of the user to process
 
     Returns:
-        UserPaths: Dataclass holding all the Path objects and HPC path strings for the user
+        UserPaths: Dataclass holding the different path relative to the user
     """
 
-    cleaned_email: str  = user_email.replace("@", "_at_").replace(".","_")
-    base_path: Path = Path("./nnUNet/nnUNet_inference")/cleaned_email
+    cleaned_email: str = user_email.replace("@", "_at_").replace(".", "_")
+    base_path: Path = Path("./nnUNet/nnUNet_inference") / cleaned_email
 
     return UserPaths(
-        upload          = Path("./static/upload") / cleaned_email,
-        aux_base        = base_path,
-        aux_input       = base_path / "input",
-        output_zip      = base_path / "output.zip",
-        download        = base_path / "output",
-        jobfile         = Path("./jobfiles") / f"nnunet_inference_{cleaned_email}.sh",
-        active_job_file = Path("./static/active_jobs") / f"{cleaned_email}.txt",
-        hpc_base_input  = f"{BASE_INPUT_HPC}/{cleaned_email}",
-        hpc_input       = f"{BASE_INPUT_HPC}/{cleaned_email}/input",
+        upload=Path("./static/upload") / cleaned_email,
+        aux_base=base_path,
+        aux_input=base_path / "input",
+        output_zip=base_path / "output.zip",
+        download=base_path / "output",
+        jobfile=Path("./jobfiles") / f"nnunet_inference_{cleaned_email}.sh",
+        active_job_file=Path("./static/active_jobs") / f"{cleaned_email}.txt",
+        hpc_base_input=f"{BASE_INPUT_HPC}/{cleaned_email}",
+        hpc_input=f"{BASE_INPUT_HPC}/{cleaned_email}/input",
     )
+
 
 def allowed_file(filename):
     """Wether the file type is allowed or not (allowd type : .nii.gz / .zip /
@@ -94,14 +193,17 @@ def allowed_file(filename):
     Returns:
         Bool: True if allowed, else False
     """
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 def zip_folder(folder_path, output_path):
-    with zipfile.ZipFile(output_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+    with zipfile.ZipFile(output_path, "w", zipfile.ZIP_DEFLATED) as zipf:
         for root, dirs, files in os.walk(folder_path):
             for file in files:
-                zipf.write(os.path.join(root, file), os.path.relpath(os.path.join(root, file), folder_path))
+                zipf.write(
+                    os.path.join(root, file),
+                    os.path.relpath(os.path.join(root, file), folder_path),
+                )
 
 
 def requires_auth(f):
@@ -110,14 +212,15 @@ def requires_auth(f):
         if "user" not in session:
             return redirect(url_for("routes.login"))
         return f(*args, **kwargs)
+
     return decorated
 
 
 def get_country_from_ip(ip):
-    response = requests.get(f'https://ipinfo.io/{ip}/json')
+    response = requests.get(f"https://ipinfo.io/{ip}/json")
     data = response.json()
-    country = data.get('country')
-    print_and_log(f"[A-eye] IP: {ip}, Country: {country}", 'info', LOGS_FOLDER)
+    country = data.get("country")
+    print_and_log(f"[A-eye] IP: {ip}, Country: {country}", "info", LOGS_FOLDER)
     return country
 
 
@@ -136,14 +239,16 @@ def copy_segmentation_data(user_email, input, output):
     dest_dir = f"{DATA_FOLDER}/{user_reference_email}_{timestamp}"
 
     os.makedirs(dest_dir, exist_ok=True)
-    
+
     input_dest = os.path.join(dest_dir, "input")
     output_dest = os.path.join(dest_dir, "output")
 
     copy_folder(input, input_dest)
     copy_folder(output, output_dest)
-    
-    print_and_log(f"[A-eye] Copied segmentation data to {dest_dir}", 'info', LOGS_FOLDER)
+
+    print_and_log(
+        f"[A-eye] Copied segmentation data to {dest_dir}", "info", LOGS_FOLDER
+    )
     sync_logs_to_output(output)
 
 
@@ -151,9 +256,9 @@ def unzip_file(file_type, source, destination):
     try:
         os.makedirs(destination, exist_ok=True)
 
-        if file_type == 'zip':
-            print_and_log(f'[A-eye] Unzipping ZIP file: {source}', 'info', LOGS_FOLDER)
-            with zipfile.ZipFile(source, 'r') as zip_ref:
+        if file_type == "zip":
+            print_and_log(f"[A-eye] Unzipping ZIP file: {source}", "info", LOGS_FOLDER)
+            with zipfile.ZipFile(source, "r") as zip_ref:
                 abs_dest = os.path.abspath(destination)
 
                 for member in zip_ref.namelist():
@@ -163,16 +268,18 @@ def unzip_file(file_type, source, destination):
 
                 zip_ref.extractall(destination)
 
-        elif file_type == '7z':
-            print_and_log(f'[A-eye] Unzipping 7z file: {source}', 'info', LOGS_FOLDER)
-            with py7zr.SevenZipFile(source, mode='r') as archive:
+        elif file_type == "7z":
+            print_and_log(f"[A-eye] Unzipping 7z file: {source}", "info", LOGS_FOLDER)
+            with py7zr.SevenZipFile(source, mode="r") as archive:
                 archive.extractall(path=destination)
 
         else:
             raise ValueError(f"Unsupported archive type: {file_type}")
 
     except Exception as e:
-        print_and_log(f'[A-eye] Error unzipping file {source}: {e}', 'error', LOGS_FOLDER)
+        print_and_log(
+            f"[A-eye] Error unzipping file {source}: {e}", "error", LOGS_FOLDER
+        )
         raise
 
 
@@ -220,19 +327,43 @@ def move_file(pattern, destination):
 
 
 def copy_file_to_hpc(source, destination):
-    print_and_log(f"[A-eye] Copying files from local {source} to HPC {destination}...", 'info', LOGS_FOLDER)
-    subprocess.run(["scp", "-o", "ConnectTimeout=8", source, f"{SSH_USER}:{destination}"], check=True, timeout=20)
+    print_and_log(
+        f"[A-eye] Copying files from local {source} to HPC {destination}...",
+        "info",
+        LOGS_FOLDER,
+    )
+    subprocess.run(
+        ["scp", "-o", "ConnectTimeout=8", source, f"{SSH_USER}:{destination}"],
+        check=True,
+        timeout=20,
+    )
 
 
 def copy_folder_to_hpc(source, destination):
-    print_and_log(f"[A-eye] Copying files from local {source} to HPC {destination}...", 'info', LOGS_FOLDER)
-    subprocess.run(["scp", "-o", "ConnectTimeout=8", "-r", source, f"{SSH_USER}:{destination}"], check=True, timeout=30)
+    print_and_log(
+        f"[A-eye] Copying files from local {source} to HPC {destination}...",
+        "info",
+        LOGS_FOLDER,
+    )
+    subprocess.run(
+        ["scp", "-o", "ConnectTimeout=8", "-r", source, f"{SSH_USER}:{destination}"],
+        check=True,
+        timeout=30,
+    )
 
 
 def copy_files_from_hpc(source, destination):
-    print_and_log(f"[A-eye] Copying files from HPC {source} to local {destination}...", 'info', LOGS_FOLDER)
+    print_and_log(
+        f"[A-eye] Copying files from HPC {source} to local {destination}...",
+        "info",
+        LOGS_FOLDER,
+    )
     os.makedirs(destination, exist_ok=True)
-    subprocess.run(["scp", "-o", "ConnectTimeout=8", "-r", f"{SSH_USER}:{source}/.", destination], check=True, timeout=30)
+    subprocess.run(
+        ["scp", "-o", "ConnectTimeout=8", "-r", f"{SSH_USER}:{source}/.", destination],
+        check=True,
+        timeout=30,
+    )
 
 
 def delete_files_in_folder(folder):
@@ -245,30 +376,37 @@ def delete_files_in_folder(folder):
             try:
                 user_reference_remove_file(file_path)
             except Exception as e:
-                print_and_log(f"[A-eye] Failed to delete {file_path}. Reason: {e}", 'error', LOGS_FOLDER)
+                print_and_log(
+                    f"[A-eye] Failed to delete {file_path}. Reason: {e}",
+                    "error",
+                    LOGS_FOLDER,
+                )
+
 
 def clean_folder_hpc(folder):
     """
     Cleans the specified folder on the HPC by deleting all files and subfolders
     """
-    print_and_log(f"[A-eye] Cleaning folder {folder} on HPC...", 'info', LOGS_FOLDER)
+    print_and_log(f"[A-eye] Cleaning folder {folder} on HPC...", "info", LOGS_FOLDER)
     subprocess.run(
-        ["ssh",                                         # using the ssh client
-         "-o",                                          # ssh config option n.1
-         "BatchMode=yes",                               # non-interactive mode : will fail if a password if asked
-         "-o",                                          # ssh confing option n.2
-         "ConnectTimeout=8",                            # Maximum time (in seconds) to establish the ssh connection
-         SSH_USER,                                      # ID and adress of the distant server
-         f"mkdir -p {folder} && rm -rf {folder}/*"],    # Commands executed on the server : create folders and clear it's content
-         check=True,                                    # Raise a CalledProcessError if exit code isn't 0
-         timeout=20,                                    # Raise a TimeOutException if execution time is more than the set value (in seconds)
+        [
+            "ssh",  # using the ssh client
+            "-o",  # ssh config option n.1
+            "BatchMode=yes",  # non-interactive mode : will fail if a password if asked
+            "-o",  # ssh confing option n.2
+            "ConnectTimeout=8",  # Maximum time (in seconds) to establish the ssh connection
+            SSH_USER,  # ID and adress of the distant server
+            f"mkdir -p {folder} && rm -rf {folder}/*",
+        ],  # Commands executed on the server : create folders and clear it's content
+        check=True,  # Raise a CalledProcessError if exit code isn't 0
+        timeout=20,  # Raise a TimeOutException if execution time is more than the set value (in seconds)
     )
-    print_and_log(f"[A-eye] Folder {folder} cleaned successfully.", 'info', LOGS_FOLDER)
+    print_and_log(f"[A-eye] Folder {folder} cleaned successfully.", "info", LOGS_FOLDER)
 
 
 def delete_folder(folder):
     user_reference_rmtree(folder)
-    
+
 
 def delete_subfolders(folder):
     if not os.path.exists(folder):
@@ -280,12 +418,19 @@ def delete_subfolders(folder):
             try:
                 user_reference_rmtree(item_path)
             except Exception as e:
-                print_and_log(f"[A-eye] Failed to delete {item_path}. Reason: {e}", 'error', LOGS_FOLDER)
+                print_and_log(
+                    f"[A-eye] Failed to delete {item_path}. Reason: {e}",
+                    "error",
+                    LOGS_FOLDER,
+                )
 
 
 def _handle_remove_readonly(func, path, exc_info):
     try:
-        os.chmod(path, stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+        os.chmod(
+            path,
+            stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH,
+        )
         func(path)
     except Exception:
         raise exc_info[1]
@@ -313,17 +458,17 @@ def check_dicom_folders_names(folder):
     dicom_folders = find_dicom_folders(folder)
     # Check dicom folders names
     if not dicom_folders:
-        print_and_log('[A-eye] No DICOM folders found.', 'info', LOGS_FOLDER)
+        print_and_log("[A-eye] No DICOM folders found.", "info", LOGS_FOLDER)
         return
     else:
-        print_and_log('[A-eye] Checking DICOM folders names...', 'info', LOGS_FOLDER)
+        print_and_log("[A-eye] Checking DICOM folders names...", "info", LOGS_FOLDER)
         for dicom_folder in dicom_folders:
             dicom_folder_name = os.path.basename(dicom_folder)
             parent_folder_path = os.path.dirname(dicom_folder)
             parent_folder_name = os.path.basename(parent_folder_path)
             # Check if dicom_folder name already starts with parent_folder_name
             if not dicom_folder_name.startswith(parent_folder_name):
-                new_folder_name = parent_folder_name + '_' + dicom_folder_name
+                new_folder_name = parent_folder_name + "_" + dicom_folder_name
                 new_folder_path = os.path.join(parent_folder_path, new_folder_name)
                 os.rename(dicom_folder, new_folder_path)
             # Convert to nifti
@@ -331,37 +476,39 @@ def check_dicom_folders_names(folder):
 
 
 def check_nifti_files(folder):
-    for file_path in glob.glob(os.path.join(folder, '**', '*.nii'), recursive=True):
-        gz_path = file_path + '.gz'
-        with open(file_path, 'rb') as f_in, gzip.open(gz_path, 'wb') as f_out:
+    for file_path in glob.glob(os.path.join(folder, "**", "*.nii"), recursive=True):
+        gz_path = file_path + ".gz"
+        with open(file_path, "rb") as f_in, gzip.open(gz_path, "wb") as f_out:
             shutil.copyfileobj(f_in, f_out)
         os.remove(file_path)
 
 
 def check_filenames(folder):
-    for file_path in glob.glob(os.path.join(folder, '**', '*'), recursive=True):   # catch any case; we'll filter below
+    for file_path in glob.glob(
+        os.path.join(folder, "**", "*"), recursive=True
+    ):  # catch any case; we'll filter below
         # only operate on files that end with .nii.gz (case-insensitive)
-        if not file_path.lower().endswith('.nii.gz'):
+        if not file_path.lower().endswith(".nii.gz"):
             continue
 
-        original_basename = os.path.basename(file_path)   # e.g. "x_...1.000.nii.gz"
-        base_no_ext = original_basename[:-len('.nii.gz')] # e.g. "x_...1.000"
-        file_extension = '.nii.gz'
+        original_basename = os.path.basename(file_path)  # e.g. "x_...1.000.nii.gz"
+        base_no_ext = original_basename[: -len(".nii.gz")]  # e.g. "x_...1.000"
+        file_extension = ".nii.gz"
 
-        print_and_log(f'[A-eye] file name: {original_basename}', 'info', LOGS_FOLDER)
-        print_and_log(f'[A-eye] file base (no ext): {base_no_ext}', 'info', LOGS_FOLDER)
-        print_and_log(f'[A-eye] file extension: {file_extension}', 'info', LOGS_FOLDER)
-        print_and_log(f'[A-eye] absolute file path: {file_path}', 'info', LOGS_FOLDER)
+        print_and_log(f"[A-eye] file name: {original_basename}", "info", LOGS_FOLDER)
+        print_and_log(f"[A-eye] file base (no ext): {base_no_ext}", "info", LOGS_FOLDER)
+        print_and_log(f"[A-eye] file extension: {file_extension}", "info", LOGS_FOLDER)
+        print_and_log(f"[A-eye] absolute file path: {file_path}", "info", LOGS_FOLDER)
 
-        if not base_no_ext.endswith('_0000'):
+        if not base_no_ext.endswith("_0000"):
             # pass base without extension so correct_filename can build: base_no_ext + '_0000' + '.nii.gz'
             correct_filename(file_path, base_no_ext, file_extension)
 
 
 def correct_filename(file_path, file_name, file_extension):
-    print_and_log('[A-eye] Changing filename to nnUNet format...', 'info', LOGS_FOLDER)
-    new_file_name = f'{file_name}_0000{file_extension}' # extension for nnUNet
-    print_and_log(f'[A-eye] New filename = {new_file_name}', 'info', LOGS_FOLDER)
+    print_and_log("[A-eye] Changing filename to nnUNet format...", "info", LOGS_FOLDER)
+    new_file_name = f"{file_name}_0000{file_extension}"  # extension for nnUNet
+    print_and_log(f"[A-eye] New filename = {new_file_name}", "info", LOGS_FOLDER)
     os.rename(file_path, os.path.join(os.path.dirname(file_path), new_file_name))
 
 
@@ -369,14 +516,19 @@ def convert_to_nifti(folder):
     # Get a list of all DICOM folders in the input folder
     dicom_folders = find_dicom_folders(folder)
     if len(dicom_folders) > 0:
-        print_and_log('[A-eye] Converting DICOM to NIfTI format...', 'info', LOGS_FOLDER)
+        print_and_log(
+            "[A-eye] Converting DICOM to NIfTI format...", "info", LOGS_FOLDER
+        )
         # Convert each DICOM folder to NIfTI format
         for dicom_folder in dicom_folders:
-            filename = str(os.path.basename(dicom_folder) + '.nii.gz')
-            dicom2nifti.dicom_series_to_nifti(dicom_folder, f'{folder}/{filename}', reorient_nifti=True)
+            filename = str(os.path.basename(dicom_folder) + ".nii.gz")
+            dicom2nifti.dicom_series_to_nifti(
+                dicom_folder, f"{folder}/{filename}", reorient_nifti=True
+            )
             # cmd = ["dcm2niix", "-f", filename, "-z", "y", "-o", output_nifti_folder, input_dicom_folder]
             # process = subprocess.Popen(cmd, stdout=subprocess.PIPE)  # pass the list as input to Popen
-            # _ = process.communicate()[0]  # the [0] is to return just the output, because otherwise it would be outs, errs = proc.communicate()
+            # _ = process.communicate()[0]  # the [0] is to return just the output,
+            #  because otherwise it would be outs, errs = proc.communicate()
             # delete_folder(folder)  # Delete the original DICOM folder after conversion
 
 
@@ -385,7 +537,7 @@ def find_dicom_folders(root_path):
 
     for dirpath, dirnames, filenames in os.walk(root_path):
         for filename in filenames:
-            if fnmatch.fnmatch(filename, '*.dcm'):
+            if fnmatch.fnmatch(filename, "*.dcm"):
                 dicom_folders.append(dirpath)
                 break
 
@@ -396,23 +548,23 @@ def start_docker():
     # Check if Docker is running and if not, initialize it
     try:
         # docker version
-        run_command_and_print_output('docker version')
-        print_and_log("\n[A-eye] Docker is already running...", 'info', LOGS_FOLDER)
+        run_command_and_print_output("docker version")
+        print_and_log("\n[A-eye] Docker is already running...", "info", LOGS_FOLDER)
     except:
         # If Docker is not running...
-        print_and_log("[A-eye] Docker was not initialized!!", 'warning', LOGS_FOLDER)
+        print_and_log("[A-eye] Docker was not initialized!!", "warning", LOGS_FOLDER)
         # ... start it!
-        print_and_log("[A-eye] Initializing docker...", 'info', LOGS_FOLDER)
+        print_and_log("[A-eye] Initializing docker...", "info", LOGS_FOLDER)
         # docker start
-        run_command_and_print_output('systemctl start docker')
+        run_command_and_print_output("systemctl start docker")
         # sleep 1s
-        run_command_and_print_output('sleep 1')
-        print_and_log("[A-eye] Docker has been started", 'info', LOGS_FOLDER)
+        run_command_and_print_output("sleep 1")
+        print_and_log("[A-eye] Docker has been started", "info", LOGS_FOLDER)
 
 
 def clear_logs(logs_folder=None):
-    open(f'{logs_folder}/app.log', 'w').close()
-    open(f'{logs_folder}/console.log','w').close()
+    open(f"{logs_folder}/app.log", "w").close()
+    open(f"{logs_folder}/console.log", "w").close()
 
 
 def prepare_log_target(target):
@@ -423,7 +575,7 @@ def prepare_log_target(target):
     except PermissionError:
         pass
 
-    for filename in ('app.log', 'console.log'):
+    for filename in ("app.log", "console.log"):
         path = os.path.join(target, filename)
         if os.path.exists(path):
             try:
@@ -438,15 +590,15 @@ def get_log_targets(logs_folder=None):
 
 
 def append_log_line(path, line):
-    with open(path, 'a', encoding='utf-8') as f:
+    with open(path, "a", encoding="utf-8") as f:
         f.write(f"{line}\n")
 
 
 def sync_logs_to_output(output_folder):
-    output_logs = os.path.join(output_folder, 'logs')
+    output_logs = os.path.join(output_folder, "logs")
     prepare_log_target(output_logs)
 
-    for filename in ('app.log', 'console.log'):
+    for filename in ("app.log", "console.log"):
         source = os.path.join(LOGS_FOLDER, filename)
         destination = os.path.join(output_logs, filename)
         if os.path.exists(source):
@@ -462,7 +614,7 @@ def print_console(text=None, logs_folder=None):
     targets = get_log_targets(logs_folder)
 
     for index, target in enumerate(targets):
-        logs_file = f'{target}/console.log'
+        logs_file = f"{target}/console.log"
         try:
             append_log_line(logs_file, text)
         except PermissionError:
@@ -470,14 +622,14 @@ def print_console(text=None, logs_folder=None):
                 raise
 
 
-def print_and_log(text=None, level='info', logs_folder=None):
+def print_and_log(text=None, level="info", logs_folder=None):
     timestamp = datetime.now(ZoneInfo("Europe/Zurich")).strftime("%Y-%m-%d %H:%M:%S")
     app_line = f"{timestamp} {level.upper()} {text}"
     targets = get_log_targets(logs_folder)
 
     for index, target in enumerate(targets):
-        console_file = f'{target}/console.log'
-        app_file = f'{target}/app.log'
+        console_file = f"{target}/console.log"
+        app_file = f"{target}/app.log"
 
         try:
             append_log_line(console_file, text)
@@ -492,19 +644,20 @@ def run_command_and_print_output(command):
         command,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,  # Redirect stderr to stdout
-        shell=True
+        shell=True,
     )
     console_output, console_errors = process.communicate()
-    
+
     if console_output:
-        console_output = console_output.decode('utf-8')
+        console_output = console_output.decode("utf-8")
         for line in console_output.splitlines():
             print_console(line, LOGS_FOLDER)
 
     if console_errors:
-        console_errors = console_errors.decode('utf-8')
+        console_errors = console_errors.decode("utf-8")
         for line in console_errors.splitlines():
             print_console(line, LOGS_FOLDER)
+
 
 def clean_folders(user_email: str) -> None:
     """Clear all folders used in the segmentation process from old remaining datas"""
@@ -518,49 +671,48 @@ def clean_folders(user_email: str) -> None:
     user_reference_rmtree(paths.download)
     paths.download.mkdir(parents=True, exist_ok=True)
     paths.jobfile.unlink(missing_ok=True)
-    
+
     clean_folder_hpc(paths.hpc_input)
 
+
 def get_management_api_token():
-    url = f'https://{current_app.config["AUTH0_DOMAIN"]}/oauth/token'
+    url = f"https://{current_app.config['AUTH0_DOMAIN']}/oauth/token"
     payload = {
-        'client_id': current_app.config['AUTH0_CLIENT_ID'],
-        'client_secret': current_app.config['AUTH0_CLIENT_SECRET'],
-        'audience': f'https://{current_app.config["AUTH0_DOMAIN"]}/api/v2/',
-        'grant_type': 'client_credentials'
+        "client_id": current_app.config["AUTH0_CLIENT_ID"],
+        "client_secret": current_app.config["AUTH0_CLIENT_SECRET"],
+        "audience": f"https://{current_app.config['AUTH0_DOMAIN']}/api/v2/",
+        "grant_type": "client_credentials",
     }
-    headers = {'Content-Type': 'application/json'}
+    headers = {"Content-Type": "application/json"}
     response = requests.post(url, json=payload, headers=headers)
     response.raise_for_status()
-    return response.json()['access_token']
+    return response.json()["access_token"]
 
 
 def get_user_data():
-    auth0_domain = current_app.config['AUTH0_DOMAIN']
+    auth0_domain = current_app.config["AUTH0_DOMAIN"]
     access_token = get_management_api_token()
-    headers = {'Authorization': f'Bearer {access_token}'}
+    headers = {"Authorization": f"Bearer {access_token}"}
 
     # Include fields you want explicitly
     params = {
-        'fields': 'email,last_ip',
-        'include_fields': 'true',
-        'per_page': 100,
-        'page': 0
+        "fields": "email,last_ip",
+        "include_fields": "true",
+        "per_page": 100,
+        "page": 0,
     }
 
     all_users = []
     while True:
         response = requests.get(
-            f'https://{auth0_domain}/api/v2/users',
-            headers=headers,
-            params=params
+            f"https://{auth0_domain}/api/v2/users", headers=headers, params=params
         )
         response.raise_for_status()
         page_users = response.json()
         if not page_users:
             break
         all_users.extend(page_users)
-        params['page'] += 1
+        params["page"] += 1
 
     return all_users
 
@@ -571,11 +723,7 @@ def get_user_data():
 
 def send_email(to, body):
     with current_app.app_context():
-        msg = Message(
-            subject='Segmentation Task Completed',
-            recipients=[to],
-            body=body
-        )
+        msg = Message(subject="Segmentation Task Completed", recipients=[to], body=body)
         mail.send(msg)
 
 
@@ -597,9 +745,15 @@ def get_cases_processed():
     return load_stats()["cases_processed"]
 
 
-def modify_jobfile(template_file: str|Path, user_email: str, timestamp: str, output_file: str|Path, hpc_input: str) -> None:
+def modify_jobfile(
+    template_file: str | Path,
+    user_email: str,
+    timestamp: str,
+    output_file: str | Path,
+    hpc_input: str,
+) -> None:
     """Modify the jobfile template with user-specific information"""
-    
+
     # Make the email user_reference for paths
     user_reference_email = user_email.replace("@", "_at_").replace(".", "_")
 
@@ -616,22 +770,24 @@ def modify_jobfile(template_file: str|Path, user_email: str, timestamp: str, out
         job_script = template.safe_substitute(MAIL_USER=user_email)
 
     # Update SBATCH output/error paths
-    out_file = f"{user_dir}/{user_reference_email}_{timestamp}_nnUNet_predict.%N.%j.%a.out"
-    err_file = f"{user_dir}/{user_reference_email}_{timestamp}_nnUNet_predict.%N.%j.%a.err"
-    job_script = re.sub(r'(#SBATCH --output=).+\.out', rf'\1{out_file}', job_script)
-    job_script = re.sub(r'(#SBATCH --error=).+\.err', rf'\1{err_file}', job_script)
+    out_file = (
+        f"{user_dir}/{user_reference_email}_{timestamp}_nnUNet_predict.%N.%j.%a.out"
+    )
+    err_file = (
+        f"{user_dir}/{user_reference_email}_{timestamp}_nnUNet_predict.%N.%j.%a.err"
+    )
+    job_script = re.sub(r"(#SBATCH --output=).+\.out", rf"\1{out_file}", job_script)
+    job_script = re.sub(r"(#SBATCH --error=).+\.err", rf"\1{err_file}", job_script)
 
     # Update the specific --bind line
     job_script = re.sub(
-        r'--bind\s+/home/jaime\.barrancohernandez/results/nnunet:/output',
+        r"--bind\s+/home/jaime\.barrancohernandez/results/nnunet:/output",
         f"--bind {user_dir}:/output",
-        job_script
+        job_script,
     )
     # isolate HPC input bind
     job_script = re.sub(
-        r'--bind\s+\S+:/input',
-        f"--bind {hpc_input}:/input",
-        job_script
+        r"--bind\s+\S+:/input", f"--bind {hpc_input}:/input", job_script
     )
 
     # Write modified jobfile
@@ -639,9 +795,9 @@ def modify_jobfile(template_file: str|Path, user_email: str, timestamp: str, out
         f.write(job_script)
 
 
-def upload_files(upload_folder:str, aux_input:str, hpc_base_input:str) -> None:
+def upload_files(upload_folder: str, aux_input: str, hpc_base_input: str) -> None:
     """Upload files into HPC folder after some operations
-        1. Unzip if needed 
+        1. Unzip if needed
         2. If .dcm, then convert to .nii
         3. Compress .nii to nii.gz
         4. Rename to expected format (*_0000.nii.gz) for HPC
@@ -662,8 +818,10 @@ def upload_files(upload_folder:str, aux_input:str, hpc_base_input:str) -> None:
             fpath = os.path.join(upload_folder, file)
             if os.path.isfile(fpath):
                 ext = os.path.splitext(file)[1].lower()
-                if ext in ['.zip', '.7z']:
-                    unzip_file(ext[1:], fpath, upload_folder)  # unzip into the same input folder
+                if ext in [".zip", ".7z"]:
+                    unzip_file(
+                        ext[1:], fpath, upload_folder
+                    )  # unzip into the same input folder
 
     # 2. Check dicom folders
     check_dicom_folders_names(upload_folder)

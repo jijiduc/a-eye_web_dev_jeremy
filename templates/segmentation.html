@@ -204,7 +204,8 @@
 
                 if (data.status === 'success') {
                     bar.textContent = 'Upload complete';
-                    buildFileList(uploadFileList, selection, null, () => '<em class="text-muted">Futur metadata...</em>');
+                    buildFileList(uploadFileList, selection, null,
+                        (file) => renderMetadataTable(data.metadata?.[file.name]));
                     alert(data.message);
 
                     const segmentButton = document.getElementById('segment-button');
@@ -272,6 +273,27 @@
         }
     });
 
+    /**
+     * Make the extracted metadata table for display in file list
+     */
+    function renderMetadataTable(fields) {
+        // no metadata found
+        if (!fields || !Object.keys(fields).length)
+            return '<em class="text-muted p-2 d-block">No metadata available.</em>';
+        // with found : 2 columns table
+        const rows = Object.entries(fields).map(([key, val]) => {
+            const display = Array.isArray(val) ? val.join(', ') : String(val);
+            return `<tr>
+                <td style="white-space:nowrap; font-weight:500; width:40%;">${key}</td>
+                <td style="word-break:break-all;">${display}</td>
+            </tr>`;
+        }).join('');
+        return `<table class="table table-sm table-bordered table-striped table-hover mb-0" style="font-size:0.78em;">
+            <thead class="table-dark"><tr><th>Field</th><th>Value</th></tr></thead>
+            <tbody>${rows}</tbody>
+        </table>`;
+    }
+
     /*
     *   To build the different lists of files displayed,
     *   with optional remove button / metadata dropdown
@@ -292,7 +314,7 @@
             const headerUnselect = document.createElement('span');
             headerUnselect.style.fontWeight = 'bold';
             headerUnselect.style.color = '#bf0a0a';
-            headerUnselect.textContent = 'remove selection';
+            headerUnselect.textContent = 'remove file';
             header.appendChild(headerUnselect);
         }
 

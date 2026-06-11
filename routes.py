@@ -34,6 +34,7 @@ from utils import (
     clean_folders,
     convert_country_to_iso3,
     copy_segmentation_data,
+    extract_nifti_metadata,
     get_cases_processed,
     get_country_from_ip,
     get_user_data,
@@ -156,11 +157,14 @@ def users():
                             country_counts[country_iso3] = 1
     
     # Create a DataFrame for the country data
-    df = pd.DataFrame(list(country_counts.items()), columns=['Country', 'Count'])
+    df = pd.DataFrame(list(country_counts.items()),
+                           columns=['Country', 'Count'])
     
     # Generate the choropleth map
-    fig = px.choropleth(df, locations="Country", locationmode='ISO-3', color="Count",
-                        color_continuous_scale="Greens", range_color=(0, high_scale_nb_users))
+    fig = px.choropleth(df, locations="Country",
+                        locationmode='ISO-3', color="Count",
+                        color_continuous_scale="Greens",
+                        range_color=(0, high_scale_nb_users))
 
     fig.update_layout(
         autosize=True,
@@ -214,7 +218,7 @@ def upload_file() -> tuple[Response, int]:
       3. copy them to the HPC input directory
 
       Returns:
-          tuple[Response, int]: JSON response with upload status and HTTP status code
+          tuple[Response, int]: JSON response with upload and HTTP status code
       """
     user_email: str = session.get("user", {}).get("email", "unknown_user")
     paths: UserPaths = get_user_paths(user_email)
@@ -243,36 +247,39 @@ def upload_file() -> tuple[Response, int]:
             'error': str(error)
         }), 503
 
-    # 2. saves provided files locally 
+    # 2. Save provided files locally and extract their metadata
+    metadata : dict[str, dict] = {}
     for file in files:
         if file and allowed_file(file.filename):
-             # Use this werkzeug method to secure filename
-            filename = secure_filename(file.filename) 
+            filename = secure_filename(file.filename)  # werkzeug sanitisation
             filepath = paths.upload / filename
             file.save(filepath)
             uploaded_files.append(filename)
+            metadata[filename] = extract_nifti_metadata(str(filepath))
         else:
             rejected_files.append(file.filename)
 
     try:
-        #3. copy the provided files in the HPC input directory
+        # 3. copy the provided files in the HPC input directory
         upload_files(paths.upload, paths.aux_input, paths.hpc_base_input)
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as error:
         current_app.logger.exception("Could not copy uploaded files to HPC")
         return jsonify({
-            'message': 'Files were received locally, but could not be copied to the HPC over SSH.'
+            'message': 'Files were received locally,'
+                       ' but could not be copied to the HPC over SSH.'
             ' Please try again once chacha/disco SSH access is available.',
             'status': 'error',
             'error': str(error)
         }), 503
-    
+
     if uploaded_files:
         message = f"Uploaded: {', '.join(uploaded_files)}"
         if rejected_files:
             message += f" | Rejected: {', '.join(rejected_files)}"
         return jsonify({
             'message': message,
-            'status': 'success'
+            'status': 'success',
+            'metadata': metadata,
             }), 200
     else:
         return jsonify({
@@ -311,10 +318,12 @@ def segment() -> tuple[Response, int]:
         getSegmentation(user_email, paths, ongoing_job_id=store_job_id)
     except Exception as error:
         paths.active_job_file.unlink(missing_ok=True)
-        print_and_log(f"[A-eye] Segmentation failed: {error}", 'error', LOGS_FOLDER)
+        print_and_log(f"[A-eye] Segmentation failed: {error}",
+                       'error', LOGS_FOLDER)
         sync_logs_to_output(paths.download)
         clean_folders(user_email)
-        return jsonify({"message": "Segmentation failed", "error": str(error)}), 500
+        return jsonify({"message": "Segmentation failed",
+                         "error": str(error)}), 500
 
     paths.active_job_file.unlink(missing_ok=True)
 
@@ -324,7 +333,8 @@ def segment() -> tuple[Response, int]:
     )
 
     if has_output:
-        print_and_log("[A-eye] Copying segmentation data to filer in background...", 'info', LOGS_FOLDER)
+        print_and_log("[A-eye] Copying segm. data to Filer01...",
+                       'info', LOGS_FOLDER)
         sync_logs_to_output(paths.download)
 
     # 2. Zip folder for download
@@ -341,11 +351,14 @@ def segment() -> tuple[Response, int]:
         ).start()
     else:
         # send_email(user_email, "A-eye segmentation task failed. Check the logs for details.")
-        print_and_log("[A-eye] Segmentation failed or no .nii.gz output found. Data not copied!", 'error', LOGS_FOLDER)
+        print_and_log("[A-eye] Segmentation failed or no .nii.gz output found" +
+                      "Data not copied!",
+                       'error', LOGS_FOLDER)
         sync_logs_to_output(paths.download)
         clean_folders(user_email)
 
-    return jsonify({"message": "Segmentation completed", "download_url": "/download"}), 200
+    return jsonify({"message": "Segmentation completed",
+                     "download_url": "/download"}), 200
 
 
 @bp.route('/profile')
