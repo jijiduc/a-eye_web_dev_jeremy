@@ -358,8 +358,20 @@ def segment() -> tuple[Response, int]:
         sync_logs_to_output(paths.download)
         clean_folders(user_email)
 
+    # 4. add result file and metadata
+    result : list = []
+
+    for file_name in sorted(os.listdir(paths.download)):
+        if file_name.endswith('.nii.gz'):
+            result.append({
+                'name': file_name,
+                'metadata': extract_nifti_metadata(str(paths.download/file_name)),
+                'input_name': file_name.replace('.nii.gz', '_0000.nii.gz'),
+            })
+
     return jsonify({"message": "Segmentation completed",
-                     "download_url": "/download"}), 200
+                     "download_url": "/download",
+                     "result": result}), 200
 
 
 @bp.route('/profile')
