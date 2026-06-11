@@ -49,39 +49,32 @@
 
     <div class="row text-center" style="margin-top: 30px;">
         <div class="col-md-12">
-            <div id="processing-spinner" class="text-center mt-3" style="display: none;">
-                <div class="spinner-border" role="status" 
-                    style="border-color: green; border-right-color: transparent;">
-                </div>
-                <div class="mt-2">Processing segmentation…</div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row text-center" style="margin-top: 30px;">
-        <div class="col-md-12">
             <div id="rejection-tooltip" class="text-danger fw-bold mb-2" style="display:none;">
             </div>
             <h5 id="selected-files-title" class="text-center mb-3" style="display:none;">selected file(s)</h5>
             <ul id="file-list" class="list-group"></ul>
         </div>
     </div>
+
     <!-- progress bar -->
-    <div class="row text-center" id="upload-status" style="display:none; margin-top: 30px;">
+    <div class="row text-center" id="status-section" style="display:none; margin-top: 30px;">
         <div class="col-md-12">
             <div class="progress mb-3">
-                <div id="upload-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-success"
+                <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-success"
                     role="progressbar" style="width: 100%;">
                     upload in progress...
                 </div>
             </div>
-            <ul id="upload-file-list" class="list-group"></ul>
+            <ul id="display-file-list" class="list-group"></ul>
         </div>
     </div>
+
 </div>
+
 
 <script>
     let selection = [];
+    let segmentationResult = [];
     const allowedExtensions = ['gz', 'zip', '7z', 'nii'];
 
     // ensure no duplicate and correct file extension in the selection
@@ -91,7 +84,7 @@
 
         for (let i = 0; i < selectedFiles.length; i++) {
             let file = selectedFiles[i];
-            let duplicate = selection.some(function(existing) {
+            let duplicate = selection.some(function (existing) {
                 return existing.name === file.name &&
                     existing.size === file.size &&
                     existing.lastModified === file.lastModified;
@@ -118,7 +111,7 @@
         let notice = document.getElementById('rejection-tooltip');
         notice.innerHTML = '';
 
-        fileNames.forEach(function(name) {
+        fileNames.forEach(function (name) {
             let errorMessage = document.createElement('div');
             errorMessage.textContent = name + ' has been rejected: unsupported file format (only allowing: .nii, .nii.gz, .zip, .7z)';
             notice.appendChild(errorMessage);
@@ -127,7 +120,7 @@
         notice.style.display = 'block';
         clearTimeout(window._rejectionTimer);
 
-        window._rejectionTimer = setTimeout(function() {
+        window._rejectionTimer = setTimeout(function () {
             notice.style.display = 'none';
         }, 4000);
     }
@@ -167,6 +160,13 @@
         }
     }
 
+    /**
+    * Handles the multi-file upload :
+    *   - managing UI states
+    *   - validating file extensions
+    *   - preparing form data
+    *   - submitting files to the server
+    */
     function uploadFiles() {
         let formData = new FormData();
 
@@ -188,10 +188,10 @@
             btn.classList.add('btn-secondary');
         });
 
-        const uploadFileList = document.getElementById('upload-file-list');
+        const uploadFileList = document.getElementById('display-file-list');
         buildFileList(uploadFileList, selection);
 
-        document.getElementById('upload-status').style.display = 'block';
+        document.getElementById('status-section').style.display = 'block';
 
         fetch('/upload', {
             method: 'POST',
@@ -199,7 +199,7 @@
         })
             .then(response => response.json())
             .then(data => {
-                const bar = document.getElementById('upload-progress-bar');
+                const bar = document.getElementById('progress-bar');
                 bar.classList.remove('progress-bar-animated', 'progress-bar-striped');
 
                 if (data.status === 'success') {
@@ -217,7 +217,7 @@
                 }
             })
             .catch(error => {
-                const bar = document.getElementById('upload-progress-bar');
+                const bar = document.getElementById('progress-bar');
 
                 bar.classList.remove('progress-bar-animated', 'progress-bar-striped');
                 bar.classList.remove('bg-success');
@@ -229,40 +229,57 @@
             });
     }
 
+    /*
+    * Handles the file segmentation process : 
+    *   - managing the UI state
+    *   - initiating a server request
+    *   - processing the response
+    */
     function segmentFiles() {
-        const spinner = document.getElementById('processing-spinner');
-        const downloadButton = document.getElementById('download-button');
-        const segmentButton = document.getElementById('segment-button');
-        const uploadButton = document.getElementById('upload-button');
+        ['segment-button', 'upload-button'].forEach(id => {
+            const btn = document.getElementById(id);
+            btn.disabled = true;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-secondary');
+        });
 
-        segmentButton.disabled = true;
-        uploadButton.disabled = true;
-        segmentButton.classList.add('btn-secondary');
-        segmentButton.classList.remove('btn-success');
-        uploadButton.classList.add('btn-secondary');
-        uploadButton.classList.remove('btn-success');
-
-        spinner.style.display = 'block';
+        const bar = document.getElementById('progress-bar');
+        bar.classList.add('progress-bar-animated', 'progress-bar-striped');
+        bar.classList.remove('bg-success', 'bg-danger');
+        bar.classList.add('bg-primary');
+        bar.textContent = 'segmentation in progress...';
 
         fetch('/segment', { method: 'POST' })
             .then(response => response.json())
             .then(data => {
-                spinner.style.display = 'none';
+                bar.classList.remove('progress-bar-animated', 'progress-bar-striped');
 
-                downloadButton.disabled = false;
-                downloadButton.classList.remove('btn-secondary');
-                downloadButton.classList.add('btn-success');
-                downloadButton.setAttribute('data-download-url', data.download_url);
+                if (data.download_url) {
+                    bar.textContent = 'Segmentation complete';
 
-                alert('Segmentation completed successfully.');
-                window.location.href = data.download_url;
+                    const downloadButton = document.getElementById('download-button');
+                    downloadButton.disabled = false;
+                    downloadButton.classList.remove('btn-secondary');
+                    downloadButton.classList.add('btn-success');
+                    downloadButton.setAttribute('data-download-url', data.download_url);
+
+                    segmentationResult = data.result_files || [];
+                    buildResultList(segmentationResult);
+                } else {
+                    throw new Error(data.message || 'Segmentation failed');
+                }
             })
             .catch(error => {
-                spinner.style.display = 'none';
-                console.error('Segmentation error:', error);
-                alert('Failed to complete segmentation.');
+                bar.classList.remove('progress-bar-animated', 'progress-bar-striped');
+                bar.classList.remove('bg-primary');
+                bar.classList.add('bg-danger');
+                bar.textContent = 'Segmentation failed';
+
+                alert(error.message || 'An error occurred during segmentation.');
+                console.error('Error:', error);
             });
     }
+
 
     document.getElementById('download-button').addEventListener('click', function () {
         var downloadUrl = this.getAttribute('data-download-url');
@@ -272,6 +289,7 @@
             alert('No file available for download. Please run segmentation first.');
         }
     });
+
 
     /**
      * Make the extracted metadata table for display in file list
@@ -369,13 +387,20 @@
                     metadataRow.style.display = collapsed ? 'block' : 'none';
                     icon.classList.replace(
                         collapsed ? 'fa-chevron-down' : 'fa-chevron-up',
-                        collapsed ? 'fa-chevron-up'   : 'fa-chevron-down'
+                        collapsed ? 'fa-chevron-up' : 'fa-chevron-down'
                     );
                 };
             } else {
                 ulElement.appendChild(fileRow);
             }
         });
+    }
+    /**
+     * To build the result list
+     */
+    function buildResultList(results = []) {
+        const ul = document.getElementById('display-file-list');
+        buildFileList(ul, results.map(r => ({ name: r.name })));
     }
 </script>
 {% endblock %}
