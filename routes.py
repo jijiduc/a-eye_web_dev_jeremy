@@ -3,6 +3,7 @@ import secrets
 import subprocess
 import threading
 from datetime import datetime
+from pathlib import Path
 from urllib.parse import quote_plus, urlencode
 
 import pandas as pd
@@ -408,3 +409,14 @@ def test_email():
         return "Email sent successfully!", 200
     except Exception as e:
         return f"Failed to send email: {e}", 500
+
+@bp.route('/result/<filename>', methods=['GET'])
+def serve_result(filename: str):
+    # check that the logged in user try to access
+    if 'user' not in session:
+        return jsonify({'message': 'Unauthorized'}), 401
+
+    user_email: str = session.get("user", {}).get("email", "unknown_user")
+    file_path: Path = (get_user_paths(user_email).download / filename)
+
+    return send_file(file_path, mimetype='application/gzip')
