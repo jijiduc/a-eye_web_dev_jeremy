@@ -8,3 +8,6 @@ dependencies = []
 
 [tool.ruff.lint]
 select = ["I"]
+
+[tool.ruff.format]
+preview = true
