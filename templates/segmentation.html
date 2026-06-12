@@ -11,7 +11,7 @@
         By proceeding, I authorize the A-eye team to store my image data in a secure, non-public database to help
         improve A-eye's performance.
     </p>
-
+    <!-- buttons -->
     <div class="row text-center" style="margin-top: 30px;">
         <div class="col-md-3">
             <form id="choose-file-form">
@@ -46,7 +46,7 @@
             </form>
         </div>
     </div>
-
+    <!-- rejection notice -->
     <div class="row text-center" style="margin-top: 30px;">
         <div class="col-md-12">
             <div id="rejection-tooltip" class="text-danger fw-bold mb-2" style="display:none;">
@@ -61,11 +61,16 @@
         <div class="col-md-12">
             <div class="progress mb-3">
                 <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-success"
-                    role="progressbar" style="width: 100%;">
-                    upload in progress...
-                </div>
+                    role="progressbar" style="width: 100%;"></div>
             </div>
             <ul id="display-file-list" class="list-group"></ul>
+        </div>
+    </div>
+
+    <!-- segmentation results -->
+    <div class="row" id="segmentation-result-section" style="display:none; margin-top: 30px;">
+        <div class="col-md-12">
+            <ul id="result-file-list" class="list-group"></ul>
         </div>
     </div>
 
@@ -84,11 +89,11 @@
 
         for (let i = 0; i < selectedFiles.length; i++) {
             let file = selectedFiles[i];
-            let duplicate = selection.some(function (existing) {
-                return existing.name === file.name &&
-                    existing.size === file.size &&
-                    existing.lastModified === file.lastModified;
-            });
+            let duplicate = selection.some(existing =>
+                existing.name === file.name &&
+                existing.size === file.size &&
+                existing.lastModified === file.lastModified
+            );
             if (!duplicate) {
                 let extension = file.name.split('.').pop().toLowerCase();
                 if (allowedExtensions.includes(extension)) {
@@ -111,7 +116,7 @@
         let notice = document.getElementById('rejection-tooltip');
         notice.innerHTML = '';
 
-        fileNames.forEach(function (name) {
+        fileNames.forEach(name => {
             let errorMessage = document.createElement('div');
             errorMessage.textContent = name + ' has been rejected: unsupported file format (only allowing: .nii, .nii.gz, .zip, .7z)';
             notice.appendChild(errorMessage);
@@ -137,14 +142,10 @@
 
         if (selection.length > 0) {
             title.style.display = 'block';
-            title.textContent = '' + selection.length + ' selected file(s)';
-        } else {
-            title.style.display = 'none';
-        }
-
-        if (selection.length > 0) {
+            title.textContent = selection.length + ' selected file(s)';
             buildFileList(fileList, selection, unselectFile);
         } else {
+            title.style.display = 'none';
             fileList.innerHTML = '';
         }
 
@@ -170,12 +171,7 @@
     function uploadFiles() {
         let formData = new FormData();
 
-        selection.forEach((file) => {
-            let extension = file.name.split('.').pop().toLowerCase();
-            if (allowedExtensions.includes(extension)) {
-                formData.append('files[]', file);
-            }
-        });
+        selection.forEach(file => formData.append('files[]', file));
 
         ['rejection-tooltip', 'selected-files-title', 'file-list'].forEach(id => {
             document.getElementById(id).style.display = 'none';
@@ -193,19 +189,24 @@
 
         document.getElementById('status-section').style.display = 'block';
 
+        const bar = document.getElementById('progress-bar');
+        bar.classList.add('progress-bar-animated', 'progress-bar-striped');
+        bar.classList.remove('bg-danger');
+        bar.classList.add('bg-success');
+        bar.textContent = 'upload in progress...';
+
         fetch('/upload', {
             method: 'POST',
             body: formData
         })
             .then(response => response.json())
             .then(data => {
-                const bar = document.getElementById('progress-bar');
                 bar.classList.remove('progress-bar-animated', 'progress-bar-striped');
 
                 if (data.status === 'success') {
                     bar.textContent = 'Upload complete';
-                    buildFileList(uploadFileList, selection, null,
-                        (file) => renderMetadataTable(data.metadata?.[file.name]));
+                    buildFileList(uploadFileList, selection, null, 'view metadata',
+                        (file, idx, row) => { row.innerHTML = renderMetadataTable(data.metadata?.[file.name]); });
                     alert(data.message);
 
                     const segmentButton = document.getElementById('segment-button');
@@ -217,8 +218,6 @@
                 }
             })
             .catch(error => {
-                const bar = document.getElementById('progress-bar');
-
                 bar.classList.remove('progress-bar-animated', 'progress-bar-striped');
                 bar.classList.remove('bg-success');
                 bar.classList.add('bg-danger');
@@ -248,32 +247,46 @@
         bar.classList.remove('bg-success', 'bg-danger');
         bar.classList.add('bg-primary');
         bar.textContent = 'segmentation in progress...';
-
+        // after the segmenation is done
         fetch('/segment', { method: 'POST' })
             .then(response => response.json())
             .then(data => {
                 bar.classList.remove('progress-bar-animated', 'progress-bar-striped');
-
+                // if data of segmentation is ready for download
                 if (data.download_url) {
                     bar.textContent = 'Segmentation complete';
-
+                    // enable dowload button
                     const downloadButton = document.getElementById('download-button');
                     downloadButton.disabled = false;
                     downloadButton.classList.remove('btn-secondary');
                     downloadButton.classList.add('btn-success');
                     downloadButton.setAttribute('data-download-url', data.download_url);
-
-                    segmentationResult = data.result_files || [];
-                    buildResultList(segmentationResult);
+                    // display the result on the page
+                    segmentationResult = data.result || [];
+                    // document.getElementById('status-section').style.display = 'none';
+                    document.getElementById('segmentation-result-section').style.display = 'block';
+                    buildFileList(
+                        document.getElementById('result-file-list'),
+                        segmentationResult,
+                        null,
+                        'view results',
+                        async (result, idx, row) => {
+                            row.innerHTML = `<div style="width:100%; height:85vh;"><canvas id="niivue-canvas-${idx}" style="display:block; width:100%; height:100%;"></canvas></div>`;
+                            await window.initNiivue(`niivue-canvas-${idx}`, `/result/${result.name}`);
+                        },
+                        (result, idx, row) => { row.innerHTML = ''; }
+                    );
+                    // make the browser alert
+                    alert(data.message);
                 } else {
-                    throw new Error(data.message || 'Segmentation failed');
+                    throw new Error(data.message || 'segmentation failed');
                 }
             })
             .catch(error => {
                 bar.classList.remove('progress-bar-animated', 'progress-bar-striped');
                 bar.classList.remove('bg-primary');
                 bar.classList.add('bg-danger');
-                bar.textContent = 'Segmentation failed';
+                bar.textContent = 'segmentation failed';
 
                 alert(error.message || 'An error occurred during segmentation.');
                 console.error('Error:', error);
@@ -282,7 +295,7 @@
 
 
     document.getElementById('download-button').addEventListener('click', function () {
-        var downloadUrl = this.getAttribute('data-download-url');
+        const downloadUrl = this.getAttribute('data-download-url');
         if (downloadUrl) {
             window.location.href = downloadUrl;
         } else {
@@ -316,7 +329,7 @@
     *   To build the different lists of files displayed,
     *   with optional remove button / metadata dropdown
     */
-    function buildFileList(ulElement, files, onRemove = null, onDropdown = null) {
+    function buildFileList(ulElement, files, onRemove = null, dropdownLabel = '', onOpen = null, onClose = null) {
         ulElement.innerHTML = '';
         const header = document.createElement('li');
         header.className = 'list-group-item d-flex justify-content-between align-items-center';
@@ -336,12 +349,12 @@
             header.appendChild(headerUnselect);
         }
 
-        if (onDropdown) {
-            const headerMetadata = document.createElement('span');
-            headerMetadata.style.fontWeight = 'bold';
-            headerMetadata.style.color = '#0b0f80';
-            headerMetadata.textContent = 'view metadata';
-            header.appendChild(headerMetadata);
+        if (onOpen) {
+            const headerDropdown = document.createElement('span');
+            headerDropdown.style.fontWeight = 'bold';
+            headerDropdown.style.color = '#0b0f80';
+            headerDropdown.textContent = dropdownLabel;
+            header.appendChild(headerDropdown);
         }
 
         ulElement.appendChild(header);
@@ -365,42 +378,48 @@
                 fileRow.appendChild(btn);
             }
 
-            if (onDropdown) {
+            if (onOpen) {
                 const btn = document.createElement('button');
                 btn.type = 'button';
                 btn.className = 'btn btn-primary btn-sm';
-                btn.setAttribute('aria-label', 'Show metadata');
+                btn.setAttribute('aria-label', 'Show details');
                 btn.style.cssText = 'width:30px; height:30px; padding:0; display:flex; align-items:center; justify-content:center;';
                 btn.innerHTML = '<i class="fas fa-chevron-down" style="margin:0; color:white;"></i>';
                 fileRow.appendChild(btn);
                 ulElement.appendChild(fileRow);
 
-                const metadataRow = document.createElement('li');
-                metadataRow.className = 'list-group-item';
-                metadataRow.style.cssText = 'display:none; background-color:#f8f9fa;';
-                metadataRow.innerHTML = onDropdown(file);
-                ulElement.appendChild(metadataRow);
+                const dropdownRow = document.createElement('li');
+                dropdownRow.className = 'list-group-item';
+                dropdownRow.style.cssText = 'display:none; background-color:#f8f9fa;';
+                ulElement.appendChild(dropdownRow);
 
-                btn.onclick = () => {
+                btn.onclick = async () => {
                     const icon = btn.querySelector('i');
-                    const collapsed = metadataRow.style.display === 'none';
-                    metadataRow.style.display = collapsed ? 'block' : 'none';
+                    const collapsed = dropdownRow.style.display === 'none';
+                    dropdownRow.style.display = collapsed ? 'block' : 'none';
                     icon.classList.replace(
                         collapsed ? 'fa-chevron-down' : 'fa-chevron-up',
                         collapsed ? 'fa-chevron-up' : 'fa-chevron-down'
                     );
+                    if (collapsed) {
+                        await onOpen(file, index, dropdownRow);
+                    } else if (onClose) {
+                        onClose(file, index, dropdownRow);
+                    }
                 };
             } else {
                 ulElement.appendChild(fileRow);
             }
         });
     }
-    /**
-     * To build the result list
-     */
-    function buildResultList(results = []) {
-        const ul = document.getElementById('display-file-list');
-        buildFileList(ul, results.map(r => ({ name: r.name })));
-    }
+
+</script>
+<script type="module">
+    import { Niivue } from "https://unpkg.com/@niivue/niivue@0.69.0/dist/index.js";
+    window.initNiivue = async (canvasId, url) => {
+        const nv = new Niivue({ isResizeCanvas: true });
+        await nv.attachTo(canvasId);
+        await nv.loadVolumes([{ url }]);
+    };
 </script>
 {% endblock %}
