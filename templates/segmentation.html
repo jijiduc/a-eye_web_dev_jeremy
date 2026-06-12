@@ -341,22 +341,6 @@
         headerFilename.textContent = 'filename';
         header.appendChild(headerFilename);
 
-        if (onRemove) {
-            const headerUnselect = document.createElement('span');
-            headerUnselect.style.fontWeight = 'bold';
-            headerUnselect.style.color = '#bf0a0a';
-            headerUnselect.textContent = 'remove file';
-            header.appendChild(headerUnselect);
-        }
-
-        if (onOpen) {
-            const headerDropdown = document.createElement('span');
-            headerDropdown.style.fontWeight = 'bold';
-            headerDropdown.style.color = '#0b0f80';
-            headerDropdown.textContent = dropdownLabel;
-            header.appendChild(headerDropdown);
-        }
-
         ulElement.appendChild(header);
 
         files.forEach((file, index) => {
@@ -371,9 +355,7 @@
                 const btn = document.createElement('button');
                 btn.type = 'button';
                 btn.className = 'btn btn-danger btn-sm';
-                btn.setAttribute('aria-label', 'Remove');
-                btn.style.cssText = 'width:30px; height:30px; padding:0; display:flex; align-items:center; justify-content:center;';
-                btn.innerHTML = '<i class="fas fa-times" style="margin:0;"></i>';
+                btn.textContent = 'remove';
                 btn.onclick = () => onRemove(index);
                 fileRow.appendChild(btn);
             }
@@ -382,9 +364,7 @@
                 const btn = document.createElement('button');
                 btn.type = 'button';
                 btn.className = 'btn btn-primary btn-sm';
-                btn.setAttribute('aria-label', 'Show details');
-                btn.style.cssText = 'width:30px; height:30px; padding:0; display:flex; align-items:center; justify-content:center;';
-                btn.innerHTML = '<i class="fas fa-chevron-down" style="margin:0; color:white;"></i>';
+                btn.textContent = dropdownLabel;
                 fileRow.appendChild(btn);
                 ulElement.appendChild(fileRow);
 
@@ -394,13 +374,9 @@
                 ulElement.appendChild(dropdownRow);
 
                 btn.onclick = async () => {
-                    const icon = btn.querySelector('i');
                     const collapsed = dropdownRow.style.display === 'none';
                     dropdownRow.style.display = collapsed ? 'block' : 'none';
-                    icon.classList.replace(
-                        collapsed ? 'fa-chevron-down' : 'fa-chevron-up',
-                        collapsed ? 'fa-chevron-up' : 'fa-chevron-down'
-                    );
+                    btn.textContent = collapsed ? 'hide' : dropdownLabel;
                     if (collapsed) {
                         await onOpen(file, index, dropdownRow);
                     } else if (onClose) {
