@@ -263,7 +263,7 @@
                     downloadButton.setAttribute('data-download-url', data.download_url);
                     // display the result on the page
                     segmentationResult = data.result || [];
-                    // document.getElementById('status-section').style.display = 'none';
+                    document.getElementById('status-section').style.display = 'none';
                     document.getElementById('segmentation-result-section').style.display = 'block';
                     buildFileList(
                         document.getElementById('result-file-list'),
@@ -271,7 +271,15 @@
                         null,
                         'view results',
                         async (result, idx, row) => {
-                            row.innerHTML = `<div style="width:100%; height:85vh;"><canvas id="niivue-canvas-${idx}" style="display:block; width:100%; height:100%;"></canvas></div>`;
+                            row.innerHTML = `
+                                <div style="display:flex; width:100%; height:85vh; gap:8px;">
+                                    <div style="flex:0 0 20%; overflow-y:scroll; border-right:1px solid #dee2e6; padding-right:8px;">
+                                        ${renderMetadataTable(result.metadata)}
+                                    </div>
+                                    <div style="flex:1;">
+                                        <canvas id="niivue-canvas-${idx}" style="display:block; width:100%; height:100%;"></canvas>
+                                    </div>
+                                </div>`;
                             await window.initNiivue(`niivue-canvas-${idx}`, `/result/${result.name}`);
                         },
                         (result, idx, row) => { row.innerHTML = ''; }
