@@ -2,6 +2,8 @@
 
 {% block title %}Segmentation - AEye{% endblock %}
 
+{% block body_container %}container-fluid px-3{% endblock %}
+
 {% block content %}
 <div class="container" style="margin-top: 50px;">
     <h2 class="main-title text-center">Segmentation Tool</h2>
@@ -66,19 +68,17 @@
             <ul id="display-file-list" class="list-group"></ul>
         </div>
     </div>
+    
+</div>
 
-    <!-- segmentation results -->
-    <div class="row" id="segmentation-result-section" style="display:none; margin-top: 30px;">
-        <div class="col-md-12">
-            <div class="text-center mb-3">
-                <button type="button" class="btn btn-outline-secondary btn-lg px-5" onclick="window.location.reload()">
-                    <i class="fas fa-redo me-2"></i> New segmentation
-                </button>
-            </div>
-            <ul id="result-file-list" class="list-group"></ul>
-        </div>
+<!-- segmentation results -->
+<div id="segmentation-result-section" style="display:none; margin-top: 30px;">
+    <div class="text-center mb-3">
+        <button type="button" class="btn btn-outline-secondary btn-lg px-5" onclick="window.location.reload()">
+            <i class="fas fa-redo me-2"></i> New segmentation
+        </button>
     </div>
-
+    <ul id="result-file-list" class="list-group"></ul>
 </div>
 
 
@@ -277,21 +277,28 @@
                         'view results',
                         async (result, idx, row) => {
                             row.innerHTML = `
-                                <div style="display:flex; width:100%; height:85vh; gap:8px;">
-                                    <div style="flex:1;  display:flex; flex-direction:column; gap:4px;">
-                                        <small class="text-muted" > Before segmentation </small>
-                                        <canvas id="niivue-input-${idx}" style="display:block; width:100%; height:100%; flex:1;"></canvas>
+                                <div style="display:flex; width:100%; gap:8px; align-items:flex-start;">
+                                    <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:4px;">
+                                        <small class="text-muted">Before segmentation</small>
+                                        <canvas id="niivue-input-${idx}" style="display:block; width:100%; aspect-ratio:1/1;"></canvas>
                                     </div>
-                                    <div style="flex:0 0 20%; overflow-y:scroll; border-left:2px solid #33961d; border-right:2px solid #33961d; padding:0 8px;">
+                                    <div id="info-panel-${idx}" style="flex:0 0 20%; overflow-y:auto; border-left:2px solid #33961d; border-right:2px solid #33961d; padding:0 8px;">
                                         ${renderSegmentationLegend()}
                                         <div style="margin-top:8px; font-size:0.78em; color:#212529;"><strong style="margin-bottom:5px;">Metadata</strong></div>
                                         <div>${renderMetadataTable(result.metadata)}</div>
                                     </div>
-                                    <div style="flex:1; display:flex; flex-direction:column; gap:4px;">
-                                        <small class="text-muted"> After segmentation </small>
-                                        <canvas id="niivue-output-${idx}" style="display:block; width:100%; height:100%; flex:1;"></canvas>
+                                    <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:4px;">
+                                        <small class="text-muted">After segmentation</small>
+                                        <canvas id="niivue-output-${idx}" style="display:block; width:100%; aspect-ratio:1/1;"></canvas>
                                     </div>
                                 </div>`;
+                            // to keep the center panel height in sync with niivues)
+                            const niivues = document.getElementById(`niivue-input-${idx}`);
+                            const panel  = document.getElementById(`info-panel-${idx}`);
+                            new ResizeObserver(() => {
+                                panel.style.maxHeight = niivues.offsetHeight + 'px';
+                            }).observe(niivues);
+
                             await window.initNiivue(`niivue-input-${idx}`, `/result/${result.input_name}`);
                             await window.initNiivue(`niivue-output-${idx}`, `/result/${result.name}`, 'eye-seg', 0, 9);
                         },
