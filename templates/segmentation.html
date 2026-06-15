@@ -278,12 +278,14 @@
                         async (result, idx, row) => {
                             row.innerHTML = `
                                 <div style="display:flex; width:100%; height:85vh; gap:8px;">
-                                    <div style="flex:0 0 20%; overflow-y:scroll; border-right:1px solid #dee2e6; padding-right:8px;">
-                                        ${renderMetadataTable(result.metadata)}
-                                    </div>
                                     <div style="flex:1;  display:flex; flex-direction:column; gap:4px;">
-                                        <small class="text-muted"> Before segmentation </small>
+                                        <small class="text-muted" > Before segmentation </small>
                                         <canvas id="niivue-input-${idx}" style="display:block; width:100%; height:100%; flex:1;"></canvas>
+                                    </div>
+                                    <div style="flex:0 0 20%; overflow-y:scroll; border-left:2px solid #33961d; border-right:2px solid #33961d; padding:0 8px;">
+                                        ${renderSegmentationLegend()}
+                                        <div style="margin-top:8px; font-size:0.78em; color:#212529;"><strong style="margin-bottom:5px;">Metadata</strong></div>
+                                        <div>${renderMetadataTable(result.metadata)}</div>
                                     </div>
                                     <div style="flex:1; display:flex; flex-direction:column; gap:4px;">
                                         <small class="text-muted"> After segmentation </small>
@@ -291,7 +293,7 @@
                                     </div>
                                 </div>`;
                             await window.initNiivue(`niivue-input-${idx}`, `/result/${result.input_name}`);
-                            await window.initNiivue(`niivue-output-${idx}`, `/result/${result.name}`,'actc', 0 ,8);
+                            await window.initNiivue(`niivue-output-${idx}`, `/result/${result.name}`, 'eye-seg', 0, 9);
                         },
                         (result, idx, row) => { row.innerHTML = ''; }
                     );
@@ -322,7 +324,6 @@
         }
     });
 
-
     /**
      * Make the extracted metadata table for display in file list
      */
@@ -342,6 +343,20 @@
             <thead class="table-dark"><tr><th>Field</th><th>Value</th></tr></thead>
             <tbody>${rows}</tbody>
         </table>`;
+    }
+
+    /*
+    *   To render the legends of ROI after sementation
+    */
+    function renderSegmentationLegend() {
+        const labels = window.EYE_LABELS || [];
+        const legends = labels.slice(1).map(({name, color}) =>
+            `<div style="display: flex; align-items: center; gap: 6px; padding: 2px 0;">
+                <span style="width: 12px; height: 12px; background: rgb(${color}); border: 1px solid #aaa; border-radius: 2px;"></span>
+                <span>${name}</span>
+            </div>`
+        ).join('');
+        return `<div style="font-size:0.78em; color:#212529;"><strong>Labels of segmentation</strong>${legends}</div>`;
     }
 
     /*
@@ -411,12 +426,61 @@
 </script>
 <script type="module">
     import { Niivue } from "https://unpkg.com/@niivue/niivue@0.69.0/dist/index.js";
+
+    window.EYE_LABELS = [
+        { name: 'background',             color: [0,  0,  0 ] },
+        { name: 'lens',                   color: [223, 227, 232] },
+        { name: 'globe',                  color: [94,  141, 242] },
+        { name: 'optic nerve',            color: [251, 196, 14 ] },
+        { name: 'intraconal fat',         color: [254, 153, 117] },
+        { name: 'extraconal fat',         color: [248, 114, 43 ] },
+        { name: 'lateral rectus muscle',  color: [204, 37,  45 ] },
+        { name: 'medial rectus muscle',   color: [35,  163, 48 ] },
+        { name: 'inferior rectus muscle', color: [42,  176, 184] },
+        { name: 'superior rectus muscle', color: [155, 46,  207] },
+    ];
+
+    /*
+    * To get the colormap based on the ROI classes
+    */
+    function buildEyeSegColormap() {
+        const n = 256;
+        const n_classes = window.EYE_LABELS.length;
+        const R = [];
+        const G = [];
+        const B = [];
+        const A = [];
+        
+        for (let i = 0; i < n; i++) {
+            // finding the index of class after normalization
+            const classe = Math.round(i / (n - 1) * (n_classes - 1));
+            const label = window.EYE_LABELS[classe];
+
+            R.push(label.color[0]);
+            G.push(label.color[1]);
+            B.push(label.color[2]);
+            
+            // Handling A (transparency)
+            if (classe === 0) {
+                A.push(0);
+            } else {
+                A.push(255);
+            }
+        }
+        return { R: R, G: G, B: B, A: A };
+    }
+
+
     window.initNiivue = async (canvasId, url, colorMap='gray', cal_min=null, cal_max=null) => {
         const nv = new Niivue({ isResizeCanvas: true });
         await nv.attachTo(canvasId);
-        const vol = { url, colorMap};
-        if (cal_min !==null) vol.cal_min = cal_min;
-        if (cal_max !==null) vol.cal_max = cal_max;
+        if (colorMap === 'eye-seg')
+            nv.addColormap('eye-seg', buildEyeSegColormap());
+        const vol = { url, colormap: colorMap };
+        if (cal_min !== null)
+            vol.cal_min = cal_min;
+        if (cal_max !== null) 
+            vol.cal_max = cal_max;
         await nv.loadVolumes([vol]);
     };
 </script>
