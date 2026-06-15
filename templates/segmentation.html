@@ -276,11 +276,17 @@
                                     <div style="flex:0 0 20%; overflow-y:scroll; border-right:1px solid #dee2e6; padding-right:8px;">
                                         ${renderMetadataTable(result.metadata)}
                                     </div>
-                                    <div style="flex:1;">
-                                        <canvas id="niivue-canvas-${idx}" style="display:block; width:100%; height:100%;"></canvas>
+                                    <div style="flex:1;  display:flex; flex-direction:column; gap:4px;">
+                                        <small class="text-muted"> Before segmentation </small>
+                                        <canvas id="niivue-input-${idx}" style="display:block; width:100%; height:100%; flex:1;"></canvas>
+                                    </div>
+                                    <div style="flex:1; display:flex; flex-direction:column; gap:4px;">
+                                        <small class="text-muted"> After segmentation </small>
+                                        <canvas id="niivue-output-${idx}" style="display:block; width:100%; height:100%; flex:1;"></canvas>
                                     </div>
                                 </div>`;
-                            await window.initNiivue(`niivue-canvas-${idx}`, `/result/${result.name}`);
+                            await window.initNiivue(`niivue-input-${idx}`, `/result/${result.input_name}`);
+                            await window.initNiivue(`niivue-output-${idx}`, `/result/${result.name}`,'actc', 0 ,8);
                         },
                         (result, idx, row) => { row.innerHTML = ''; }
                     );
@@ -400,10 +406,13 @@
 </script>
 <script type="module">
     import { Niivue } from "https://unpkg.com/@niivue/niivue@0.69.0/dist/index.js";
-    window.initNiivue = async (canvasId, url) => {
+    window.initNiivue = async (canvasId, url, colorMap='gray', cal_min=null, cal_max=null) => {
         const nv = new Niivue({ isResizeCanvas: true });
         await nv.attachTo(canvasId);
-        await nv.loadVolumes([{ url }]);
+        const vol = { url, colorMap};
+        if (cal_min !==null) vol.cal_min = cal_min;
+        if (cal_max !==null) vol.cal_max = cal_max;
+        await nv.loadVolumes([vol]);
     };
 </script>
 {% endblock %}
