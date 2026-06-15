@@ -41,7 +41,7 @@
         <div class="col-md-3">
             <form id="download-form" method="get" action="/download">
                 <button type="button" id="download-button" class="btn btn-secondary btn-lg btn-block" disabled>
-                    <i class="fas fa-download"></i> Download
+                    <i class="fas fa-download"></i> Download results
                 </button>
             </form>
         </div>
@@ -70,6 +70,11 @@
     <!-- segmentation results -->
     <div class="row" id="segmentation-result-section" style="display:none; margin-top: 30px;">
         <div class="col-md-12">
+            <div class="text-center mb-3">
+                <button type="button" class="btn btn-outline-secondary btn-lg px-5" onclick="window.location.reload()">
+                    <i class="fas fa-redo me-2"></i> New segmentation
+                </button>
+            </div>
             <ul id="result-file-list" class="list-group"></ul>
         </div>
     </div>
