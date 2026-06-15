@@ -1,5 +1,6 @@
 import os
 import secrets
+import shutil
 import subprocess
 import threading
 from datetime import datetime
@@ -359,14 +360,16 @@ def segment() -> tuple[Response, int]:
         clean_folders(user_email)
 
     # 4. add result file and metadata
-    result : list = []
+    result: list = []
 
     for file_name in sorted(os.listdir(paths.download)):
         if file_name.endswith('.nii.gz'):
+            input_name = file_name.replace('.nii.gz', '_0000.nii.gz')
+            shutil.copy2(paths.aux_input/ input_name, paths.download /input_name)
             result.append({
                 'name': file_name,
-                'metadata': extract_nifti_metadata(str(paths.download/file_name)),
-                'input_name': file_name.replace('.nii.gz', '_0000.nii.gz'),
+                'metadata': extract_nifti_metadata(str(paths.download / file_name)),
+                'input_name': input_name,
             })
 
     return jsonify({"message": "Segmentation completed",
