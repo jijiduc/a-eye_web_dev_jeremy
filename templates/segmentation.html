@@ -16,11 +16,11 @@
     <!-- buttons -->
     <div class="row text-center" style="margin-top: 30px;">
         <div class="col-md-3">
-            <form id="choose-file-form">
+            <form id="select-file-form">
                 <input type="file" id="file-input" style="display: none;" multiple onchange="onSelectionFilter()">
-                <button type="button" class="btn btn-success btn-lg btn-block" id="choose-file-button"
+                <button type="button" class="btn btn-success btn-lg btn-block" id="select-file-button"
                     onclick="document.getElementById('file-input').click();">
-                    <i class="fas fa-mouse-pointer"></i> Choose file(s)
+                    <i class="fas fa-mouse-pointer"></i> Select file(s)
                 </button>
             </form>
         </div>
@@ -48,13 +48,14 @@
             </form>
         </div>
     </div>
+
     <!-- rejection notice -->
     <div class="row text-center" style="margin-top: 30px;">
         <div class="col-md-12">
-            <div id="rejection-tooltip" class="text-danger fw-bold mb-2" style="display:none;">
-            </div>
             <h5 id="selected-files-title" class="text-center mb-3" style="display:none;">selected file(s)</h5>
             <ul id="file-list" class="list-group"></ul>
+            <div id="rejection-tooltip" class="text-danger fw-bold mt-2" style="display:none;">
+            </div>
         </div>
     </div>
 
@@ -82,6 +83,7 @@
 </div>
 
 
+<script src="/static/js/archive.js"></script>
 <script src="/static/js/file-list-ui.js"></script>
 <script src="/static/js/segmentation-pipeline.js"></script>
 <script type="module">

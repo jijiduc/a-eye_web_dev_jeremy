@@ -1,11 +1,15 @@
 let selection = [];
+let selectionCaseInfoMap = new Map();
 let segmentationResult = [];
 const allowedExtensions = ['gz', 'zip', '7z', 'nii'];
+const MAX_CASES = 5;
 
-// ensure no duplicate and correct file extension in the selection
-function onSelectionFilter() {
+// ensure no duplicate, correct file extension, and case limit in the selection
+async function onSelectionFilter() {
     let selectedFiles = document.getElementById('file-input').files;
-    let unallowedFiles = [];
+    let rejectedFileNames = [];
+    let rejectedReasons = [];
+    let newFiles = [];
 
     for (let i = 0; i < selectedFiles.length; i++) {
         let file = selectedFiles[i];
@@ -17,40 +21,63 @@ function onSelectionFilter() {
         if (!duplicate) {
             let extension = file.name.split('.').pop().toLowerCase();
             if (allowedExtensions.includes(extension)) {
-                selection.push(file);
+                newFiles.push(file);
             } else {
-                unallowedFiles.push(file.name);
+                rejectedFileNames.push(file.name);
+                rejectedReasons.push('unsupported file format (allowed: .nii, .nii.gz, .zip, .7z)');
             }
         }
     }
 
-    if (unallowedFiles.length > 0) {
-        onRejectionNotice(unallowedFiles);
+    // Checking selected cases informations to restrict if needed
+    let maxCases = currentCaseCount();
+    for (let i = 0; i < newFiles.length; i++) {
+        let file = newFiles[i];
+        let info = await getCaseInfo(file);
+
+        if (maxCases + info.count > MAX_CASES) {
+            rejectedFileNames.push(file.name);
+            rejectedReasons.push('would exceed the ' + MAX_CASES + ' cases limit');
+        } else {
+            selection.push(file);
+            selectionCaseInfoMap.set(file, info);
+            maxCases += info.count;
+        }
+    }
+    // display the notice if needed
+    if (rejectedFileNames.length > 0) {
+        onRejectionNotice(rejectedFileNames, rejectedReasons);
     }
 
     renderFileList();
 }
 
+function currentCaseCount() {
+    let total = 0;
+    selectionCaseInfoMap.forEach(
+        info => { total += info.count; }
+    );
+    return total;
+}
+
 // Display a notice in case of selection's rejection
-function onRejectionNotice(fileNames) {
+function onRejectionNotice(names, reasons) {
     let notice = document.getElementById('rejection-tooltip');
     notice.innerHTML = '';
 
-    fileNames.forEach(name => {
-        let errorMessage = document.createElement('div');
-        errorMessage.textContent = name + ' has been rejected: unsupported file format (only allowing: .nii, .nii.gz, .zip, .7z)';
-        notice.appendChild(errorMessage);
-    });
+    for (let i = 0; i < names.length; i++) {
+        let msg = document.createElement('div');
+        msg.textContent = names[i] + ' has been rejected: ' + reasons[i];
+        notice.appendChild(msg);
+    }
 
     notice.style.display = 'block';
     clearTimeout(window._rejectionTimer);
-
-    window._rejectionTimer = setTimeout(function () {
-        notice.style.display = 'none';
-    }, 4000);
+    window._rejectionTimer = setTimeout(function () { notice.style.display = 'none'; }, 6000);
 }
 
 function unselectFile(index) {
+    selectionCaseInfoMap.delete(selection[index]);
     selection.splice(index, 1);
     renderFileList();
 }
@@ -60,9 +87,10 @@ function renderFileList() {
     let title = document.getElementById('selected-files-title');
 
     if (selection.length > 0) {
+        const cases = currentCaseCount();
         title.style.display = 'block';
-        title.textContent = selection.length + ' selected file(s)';
-        buildFileList(fileList, selection, unselectFile);
+        title.textContent = `${selection.length} file${selection.length > 1 ? 's' : ''} — ${cases} / ${MAX_CASES} cases`;
+        buildFileList(fileList, selection, unselectFile, '', null, null, selectionCaseInfoMap);
     } else {
         title.style.display = 'none';
         fileList.innerHTML = '';
@@ -95,7 +123,7 @@ function uploadFiles() {
         document.getElementById(id).style.display = 'none';
     });
 
-    ['upload-button', 'choose-file-button'].forEach(id => {
+    ['upload-button', 'select-file-button'].forEach(id => {
         const btn = document.getElementById(id);
         btn.disabled = true;
         btn.classList.remove('btn-success');
@@ -103,7 +131,7 @@ function uploadFiles() {
     });
 
     const uploadFileList = document.getElementById('display-file-list');
-    buildFileList(uploadFileList, selection);
+    buildFileList(uploadFileList, selection, null, '', null, null, selectionCaseInfoMap);
 
     document.getElementById('status-section').style.display = 'block';
 
@@ -124,7 +152,8 @@ function uploadFiles() {
             if (data.status === 'success') {
                 bar.textContent = 'Upload complete';
                 buildFileList(uploadFileList, selection, null, 'view metadata',
-                    (file, idx, row) => { row.innerHTML = renderMetadataTable(data.metadata?.[file.name]); });
+                    (file, idx, row) => { row.innerHTML = renderMetadataTable(data.metadata?.[file.name]); },
+                    null, selectionCaseInfoMap);
                 alert(data.message);
 
                 const segmentButton = document.getElementById('segment-button');
@@ -207,7 +236,7 @@ function segmentFiles() {
                             </div>`;
                         // to keep the center panel height in sync with niivues
                         const niivues = document.getElementById(`niivue-input-${idx}`);
-                        const panel  = document.getElementById(`info-panel-${idx}`);
+                        const panel = document.getElementById(`info-panel-${idx}`);
                         new ResizeObserver(() => {
                             panel.style.maxHeight = niivues.offsetHeight + 'px';
                         }).observe(niivues);
