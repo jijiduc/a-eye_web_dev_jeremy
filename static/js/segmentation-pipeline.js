@@ -1,7 +1,6 @@
 let selection = [];
 let selectionCaseInfoMap = new Map();
 let segmentationResult = [];
-const allowedExtensions = ['gz', 'zip', '7z', 'nii'];
 const MAX_CASES = 5;
 
 // ensure no duplicate, correct file extension, and case limit in the selection
@@ -19,8 +18,12 @@ async function onSelectionFilter() {
             existing.lastModified === file.lastModified
         );
         if (!duplicate) {
-            let extension = file.name.split('.').pop().toLowerCase();
-            if (allowedExtensions.includes(extension)) {
+            const nameLower = file.name.toLowerCase();
+            const isValidExtension = nameLower.endsWith('.nii') ||
+                                     nameLower.endsWith('.nii.gz') ||
+                                     nameLower.endsWith('.zip') ||
+                                     nameLower.endsWith('.7z');
+            if (isValidExtension) {
                 newFiles.push(file);
             } else {
                 rejectedFileNames.push(file.name);
