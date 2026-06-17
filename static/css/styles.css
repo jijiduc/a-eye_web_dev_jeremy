@@ -382,6 +382,16 @@ a:hover {
     transition: background-color 0.2s ease;
 }
 
+.fl-case-label {
+    padding-left: 2.5rem !important;
+    font-size: 0.875em;
+    background-color: #f0f4f8 !important;
+}
+
+[data-theme="dark"] .fl-case-label {
+    background-color: #333d44 !important;
+}
+
 .progress {
     width: 100%;
     background-color: var(--progress-bg);

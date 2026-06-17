@@ -22,7 +22,7 @@ function renderMetadataTable(fields) {
 */
 function renderSegmentationLegend() {
     const labels = window.EYE_LABELS || [];
-    const legends = labels.slice(1).map(({name, color}) =>
+    const legends = labels.slice(1).map(({ name, color }) =>
         `<div style="display: flex; align-items: center; gap: 6px; padding: 2px 0;">
             <span style="width: 12px; height: 12px; background: rgb(${color}); border: 1px solid #aaa; border-radius: 2px;"></span>
             <span>${name}</span>
@@ -31,11 +31,21 @@ function renderSegmentationLegend() {
     return `<div style="font-size:0.78em; color:#212529;"><strong>Labels of segmentation</strong>${legends}</div>`;
 }
 
+// Appends sub-rows for each cases in selected file
+function addLabelRow(ulElement, labels) {
+    labels.forEach(label => {
+        const row = document.createElement('li');
+        row.className = 'list-group-item fl-case-label';
+        row.textContent = label;
+        ulElement.appendChild(row);
+    });
+}
+
 /*
 *   To build the different lists of files displayed,
 *   with optional remove button / metadata dropdown
 */
-function buildFileList(ulElement, files, onRemove = null, dropdownLabel = '', onOpen = null, onClose = null) {
+function buildFileList(ulElement, files, onRemove = null, dropdownLabel = '', onOpen = null, onClose = null, caseInfoMap = null) {
     ulElement.innerHTML = '';
     const header = document.createElement('li');
     header.className = 'list-group-item d-flex justify-content-between align-items-center';
@@ -44,7 +54,7 @@ function buildFileList(ulElement, files, onRemove = null, dropdownLabel = '', on
 
     const headerFilename = document.createElement('span');
     headerFilename.style.fontWeight = 'bold';
-    headerFilename.textContent = 'filename';
+    headerFilename.textContent = 'Selected files/cases';
     header.appendChild(headerFilename);
 
     ulElement.appendChild(header);
@@ -91,6 +101,11 @@ function buildFileList(ulElement, files, onRemove = null, dropdownLabel = '', on
             };
         } else {
             ulElement.appendChild(fileRow);
+        }
+
+        const info = caseInfoMap?.get(file);
+        if (info?.labels) {
+            addLabelRow(ulElement, info.labels);
         }
     });
 }
