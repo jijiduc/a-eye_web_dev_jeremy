@@ -134,10 +134,15 @@ dmypy.json
 # Others
 # Ignore everything under static/ except the images directory and its contents
 static/*
+!static/js/
 !static/images/
 !static/images/**
 !static/css/
 !static/css/**
+
+
+
+
 nnUNet/
 nnUNetv2/
 *.err
