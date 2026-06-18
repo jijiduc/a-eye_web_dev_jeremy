@@ -1,10 +1,12 @@
 # Segmentation results display
 
-**Goal :** is to add in the file display table, a display of the results
+In the platform, after the nnUNet inference completes, results are `.nii.gz` files stored in the user's output folder alongside logs and pipeline artefacts.
+
+**Goal** is to display the segmentation results directly in the browser — NIfTI viewer side-by-side (input / output), ROI legend and NIfTI header metadata per case.
 
 ## Results of segmentation
 
-After the segmententation inference of the nnUNet model, the output folder (named `output_<user>_<timestamp>/`) contains :
+After the segmentation inference of the nnUNet model, the output folder (named `output_<user>_<timestamp>/`) contains :
 
 - `<case_id>.nii.gz`
     - The result of inference
@@ -14,17 +16,16 @@ After the segmententation inference of the nnUNet model, the output folder (name
 
     | Key | Description |
     |---|---|
-    | `dc_per_class_raw` | unknown yet  |
-    | `dc_per_class_pp_all` | unknown yet  |
-    | `dc_per_class_pp_per_class` | unknown yet  |
-
-     Here, this score means `unknown yet`
+    | `dc_per_class_raw` | unknown yet |
+    | `dc_per_class_pp_all` | unknown yet |
+    | `dc_per_class_pp_per_class` | unknown yet |
 
 - `prediction_time.txt`
     - Total inference time in seconds
 
 - `plans.pkl`
     - Binary pickle file containing the nnUNet planning informations
+
 - `logs/`
     - Subfolder with four log files:
 
@@ -37,8 +38,31 @@ After the segmententation inference of the nnUNet model, the output folder (name
 
 ---
 
-## Plan
+## Changes made
 
-- **Frontend** :
-    - Use same dropdown mechanic as for the metada to display result on click
-    - Integrate a 2d viewer (like the NiiVue extension of vscode) with metadata in a side, scrollable block
+### Before reviews from supervisors
+
+- After `segmentation button` is pressed:
+    - **Backend**
+        - Add a new `/result/<filename>` route to serve output NIfTI files to the browser
+        - Add a `result` list in the response (`name`, `input_name`, `metadata`) in `/segment` route.
+    - **Frontend**
+        - Update Bootstrap to version 5
+        - Add NiiViewer visualisation of output/input after segmentation
+        - Add metadata in the segmentation results
+        - Add legends based on ROI classes in results display
+        - Add a new button to begin segmentation pipeline again
+
+### After reviews from supervisors
+
+- **Backend**
+    - Refactor `segmentation.html` by chunking javascript into `.js` files
+    - Add a case count limit of 5 across all selected files
+    - Add a javascript worker to unzip archives at file selection (to count them)
+    - Update metadata extraction pipeline to work with multiples at once (in case of file)
+- **Frontend**
+    - Show selected files and case count at file selection time
+    - Refine file extensions check
+    - Display separate metadata for each case in an uploaded file
+    - Add popup warning message before segmentation
+    - Enforce Bootstrap v5 CDN reference in base template
