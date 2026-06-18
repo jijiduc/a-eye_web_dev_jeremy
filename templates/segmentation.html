@@ -69,7 +69,7 @@
             <ul id="display-file-list" class="list-group"></ul>
         </div>
     </div>
-    
+
 </div>
 
 <!-- segmentation results -->
@@ -82,24 +82,39 @@
     <ul id="result-file-list" class="list-group"></ul>
 </div>
 
+<!-- modal -->
+<div id="segmentation-popup-notice" class="modal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Attention !!</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Please, do not close this windows during segementation in processing, else results will be lost !</p>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 <script src="/static/js/archive.js"></script>
 <script src="/static/js/file-list-ui.js"></script>
 <script src="/static/js/segmentation-pipeline.js"></script>
 <script type="module">
     import { Niivue } from "https://unpkg.com/@niivue/niivue@0.69.0/dist/index.js";
-
+    // based on the A-eye paper colors of visualization
     window.EYE_LABELS = [
-        { name: 'background',             color: [0,  0,  0 ] },
-        { name: 'lens',                   color: [223, 227, 232] },
-        { name: 'globe',                  color: [94,  141, 242] },
-        { name: 'optic nerve',            color: [251, 196, 14 ] },
-        { name: 'intraconal fat',         color: [254, 153, 117] },
-        { name: 'extraconal fat',         color: [248, 114, 43 ] },
-        { name: 'lateral rectus muscle',  color: [204, 37,  45 ] },
-        { name: 'medial rectus muscle',   color: [35,  163, 48 ] },
-        { name: 'inferior rectus muscle', color: [42,  176, 184] },
-        { name: 'superior rectus muscle', color: [155, 46,  207] },
+        { name: 'background', color: [0, 0, 0] },
+        { name: 'lens', color: [191, 77, 74] },
+        { name: 'globe', color: [48, 145, 11] },
+        { name: 'optic nerve', color: [23, 0, 197] },
+        { name: 'intraconal fat', color: [225, 227, 97] },
+        { name: 'extraconal fat', color: [81, 212, 240] },
+        { name: 'lateral rectus muscle', color: [142, 21, 145] },
+        { name: 'medial rectus muscle', color: [255, 255, 240] },
+        { name: 'inferior rectus muscle', color: [0, 0, 255] },
+        { name: 'superior rectus muscle', color: [150, 75, 0] },
     ];
 
     /*
@@ -112,7 +127,7 @@
         const G = [];
         const B = [];
         const A = [];
-        
+
         for (let i = 0; i < n; i++) {
             // finding the index of class after normalization
             const classe = Math.round(i / (n - 1) * (n_classes - 1));
@@ -121,7 +136,7 @@
             R.push(label.color[0]);
             G.push(label.color[1]);
             B.push(label.color[2]);
-            
+
             // Handling A (transparency)
             if (classe === 0) {
                 A.push(0);
@@ -133,7 +148,7 @@
     }
 
 
-    window.initNiivue = async (canvasId, url, colorMap='gray', cal_min=null, cal_max=null) => {
+    window.initNiivue = async (canvasId, url, colorMap = 'gray', cal_min = null, cal_max = null) => {
         const nv = new Niivue({ isResizeCanvas: true });
         await nv.attachTo(canvasId);
         if (colorMap === 'eye-seg')
@@ -141,7 +156,7 @@
         const vol = { url, colormap: colorMap };
         if (cal_min !== null)
             vol.cal_min = cal_min;
-        if (cal_max !== null) 
+        if (cal_max !== null)
             vol.cal_max = cal_max;
         await nv.loadVolumes([vol]);
     };
