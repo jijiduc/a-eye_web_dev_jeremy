@@ -40,16 +40,16 @@ async function getCaseInfo(file) {
 
         // Prepare labels for the different cases
         for (let path of paths) {
-            path = path.toLowerCase();
+            const pathLower = path.toLowerCase();
 
-            if (path.endsWith('.nii') || path.endsWith('.nii.gz')) {
-                labels.push(path.endsWith('.gz') ? path.slice(0, -3) : path);
-            } else if (path.endsWith('.dcm')) {
+            if (pathLower.endsWith('.nii') || pathLower.endsWith('.nii.gz')) {
+                labels.push(pathLower.endsWith('.gz') ? path.slice(0, -3) : path);
+            } else if (pathLower.endsWith('.dcm')) {
                 let dossier = path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '';
 
                 if (!visitedDicom.has(dossier)) {
                     visitedDicom.add(dossier);
-                    labels.push(dossier ? `${dossier}/<DICOM series>` : 'DICOM series');
+                    labels.push(dossier ? `${dossier}/<DICOM series>` : '<DICOM series>');
                 }
             }
         }

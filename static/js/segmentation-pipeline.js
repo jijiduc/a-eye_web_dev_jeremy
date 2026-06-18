@@ -20,9 +20,9 @@ async function onSelectionFilter() {
         if (!duplicate) {
             const nameLower = file.name.toLowerCase();
             const isValidExtension = nameLower.endsWith('.nii') ||
-                                     nameLower.endsWith('.nii.gz') ||
-                                     nameLower.endsWith('.zip') ||
-                                     nameLower.endsWith('.7z');
+                nameLower.endsWith('.nii.gz') ||
+                nameLower.endsWith('.zip') ||
+                nameLower.endsWith('.7z');
             if (isValidExtension) {
                 newFiles.push(file);
             } else {
@@ -154,9 +154,22 @@ function uploadFiles() {
 
             if (data.status === 'success') {
                 bar.textContent = 'Upload complete';
-                buildFileList(uploadFileList, selection, null, 'view metadata',
-                    (file, idx, row) => { row.innerHTML = renderMetadataTable(data.metadata?.[file.name]); },
-                    null, selectionCaseInfoMap);
+                const caseList = [];
+
+                selection.forEach(file => {
+                    const info = selectionCaseInfoMap.get(file);
+                    const fileMetadata = data.metadata?.[file.name] || {};
+                    if (info?.labels) {
+                        info.labels.forEach(label => {
+                            caseList.push({ name: label, metadata: fileMetadata[label] || {} });
+                        });
+                    } else {
+                        caseList.push({ name: file.name, metadata: fileMetadata[file.name] || {} });
+                    }
+                });
+                buildFileList(uploadFileList, caseList, null, 'view metadata',
+                    (caseItem, idx, row) => { row.innerHTML = renderMetadataTable(caseItem.metadata); },
+                    null, null);
                 alert(data.message);
 
                 const segmentButton = document.getElementById('segment-button');
