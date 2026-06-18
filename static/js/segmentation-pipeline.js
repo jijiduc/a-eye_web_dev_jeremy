@@ -210,10 +210,14 @@ function segmentFiles() {
     bar.classList.remove('bg-success', 'bg-danger');
     bar.classList.add('bg-primary');
     bar.textContent = 'segmentation in progress...';
+    
+    const popup = new bootstrap.Modal(document.getElementById('segmentation-popup-notice'));
+    popup.show();
 
     fetch('/segment', { method: 'POST' })
         .then(response => response.json())
         .then(data => {
+            popup.hide();
             bar.classList.remove('progress-bar-animated', 'progress-bar-striped');
 
             if (data.download_url) {
@@ -268,6 +272,7 @@ function segmentFiles() {
             }
         })
         .catch(error => {
+            popup.hide();
             bar.classList.remove('progress-bar-animated', 'progress-bar-striped');
             bar.classList.remove('bg-primary');
             bar.classList.add('bg-danger');
