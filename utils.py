@@ -3,7 +3,6 @@ import glob
 import gzip
 import json
 import os
-from os import path
 import re
 import shutil
 import stat
@@ -12,6 +11,7 @@ import tempfile
 import zipfile
 from datetime import datetime
 from functools import wraps
+from os import path
 from pathlib import Path
 from string import Template
 from zoneinfo import ZoneInfo
@@ -37,7 +37,9 @@ from config import (
 from models import UserPaths
 
 
-def _header_to_dict(header: nibabel.nifti1.Nifti1Header) -> dict[str, list[float | int] | float | int | str | None]:
+def _header_to_dict(
+    header: nibabel.nifti1.Nifti1Header,
+) -> dict[str, list[float | int] | float | int | str | None]:
     """Serialize the extracted C structure (Nibabel)
        into a dict for the JSON message for frontend display
 
@@ -68,62 +70,100 @@ def _header_to_dict(header: nibabel.nifti1.Nifti1Header) -> dict[str, list[float
     return result
 
 
-def extract_nifti_metadata(file_path: str) -> dict:
-    """Extract the metadata from nifti file
+def extract_nifti_metadata(file_path: str) -> dict[str, dict]:
+    """Extract metadata from a NIfTI file or archive
 
     Args:
         file_path (str): path of the file to extract from
 
     Returns:
-        dict: JSON-serializable dict containing :
-                - on success : metadata fields (as key) with coresponding values
+        dict[str, dict]: case label, case header
+                - on success : one entry per NIfTI file or DICOM series
                 - on failure : empty dictionnary
     """
-    extension: str = "".join(Path(file_path).suffixes).lower()
+    path = Path(file_path)
+    extension = "".join(path.suffixes).lower()
 
-    # transform header to usable dict
-    if extension.endswith(".nii") or extension.endswith(".nii.gz"):
+    # handling single NIfTI file - no extraction nor conversion
+    if extension in (".nii", ".nii.gz"):
         try:
-            return _header_to_dict(nibabel.load(file_path).header)
+            # Clean .gz extension natively using pathlib
+            if path.suffix == ".gz":
+                label = path.with_suffix("").name
+            else:
+                label = path.name
+            return {label: _header_to_dict(nibabel.load(path).header)}
         except Exception:
             print_and_log(
-                f"[A-eye] Error in direct metadata extraction for {extension}...",
+                f"[A-eye] Error in single NIfTI extraction for {path.name}...",
                 "error",
                 LOGS_FOLDER,
             )
             return {}
 
+    # Handle archives - need extraction and conversion (if DICOM series)
     if extension in (".zip", ".7z"):
-        # extraction from the archive
+        results: dict[str, dict] = {}
+
         with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_path = Path(tmp_dir)
+
+            # extraction
             if extension == ".zip":
-                with zipfile.ZipFile(file_path, "r") as zip_file:
-                    zip_file.extractall(tmp_dir)
+                with zipfile.ZipFile(path, "r") as zip_file:
+                    zip_file.extractall(tmp_path)
             else:
-                with py7zr.SevenZipFile(file_path, mode="r") as zip_file:
-                    zip_file.extractall(path=tmp_dir)
+                with py7zr.SevenZipFile(path, mode="r") as zip_file:
+                    zip_file.extractall(path=tmp_path)
 
-            # if .dcm file, convert to nifti
-            dicom: Path | None = next(Path(tmp_dir).rglob("*.dcm"), None)
-            if dicom:
-                dicom2nifti.dicom_series_to_nifti(
-                    str(dicom.parent),
-                    str(Path(tmp_dir) / "converted.nii.gz"),
-                    reorient_nifti=True,
-                )
+            converted_dir = tmp_path / "_converted_dcm"
+            converted_dir.mkdir(exist_ok=True)
 
-            # transform header to usable dict
-            for f in Path(tmp_dir).rglob("*"):
-                if f.name.endswith(".nii") or f.name.endswith(".nii.gz"):
-                    try:
-                        return _header_to_dict(nibabel.load(f).header)
-                    except Exception:
-                        print_and_log(
-                            f"[A-eye] Error in direct metadata extraction for {extension}...",
-                            "error",
-                            LOGS_FOLDER,
-                        )
-                        return {}
+            # DICOM folders
+            dicom_folders = {dcm.parent for dcm in tmp_path.rglob("*.dcm")}
+            for folder in dicom_folders:
+                rel_path = folder.relative_to(tmp_path)
+                if rel_path == Path("."):
+                    label = "<DICOM series>"
+                    out_name = "_root"
+                else:
+                    label = f"{rel_path}/<DICOM series>"
+                    out_name = str(rel_path).replace("/", "_")
+                out_file = converted_dir / f"{out_name}.nii"
+                try:
+                    dicom2nifti.dicom_series_to_nifti(
+                        str(folder), str(out_file), reorient_nifti=True
+                    )
+                    results[label] = _header_to_dict(nibabel.load(out_file).header)
+                except Exception:
+                    print_and_log(
+                        f"[A-eye] Error in DICOM processing in {folder.name}...",
+                        "error",
+                        LOGS_FOLDER,
+                    )
+
+            # for NIfTI files
+            for nifti_file in (*tmp_path.rglob("*.nii"), *tmp_path.rglob("*.nii.gz")):
+                if converted_dir in nifti_file.parents:
+                    continue
+                try:
+                    if nifti_file.suffix == ".gz":
+                        clean_file = nifti_file.with_suffix("")
+                    else:
+                        clean_file = nifti_file
+
+                    label = str(clean_file.relative_to(tmp_path))
+                    results[label] = _header_to_dict(nibabel.load(nifti_file).header)
+
+                except Exception:
+                    print_and_log(
+                        f"[A-eye] Error in NIfTI in folder extraction for {nifti_file.name}...",
+                        "error",
+                        LOGS_FOLDER,
+                    )
+
+        return results
+
     return {}
 
 

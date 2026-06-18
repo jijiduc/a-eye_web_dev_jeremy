@@ -362,15 +362,22 @@ def segment() -> tuple[Response, int]:
     # 4. add result file and metadata
     result: list = []
 
-    for file_name in sorted(os.listdir(paths.download)):
-        if file_name.endswith('.nii.gz'):
-            input_name = file_name.replace('.nii.gz', '_0000.nii.gz')
-            shutil.copy2(paths.aux_input/ input_name, paths.download /input_name)
-            result.append({
-                'name': file_name,
-                'metadata': extract_nifti_metadata(str(paths.download / file_name)),
-                'input_name': input_name,
-            })
+    try:
+        for file_name in sorted(os.listdir(paths.download)):
+            if file_name.endswith('.nii.gz'):
+                input_name = file_name.replace('.nii.gz', '_0000.nii.gz')
+                shutil.copy2(paths.aux_input / input_name, paths.download / input_name)
+                result.append({
+                    'name': file_name,
+                    'metadata': next(iter(extract_nifti_metadata(str(paths.download / file_name)).values()), {}),
+                    'input_name': input_name,
+                })
+    except FileNotFoundError as error:
+        current_app.logger.exception("Missing input file while collecting segmentation results")
+        return jsonify({"message": f"Segmentation completed but an input file was missing: {error}"}), 500
+    except Exception as error:
+        current_app.logger.exception("Error collecting segmentation results")
+        return jsonify({"message": f"Segmentation completed but results could not be collected: {error}"}), 500
 
     return jsonify({"message": "Segmentation completed",
                      "download_url": "/download",
