@@ -7,6 +7,7 @@ from datetime import datetime
 from pathlib import Path
 from urllib.parse import quote_plus, urlencode
 
+import nibabel as nib
 import pandas as pd
 import plotly.express as px
 from authlib.integrations.base_client.errors import MismatchingStateError, OAuthError
@@ -29,12 +30,15 @@ from app import oauth
 from config import LOGS_FOLDER
 from main import getSegmentation
 from models import UserPaths
+from module.quadrant import crop_quadrant, merge_quadrants, uncrop_quadrant
 from utils import (
     Message,
     allowed_file,
     cancel_slurm_job,
+    clean_folder_hpc,
     clean_folders,
     convert_country_to_iso3,
+    copy_folder_to_hpc,
     copy_segmentation_data,
     extract_nifti_metadata,
     get_cases_processed,
@@ -316,6 +320,27 @@ def segment() -> tuple[Response, int]:
         paths.active_job_file.parent.mkdir(parents=True, exist_ok=True)
         paths.active_job_file.write_text(job_id)
 
+    # keeping the original dimension of the file
+    original_shapes: dict[str, tuple] = {}
+
+    for original_file in paths.aux_input.glob("*_0000.nii.gz"):
+        case_name = original_file.name.replace("_0000.nii.gz", "")
+        original_shapes[case_name] = nib.load(original_file).shape
+        # copy original file for overlay visualization of results
+        shutil.copy2(original_file, paths.download / original_file.name)
+
+        left_cropped_img = crop_quadrant(original_file, left_side=True)
+        right_cropped_img = crop_quadrant(original_file, left_side=False)
+        # back to HPC as cropped version
+        nib.save(left_cropped_img,  paths.aux_input / f"{case_name}_left_0000.nii.gz")
+        nib.save(right_cropped_img, paths.aux_input / f"{case_name}_right_0000.nii.gz")
+
+        original_file.unlink()
+    # to clean it from the original
+    clean_folder_hpc(paths.hpc_input)
+    # to add it the cropped versions
+    copy_folder_to_hpc(str(paths.aux_input), paths.hpc_base_input)
+
     try:
         getSegmentation(user_email, paths, ongoing_job_id=store_job_id)
     except Exception as error:
@@ -329,49 +354,54 @@ def segment() -> tuple[Response, int]:
 
     paths.active_job_file.unlink(missing_ok=True)
 
-    has_output = (
-        paths.download.exists() and
-        any(fname.endswith(".nii.gz") for fname in os.listdir(paths.download))
-    )
+    for case_name, original_shape in original_shapes.items():
+        left_segmented  = nib.load(paths.download / f"{case_name}_left.nii.gz")
+        right_segmented = nib.load(paths.download / f"{case_name}_right.nii.gz")
 
-    if has_output:
-        print_and_log("[A-eye] Copying segm. data to Filer01...",
-                       'info', LOGS_FOLDER)
-        sync_logs_to_output(paths.download)
+         # for test only -
+        shutil.copy2(paths.download / f"{case_name}_left.nii.gz", paths.download / f"{case_name}_left_cropped.nii.gz")
+        shutil.copy2(paths.download / f"{case_name}_right.nii.gz", paths.download / f"{case_name}_right_cropped.nii.gz")
+
+        left_uncropped  = uncrop_quadrant(left_segmented, original_shape, left_side=True)
+        right_uncropped = uncrop_quadrant(right_segmented, original_shape, left_side=False)
+
+        nib.save(left_uncropped,  paths.download / f"{case_name}_left.nii.gz")
+        nib.save(right_uncropped, paths.download / f"{case_name}_right.nii.gz")
+
+        merged = merge_quadrants(left_uncropped, right_uncropped)
+        nib.save(merged, paths.download / f"{case_name}_both.nii.gz")
+
+    print_and_log("[A-eye] Segmentation done - preparing results for download...", 'info', LOGS_FOLDER)
+    sync_logs_to_output(paths.download)
 
     # 2. Zip folder for download
     zip_folder(paths.download, paths.output_zip)
-        
-    # 3. Start background thread to copy files (only if output exists)
-    
-    if has_output:
-        increment_cases_processed()
-        # send_email(user_email, "A-eye segmentation task completed successfully. You can download the results.")
-        threading.Thread(
-            target=copy_segmentation_data,
-            args=(user_email, paths.aux_input, paths.download)
-        ).start()
-    else:
-        # send_email(user_email, "A-eye segmentation task failed. Check the logs for details.")
-        print_and_log("[A-eye] Segmentation failed or no .nii.gz output found" +
-                      "Data not copied!",
-                       'error', LOGS_FOLDER)
-        sync_logs_to_output(paths.download)
-        clean_folders(user_email)
+
+    # 3. Start background thread to copy files
+    increment_cases_processed()
+    # send_email(user_email, "A-eye segmentation task completed successfully. You can download the results.")
+    threading.Thread(
+        target=copy_segmentation_data,
+        args=(user_email, paths.aux_input, paths.download)
+    ).start()
 
     # 4. add result file and metadata
     result: list = []
-
     try:
-        for file_name in sorted(os.listdir(paths.download)):
-            if file_name.endswith('.nii.gz'):
-                input_name = file_name.replace('.nii.gz', '_0000.nii.gz')
-                shutil.copy2(paths.aux_input / input_name, paths.download / input_name)
-                result.append({
-                    'name': file_name,
-                    'metadata': next(iter(extract_nifti_metadata(str(paths.download / file_name)).values()), {}),
-                    'input_name': input_name,
-                })
+        for case_name in sorted(original_shapes.keys()):
+            # extract_nifti_metadata provide results in a dict : [filename : metadata]
+            input_metadata_dict = extract_nifti_metadata(str(paths.download / f"{case_name}_0000.nii.gz"))
+            input_metadata = input_metadata_dict.get(f"{case_name}_0000.nii", {})
+
+            result.append({
+                'name': case_name,
+                'input_name': f"{case_name}_0000.nii.gz",
+                'left_name': f"{case_name}_left.nii.gz",
+                'right_name': f"{case_name}_right.nii.gz",
+                'both_name': f"{case_name}_both.nii.gz",
+                'metadata': input_metadata,
+            })
+
     except FileNotFoundError as error:
         current_app.logger.exception("Missing input file while collecting segmentation results")
         return jsonify({"message": f"Segmentation completed but an input file was missing: {error}"}), 500

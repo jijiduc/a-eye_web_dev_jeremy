@@ -160,5 +160,15 @@
             vol.cal_max = cal_max;
         await nv.loadVolumes([vol]);
     };
+
+    window.initNiivueOverlay = async (canvasId, backgroundUrl, overlayUrl) => {
+        const nv = new Niivue({ isResizeCanvas: true });
+        await nv.attachTo(canvasId);
+        nv.addColormap('eye-seg', buildEyeSegColormap());
+        await nv.loadVolumes([
+            { url: backgroundUrl, colormap: 'gray' },
+            { url: overlayUrl, colormap: 'eye-seg', cal_min: 0, cal_max: 9 }
+        ]);
+    };
 </script>
 {% endblock %}
