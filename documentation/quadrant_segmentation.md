@@ -70,3 +70,7 @@ Added functions transposed from the [jupyter notebook about the quadrant segment
     - updated Font Awesome version to v7.2.0. (`templates/base.html`)
 - **About page**: 
     - added myself as a contributor (`templates/about.html`)
+
+# Segmentation time improvement
+
+A dedicated test of the time gain should be made and added in the final report.
