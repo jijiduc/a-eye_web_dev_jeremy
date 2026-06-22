@@ -51,7 +51,8 @@ async function onSelectionFilter() {
     if (rejectedFileNames.length > 0) {
         onRejectionNotice(rejectedFileNames, rejectedReasons);
     }
-
+    // to reset a previously selected input
+    document.getElementById('file-input').value='';
     renderFileList();
 }
 
