@@ -65,93 +65,107 @@ def _cancel_job(paths: UserPaths) -> None:
         return
     job_id = paths.active_job_file.read_text().strip()
     paths.active_job_file.unlink(missing_ok=True)
-    
+
     if job_id:
-        print_and_log(f"[A-eye] Cancelling Slurm job {job_id}...", 'warning', LOGS_FOLDER)
+        print_and_log(
+            f"[A-eye] Cancelling Slurm job {job_id}...", "warning", LOGS_FOLDER
+        )
         try:
             cancel_slurm_job(job_id)
         except Exception:
             current_app.logger.exception("Failed to cancel Slurm job %s", job_id)
 
-bp = Blueprint('routes', __name__)
+
+bp = Blueprint("routes", __name__)
 
 high_scale_nb_users = 100
 
-@bp.route("/") # In flask, by default a route only answer to GET request. 
+
+@bp.route("/")  # In flask, by default a route only answer to GET request.
 # Need to use the methods arguments of the route() decorator to handlie different/multiple HTTP methods.
 def welcome():
     return render_template("welcomepage.html")
+
 
 @bp.route("/callback", methods=["GET", "POST"])
 def callback():
     try:
         token = oauth.auth0.authorize_access_token()
-        state = session.pop('state', None)
-        if request.args.get('state') != state:
+        state = session.pop("state", None)
+        if request.args.get("state") != state:
             raise MismatchingStateError()
-        nonce = session.pop('nonce', None)
+        nonce = session.pop("nonce", None)
         userinfo = oauth.auth0.parse_id_token(token, nonce=nonce)
 
-        if not userinfo.get('email_verified'):
-            return redirect(url_for('routes.verify_email'))
+        if not userinfo.get("email_verified"):
+            return redirect(url_for("routes.verify_email"))
 
-        session["user"] = userinfo # stores user in session
-        return redirect(url_for('routes.segmentation'))
+        session["user"] = userinfo  # stores user in session
+        return redirect(url_for("routes.segmentation"))
     except OAuthError as error:
         flash("Authentication failed: " + error.description)
-        return redirect(url_for('routes.welcome'))
+        return redirect(url_for("routes.welcome"))
+
 
 @bp.route("/verify_email")
 def verify_email():
     return render_template("verify_email.html")
 
+
 @bp.route("/login")
 def login():
     nonce = secrets.token_urlsafe()
     state = secrets.token_urlsafe()
-    session['nonce'] = nonce
-    session['state'] = state
-    redirect_uri = current_app.config.get("AUTH0_CALLBACK_URL") or url_for("routes.callback", _external=True)
-    return oauth.auth0.authorize_redirect(
-        redirect_uri=redirect_uri,
-        nonce=nonce,
-        state=state
+    session["nonce"] = nonce
+    session["state"] = state
+    redirect_uri = current_app.config.get("AUTH0_CALLBACK_URL") or url_for(
+        "routes.callback", _external=True
     )
+    return oauth.auth0.authorize_redirect(
+        redirect_uri=redirect_uri, nonce=nonce, state=state
+    )
+
 
 @bp.route("/logout")
 def logout():
     session.clear()
-    return_to = current_app.config.get("AUTH0_LOGOUT_URL") or url_for("routes.welcome", _external=True)
+    return_to = current_app.config.get("AUTH0_LOGOUT_URL") or url_for(
+        "routes.welcome", _external=True
+    )
     return redirect(
-        "https://" + current_app.config['AUTH0_DOMAIN'] + "/v2/logout?" + urlencode(
+        "https://"
+        + current_app.config["AUTH0_DOMAIN"]
+        + "/v2/logout?"
+        + urlencode(
             {
                 "returnTo": return_to,
-                "client_id": current_app.config['AUTH0_CLIENT_ID'],
+                "client_id": current_app.config["AUTH0_CLIENT_ID"],
             },
             quote_via=quote_plus,
         )
     )
 
-@bp.route('/users')
+
+@bp.route("/users")
 def users():
     users_data = get_user_data()
     total_users = len(users_data)
     cases_processed = get_cases_processed()
-    
+
     # Calculate the number of institutions
     domains = set()
     for user in users_data:
-        email = user.get('email')
+        email = user.get("email")
         if email:
-            domain = email.split('@')[-1]
+            domain = email.split("@")[-1]
             domains.add(domain)
     total_institutions = len(domains)
-    
+
     # Get country data from user IPs
     country_counts = {}
     for user in users_data:
         if isinstance(user, dict):
-            ip = user.get('last_ip')
+            ip = user.get("last_ip")
             if ip:
                 country = get_country_from_ip(ip)
                 if country:
@@ -161,39 +175,44 @@ def users():
                             country_counts[country_iso3] += 1
                         else:
                             country_counts[country_iso3] = 1
-    
+
     # Create a DataFrame for the country data
-    df = pd.DataFrame(list(country_counts.items()),
-                           columns=['Country', 'Count'])
-    
+    df = pd.DataFrame(list(country_counts.items()), columns=["Country", "Count"])
+
     # Generate the choropleth map
-    fig = px.choropleth(df, locations="Country",
-                        locationmode='ISO-3', color="Count",
-                        color_continuous_scale="Greens",
-                        range_color=(0, high_scale_nb_users))
+    fig = px.choropleth(
+        df,
+        locations="Country",
+        locationmode="ISO-3",
+        color="Count",
+        color_continuous_scale="Greens",
+        range_color=(0, high_scale_nb_users),
+    )
 
     fig.update_layout(
         autosize=True,
-        margin={"r":0,"t":0,"l":0,"b":0},
+        margin={"r": 0, "t": 0, "l": 0, "b": 0},
         dragmode=False,
         geo=dict(
             showframe=False,
             showcoastlines=False,
-            projection_type='equirectangular',
+            projection_type="equirectangular",
             lataxis=dict(range=[-90, 90]),
             lonaxis=dict(range=[-180, 180]),
-            center=dict(lat=0, lon=0)
+            center=dict(lat=0, lon=0),
         ),
-        coloraxis_showscale=False
+        coloraxis_showscale=False,
     )
 
-    map_html = fig.to_html(full_html=False, config={'responsive': True})
-    
-    return render_template('users.html', 
-                           total_users=total_users,
-                           cases_processed=cases_processed, 
-                           total_institutions=total_institutions, 
-                           map_html=map_html)
+    map_html = fig.to_html(full_html=False, config={"responsive": True})
+
+    return render_template(
+        "users.html",
+        total_users=total_users,
+        cases_processed=cases_processed,
+        total_institutions=total_institutions,
+        map_html=map_html,
+    )
 
 
 @bp.route("/about")
@@ -208,53 +227,50 @@ def faq():
 
 @bp.route("/segmentation")
 def segmentation():
-    if 'user' in session:
+    if "user" in session:
         user_email: str = session.get("user", {}).get("email", "unknown_user")
         _cancel_job(get_user_paths(user_email))
-        return render_template('segmentation.html')
-    return redirect(url_for('routes.login'))
+        return render_template("segmentation.html")
+    return redirect(url_for("routes.login"))
 
 
-@bp.route('/upload', methods=['POST'])
+@bp.route("/upload", methods=["POST"])
 def upload_file() -> tuple[Response, int]:
     """File upload handling for the user logged-in
 
-      1. clear the user's previous data 
-      2. saves provided files locally 
-      3. copy them to the HPC input directory
+    1. clear the user's previous data
+    2. saves provided files locally
+    3. copy them to the HPC input directory
 
-      Returns:
-          tuple[Response, int]: JSON response with upload and HTTP status code
-      """
+    Returns:
+        tuple[Response, int]: JSON response with upload and HTTP status code
+    """
     user_email: str = session.get("user", {}).get("email", "unknown_user")
     paths: UserPaths = get_user_paths(user_email)
 
     _cancel_job(paths)
 
-    if 'files[]' not in request.files:
-        return jsonify({
-            'message': 'No file found',
-            'status': 'error'
-            }), 400
+    if "files[]" not in request.files:
+        return jsonify({"message": "No file found", "status": "error"}), 400
 
-    files = request.files.getlist('files[]')
+    files = request.files.getlist("files[]")
     uploaded_files = []
     rejected_files = []
 
     try:
-        # 1. clear the user's previous data 
+        # 1. clear the user's previous data
         clean_folders(user_email)
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as error:
         current_app.logger.exception("Could not prepare HPC folders for upload")
         return jsonify({
-            'message': 'Could not reach the HPC over SSH to prepare the upload.'
-                'Please try again once chacha/disco SSH access is available.',
-            'status': 'error',
-            'error': str(error)
+            "message": "Could not reach the HPC over SSH to prepare the upload."
+            "Please try again once chacha/disco SSH access is available.",
+            "status": "error",
+            "error": str(error),
         }), 503
 
     # 2. Save provided files locally and extract their metadata
-    metadata : dict[str, dict] = {}
+    metadata: dict[str, dict] = {}
     for file in files:
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)  # werkzeug sanitisation
@@ -271,11 +287,11 @@ def upload_file() -> tuple[Response, int]:
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as error:
         current_app.logger.exception("Could not copy uploaded files to HPC")
         return jsonify({
-            'message': 'Files were received locally,'
-                       ' but could not be copied to the HPC over SSH.'
-            ' Please try again once chacha/disco SSH access is available.',
-            'status': 'error',
-            'error': str(error)
+            "message": "Files were received locally,"
+            " but could not be copied to the HPC over SSH."
+            " Please try again once chacha/disco SSH access is available.",
+            "status": "error",
+            "error": str(error),
         }), 503
 
     if uploaded_files:
@@ -283,18 +299,15 @@ def upload_file() -> tuple[Response, int]:
         if rejected_files:
             message += f" | Rejected: {', '.join(rejected_files)}"
         return jsonify({
-            'message': message,
-            'status': 'success',
-            'metadata': metadata,
-            }), 200
+            "message": message,
+            "status": "success",
+            "metadata": metadata,
+        }), 200
     else:
-        return jsonify({
-            'message': 'No valid files uploaded',
-            'status': 'error'
-            }), 400
+        return jsonify({"message": "No valid files uploaded", "status": "error"}), 400
 
 
-@bp.route('/segment', methods=['POST'])
+@bp.route("/segment", methods=["POST"])
 def segment() -> tuple[Response, int]:
     """Run the segmentation pipeline for the logged-in user.
 
@@ -332,7 +345,7 @@ def segment() -> tuple[Response, int]:
         left_cropped_img = crop_quadrant(original_file, left_side=True)
         right_cropped_img = crop_quadrant(original_file, left_side=False)
         # back to HPC as cropped version
-        nib.save(left_cropped_img,  paths.aux_input / f"{case_name}_left_0000.nii.gz")
+        nib.save(left_cropped_img, paths.aux_input / f"{case_name}_left_0000.nii.gz")
         nib.save(right_cropped_img, paths.aux_input / f"{case_name}_right_0000.nii.gz")
 
         original_file.unlink()
@@ -345,33 +358,43 @@ def segment() -> tuple[Response, int]:
         getSegmentation(user_email, paths, ongoing_job_id=store_job_id)
     except Exception as error:
         paths.active_job_file.unlink(missing_ok=True)
-        print_and_log(f"[A-eye] Segmentation failed: {error}",
-                       'error', LOGS_FOLDER)
+        print_and_log(f"[A-eye] Segmentation failed: {error}", "error", LOGS_FOLDER)
         sync_logs_to_output(paths.download)
         clean_folders(user_email)
-        return jsonify({"message": "Segmentation failed",
-                         "error": str(error)}), 500
+        return jsonify({"message": "Segmentation failed", "error": str(error)}), 500
 
     paths.active_job_file.unlink(missing_ok=True)
 
     for case_name, original_shape in original_shapes.items():
-        left_segmented  = nib.load(paths.download / f"{case_name}_left.nii.gz")
+        left_segmented = nib.load(paths.download / f"{case_name}_left.nii.gz")
         right_segmented = nib.load(paths.download / f"{case_name}_right.nii.gz")
 
-         # for test only -
-        shutil.copy2(paths.download / f"{case_name}_left.nii.gz", paths.download / f"{case_name}_left_cropped.nii.gz")
-        shutil.copy2(paths.download / f"{case_name}_right.nii.gz", paths.download / f"{case_name}_right_cropped.nii.gz")
+        # for test only -
+        shutil.copy2(
+            paths.download / f"{case_name}_left.nii.gz",
+            paths.download / f"{case_name}_left_cropped.nii.gz",
+        )
+        shutil.copy2(
+            paths.download / f"{case_name}_right.nii.gz",
+            paths.download / f"{case_name}_right_cropped.nii.gz",
+        )
 
-        left_uncropped  = uncrop_quadrant(left_segmented, original_shape, left_side=True)
-        right_uncropped = uncrop_quadrant(right_segmented, original_shape, left_side=False)
+        left_uncropped = uncrop_quadrant(left_segmented, original_shape, left_side=True)
+        right_uncropped = uncrop_quadrant(
+            right_segmented, original_shape, left_side=False
+        )
 
-        nib.save(left_uncropped,  paths.download / f"{case_name}_left.nii.gz")
+        nib.save(left_uncropped, paths.download / f"{case_name}_left.nii.gz")
         nib.save(right_uncropped, paths.download / f"{case_name}_right.nii.gz")
 
         merged = merge_quadrants(left_uncropped, right_uncropped)
         nib.save(merged, paths.download / f"{case_name}_both.nii.gz")
 
-    print_and_log("[A-eye] Segmentation done - preparing results for download...", 'info', LOGS_FOLDER)
+    print_and_log(
+        "[A-eye] Segmentation done - preparing results for download...",
+        "info",
+        LOGS_FOLDER,
+    )
     sync_logs_to_output(paths.download)
 
     # 2. Zip folder for download
@@ -382,7 +405,7 @@ def segment() -> tuple[Response, int]:
     # send_email(user_email, "A-eye segmentation task completed successfully. You can download the results.")
     threading.Thread(
         target=copy_segmentation_data,
-        args=(user_email, paths.aux_input, paths.download)
+        args=(user_email, paths.aux_input, paths.download),
     ).start()
 
     # 4. add result file and metadata
@@ -390,31 +413,41 @@ def segment() -> tuple[Response, int]:
     try:
         for case_name in sorted(original_shapes.keys()):
             # extract_nifti_metadata provide results in a dict : [filename : metadata]
-            input_metadata_dict = extract_nifti_metadata(str(paths.download / f"{case_name}_0000.nii.gz"))
+            input_metadata_dict = extract_nifti_metadata(
+                str(paths.download / f"{case_name}_0000.nii.gz")
+            )
             input_metadata = input_metadata_dict.get(f"{case_name}_0000.nii", {})
 
             result.append({
-                'name': case_name,
-                'input_name': f"{case_name}_0000.nii.gz",
-                'left_name': f"{case_name}_left.nii.gz",
-                'right_name': f"{case_name}_right.nii.gz",
-                'both_name': f"{case_name}_both.nii.gz",
-                'metadata': input_metadata,
+                "name": case_name,
+                "input_name": f"{case_name}_0000.nii.gz",
+                "left_name": f"{case_name}_left.nii.gz",
+                "right_name": f"{case_name}_right.nii.gz",
+                "both_name": f"{case_name}_both.nii.gz",
+                "metadata": input_metadata,
             })
 
     except FileNotFoundError as error:
-        current_app.logger.exception("Missing input file while collecting segmentation results")
-        return jsonify({"message": f"Segmentation completed but an input file was missing: {error}"}), 500
+        current_app.logger.exception(
+            "Missing input file while collecting segmentation results"
+        )
+        return jsonify({
+            "message": f"Segmentation completed but an input file was missing: {error}"
+        }), 500
     except Exception as error:
         current_app.logger.exception("Error collecting segmentation results")
-        return jsonify({"message": f"Segmentation completed but results could not be collected: {error}"}), 500
+        return jsonify({
+            "message": f"Segmentation completed but results could not be collected: {error}"
+        }), 500
 
-    return jsonify({"message": "Segmentation completed",
-                     "download_url": "/download",
-                     "result": result}), 200
+    return jsonify({
+        "message": "Segmentation completed",
+        "download_url": "/download",
+        "result": result,
+    }), 200
 
 
-@bp.route('/profile')
+@bp.route("/profile")
 @requires_auth  # Ensure only logged-in users can view this
 def profile():
     user = session.get("user")
@@ -424,7 +457,7 @@ def profile():
     return render_template("profile.html", user=user)
 
 
-@bp.route('/download', methods=['GET'])
+@bp.route("/download", methods=["GET"])
 def download_files() -> Response | tuple[str, int]:
     """Download the ZIP file generated for the user logged in
 
@@ -438,9 +471,9 @@ def download_files() -> Response | tuple[str, int]:
         safe_email = user_email.replace("@", "_").replace(".", "_")
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         download_name = f"output_{safe_email}_{timestamp}.zip"
-        return send_file(paths.output_zip,
-                         as_attachment=True,
-                         download_name=download_name)
+        return send_file(
+            paths.output_zip, as_attachment=True, download_name=download_name
+        )
     return "File not found", 404
 
 
@@ -452,23 +485,20 @@ def test_email():
     body = "This is a test email from A-eye."
 
     try:
-        msg = Message(
-            subject="Test Email",
-            recipients=[to],
-            body=body
-        )
+        msg = Message(subject="Test Email", recipients=[to], body=body)
         mail.send(msg)
         return "Email sent successfully!", 200
     except Exception as e:
         return f"Failed to send email: {e}", 500
 
-@bp.route('/result/<filename>', methods=['GET'])
+
+@bp.route("/result/<filename>", methods=["GET"])
 def serve_result(filename: str):
     # check that the logged in user try to access
-    if 'user' not in session:
-        return jsonify({'message': 'Unauthorized'}), 401
+    if "user" not in session:
+        return jsonify({"message": "Unauthorized"}), 401
 
     user_email: str = session.get("user", {}).get("email", "unknown_user")
-    file_path: Path = (get_user_paths(user_email).download / filename)
+    file_path: Path = get_user_paths(user_email).download / filename
 
-    return send_file(file_path, mimetype='application/gzip')
+    return send_file(file_path, mimetype="application/gzip")
