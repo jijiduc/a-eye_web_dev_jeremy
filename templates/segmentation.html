@@ -23,6 +23,7 @@
                     <i class="fas fa-mouse-pointer"></i> Select files
                 </button>
             </form>
+            <small class="text-muted d-block mt-2">Supports .nii, .nii.gz, .zip and .7z. <br> Limited to 5 cases at once.</small>
         </div>
         <div class="col-md-3">
             <form id="upload-form" method="post" enctype="multipart/form-data">
@@ -31,6 +32,7 @@
                     <i class="fas fa-upload"></i> Upload
                 </button>
             </form>
+            <small class="text-muted d-block mt-2">Uploads the selected files to our server for processing.</small>
         </div>
         <div class="col-md-3">
             <form id="segment-form" method="post">
@@ -39,6 +41,7 @@
                     <i class="fas fa-cogs"></i> Segment
                 </button>
             </form>
+            <small class="text-muted d-block mt-2 ">Infers the A-eye model to automatically segment the images</small>
         </div>
         <div class="col-md-3">
             <form id="download-form" method="get" action="/download">
