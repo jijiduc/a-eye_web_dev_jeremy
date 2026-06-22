@@ -398,6 +398,7 @@ def segment() -> tuple[Response, int]:
     sync_logs_to_output(paths.download)
 
     # 2. Zip folder for download
+    shutil.copy2(Path("LICENSE.txt"), paths.download / "LICENSE.txt")
     zip_folder(paths.download, paths.output_zip)
 
     # 3. Start background thread to copy files
