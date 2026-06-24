@@ -24,3 +24,7 @@ Here under, a list of possible improvements for the web plateform, based on my o
  - More comments
  - use latest Traefik release
    - Jaime : *"Can be tried (meeting 02.06.2026)"*
+
+
+## FAQ
+ - questions should be ordonned by categories
