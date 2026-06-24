@@ -156,10 +156,9 @@ local-certs/
 pyproject.toml
 uv.lock
 
-# Test datas
+# Test input data
 data/simple-sample/*
 data/test-webplatform/*
 
-
 # example of results
-data/output_marco_caporizz_hes-so_ch_20260609_123429
+data/seg-results
