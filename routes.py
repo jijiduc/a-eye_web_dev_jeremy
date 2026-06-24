@@ -340,7 +340,7 @@ def segment() -> tuple[Response, int]:
         case_name = original_file.name.replace("_0000.nii.gz", "")
         original_shapes[case_name] = nib.load(original_file).shape
         # copy original file for overlay visualization of results
-        shutil.copy2(original_file, paths.download / original_file.name)
+        shutil.copy2(original_file, paths.download / f"{case_name}_raw.nii.gz")
 
         left_cropped_img = crop_quadrant(original_file, left_side=True)
         right_cropped_img = crop_quadrant(original_file, left_side=False)
@@ -415,13 +415,13 @@ def segment() -> tuple[Response, int]:
         for case_name in sorted(original_shapes.keys()):
             # extract_nifti_metadata provide results in a dict : [filename : metadata]
             input_metadata_dict = extract_nifti_metadata(
-                str(paths.download / f"{case_name}_0000.nii.gz")
+                str(paths.download / f"{case_name}_raw.nii.gz")
             )
-            input_metadata = input_metadata_dict.get(f"{case_name}_0000.nii", {})
+            input_metadata = input_metadata_dict.get(f"{case_name}_raw.nii", {})
 
             result.append({
                 "name": case_name,
-                "input_name": f"{case_name}_0000.nii.gz",
+                "input_name": f"{case_name}_raw.nii.gz",
                 "left_name": f"{case_name}_left.nii.gz",
                 "right_name": f"{case_name}_right.nii.gz",
                 "both_name": f"{case_name}_both.nii.gz",
