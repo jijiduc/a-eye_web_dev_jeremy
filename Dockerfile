@@ -14,8 +14,12 @@ RUN apt-get update && apt-get install -y docker.io \
 
 RUN mkdir -p /root/.ssh && chmod 700 /root/.ssh
 
-# Copy the rest of the application
-COPY . .
+# optimise build time by enhance caching usage
+COPY static/ ./static/
+COPY templates/ ./templates/
+
+COPY module/ ./module/
+COPY *.py .
 
 # Set environment variables
 ENV FLASK_DEBUG=1
