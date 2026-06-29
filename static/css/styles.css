@@ -367,6 +367,16 @@ a:hover {
     width: 100%;
 }
 
+/* summary and details*/
+.summary-chevron {
+    transition: transform 0.2s ease;
+    font-size: 0.8em;
+}
+
+details[open] .summary-chevron {
+    transform: rotate(90deg);
+}
+
 /* ============================================================
    Misc
    ============================================================ */
