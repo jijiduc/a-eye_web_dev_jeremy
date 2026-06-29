@@ -429,7 +429,6 @@ def segment() -> tuple[Response, int]:
         left_segmented = nib.load(paths.download / f"{case_name}_left.nii.gz")
         right_segmented = nib.load(paths.download / f"{case_name}_right.nii.gz")
 
-        # for test only -
         shutil.copy2(
             paths.download / f"{case_name}_left.nii.gz",
             paths.download / f"{case_name}_left_cropped.nii.gz",

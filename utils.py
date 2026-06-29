@@ -36,6 +36,13 @@ from config import (
 )
 from models import UserPaths
 
+NOT_TO_OUTPUT = [
+    "logs",
+    "plans.pkl",
+    "postprocessing.json",
+    "prediction_time.txt",
+    "*_cropped.nii.gz",
+]
 
 def _header_to_dict(
     header: nibabel.nifti1.Nifti1Header,
@@ -235,11 +242,20 @@ def allowed_file(filename):
     """
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
-
-def zip_folder(folder_path, output_path):
+def zip_folder(folder_path, output_path, to_exclude=NOT_TO_OUTPUT):
+    """Zip a folder
+    """
     with zipfile.ZipFile(output_path, "w", zipfile.ZIP_DEFLATED) as zipf:
-        for root, dirs, files in os.walk(folder_path):
+        for root, directories, files in os.walk(folder_path):
+            # remove directories/files to exclude from output
+            for directory in list(directories):
+                if any(fnmatch.fnmatch(directory, p) for p in to_exclude):
+                    directories.remove(directory)
+
             for file in files:
+                if any(fnmatch.fnmatch(file, p) for p in to_exclude):
+                    continue
+
                 zipf.write(
                     os.path.join(root, file),
                     os.path.relpath(os.path.join(root, file), folder_path),
