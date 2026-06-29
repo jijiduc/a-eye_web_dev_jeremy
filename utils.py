@@ -379,7 +379,13 @@ def copy_file_to_hpc(source, destination):
     )
 
 
-def copy_folder_to_hpc(source, destination):
+def copy_folder_to_hpc(source: str, destination: str) -> None:
+    """Copy a local folder to the HPC
+
+    Args:
+        source (str): source path of the folder to copy
+        destination (str): destination path on the HPC
+    """
     print_and_log(
         f"[A-eye] Copying files from local {source} to HPC {destination}...",
         "info",
@@ -423,9 +429,11 @@ def delete_files_in_folder(folder):
                 )
 
 
-def clean_folder_hpc(folder):
-    """
-    Cleans the specified folder on the HPC by deleting all files and subfolders
+def clean_folder_hpc(folder: str) -> None:
+    """Clear all files and subfolders of a given folder on the HPC
+
+    Args:
+        folder (str): path of the folder to clean
     """
     print_and_log(f"[A-eye] Cleaning folder {folder} on HPC...", "info", LOGS_FOLDER)
     subprocess.run(
@@ -634,7 +642,12 @@ def append_log_line(path, line):
         f.write(f"{line}\n")
 
 
-def sync_logs_to_output(output_folder):
+def sync_logs_to_output(output_folder: str | Path) -> None:
+    """Copy the current app and console logs a subfolder of the output folder
+
+    Args:
+        output_folder (str | Path): path were the logs subfolder will be made
+    """
     output_logs = os.path.join(output_folder, "logs")
     prepare_log_target(output_logs)
 

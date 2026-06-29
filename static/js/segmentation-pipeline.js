@@ -51,7 +51,8 @@ async function onSelectionFilter() {
     if (rejectedFileNames.length > 0) {
         onRejectionNotice(rejectedFileNames, rejectedReasons);
     }
-
+    // to reset a previously selected input
+    document.getElementById('file-input').value='';
     renderFileList();
 }
 
@@ -241,8 +242,8 @@ function segmentFiles() {
                         row.innerHTML = `
                             <div style="display:flex; width:100%; gap:8px; align-items:flex-start;">
                                 <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:4px;">
-                                    <small class="text-muted">Before segmentation</small>
-                                    <canvas id="niivue-input-${idx}" style="display:block; width:100%; aspect-ratio:1/1;"></canvas>
+                                    <small class="text-muted" style="margin-left: 2px;" >Both eyes overlaid on original image</small>
+                                    <canvas id="niivue-overlay-${idx}" style="display:block; width:100%; aspect-ratio:1/1;"></canvas>
                                 </div>
                                 <div id="info-panel-${idx}" style="flex:0 0 20%; overflow-y:auto; border-left:2px solid #33961d; border-right:2px solid #33961d; padding:0 8px;">
                                     ${renderSegmentationLegend()}
@@ -250,19 +251,19 @@ function segmentFiles() {
                                     <div>${renderMetadataTable(result.metadata)}</div>
                                 </div>
                                 <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:4px;">
-                                    <small class="text-muted">After segmentation</small>
-                                    <canvas id="niivue-output-${idx}" style="display:block; width:100%; aspect-ratio:1/1;"></canvas>
+                                    <small class="text-muted" style="margin-left: 2px;">Both eyes only</small>
+                                    <canvas id="niivue-eyes-${idx}" style="display:block; width:100%; aspect-ratio:1/1;"></canvas>
                                 </div>
                             </div>`;
-                        // to keep the center panel height in sync with niivues
-                        const niivues = document.getElementById(`niivue-input-${idx}`);
+                        // to keep the center panel height in sync with the overlay
+                        const overlay = document.getElementById(`niivue-overlay-${idx}`);
                         const panel = document.getElementById(`info-panel-${idx}`);
                         new ResizeObserver(() => {
-                            panel.style.maxHeight = niivues.offsetHeight + 'px';
-                        }).observe(niivues);
+                            panel.style.maxHeight = overlay.offsetHeight + 'px';
+                        }).observe(overlay);
 
-                        await window.initNiivue(`niivue-input-${idx}`, `/result/${result.input_name}`);
-                        await window.initNiivue(`niivue-output-${idx}`, `/result/${result.name}`, 'eye-seg', 0, 9);
+                        await window.initNiivueOverlay(`niivue-overlay-${idx}`, `/result/${result.input_name}`, `/result/${result.both_name}`);
+                        await window.initNiivue(`niivue-eyes-${idx}`, `/result/${result.both_name}`, 'eye-seg', 0, 9);
                     },
                     (result, idx, row) => { row.innerHTML = ''; }
                 );

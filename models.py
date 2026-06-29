@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from pathlib import Path
 
+
 @dataclass
 class UserPaths:
     """User-scoped paths for all stages of the segmentation pipeline
@@ -16,19 +17,19 @@ class UserPaths:
         hpc_base_input:  Root directory on the HPC cluster for this user's input data
         hpc_input:       Subdirectory of hpc_base_input where input files are placed for inference
     """
-    upload:          Path
-    aux_base:        Path
-    aux_input:       Path
-    output_zip:      Path
-    download:        Path
-    jobfile:         Path
+
+    upload: Path
+    aux_base: Path
+    aux_input: Path
+    output_zip: Path
+    download: Path
+    jobfile: Path
     active_job_file: Path
-    hpc_base_input:  str
-    hpc_input:       str
+    hpc_base_input: str
+    hpc_input: str
 
     def create_directories(self) -> None:
-        """Create the needed local directories if missing
-        """
+        """Create the needed local directories if missing"""
         self.upload.mkdir(parents=True, exist_ok=True)
         self.aux_input.mkdir(parents=True, exist_ok=True)
         self.download.mkdir(parents=True, exist_ok=True)
