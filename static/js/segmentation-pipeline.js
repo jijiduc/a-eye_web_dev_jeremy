@@ -93,7 +93,7 @@ function renderFileList() {
     if (selection.length > 0) {
         const cases = currentCaseCount();
         title.style.display = 'block';
-        title.innerHTML = `<span class="badge bg-secondary me-1">${selection.length} file${selection.length > 1 ? 's' : ''}</span> <span class="badge bg-sucess">${cases} / ${MAX_CASES} cases</span>`;
+        title.innerHTML = `<span class="badge me-1" style="background:var(--link-color);">${selection.length} file${selection.length > 1 ? 's' : ''}</span><span class="badge" style="background:var(--btn-secondary-bg);">${cases} / ${MAX_CASES} cases</span>`;
         buildFileList(fileList, selection, unselectFile, [], selectionCaseInfoMap);
     } else {
         title.style.display = 'none';
@@ -345,7 +345,7 @@ function buildResultFileList(results) {
                             </span>
                             <canvas id="niivue-overlay-${idx}" style="display:block; width:100%; aspect-ratio:1/1;"></canvas>
                         </div>
-                        <div id="info-panel-${idx}" style="flex:0 0 20%; overflow-y:auto; border-left:2px solid #33961d; border-right:2px solid #33961d; padding:0 8px;">
+                        <div id="info-panel-${idx}" style="flex:0 0 20%; overflow-y:auto; border-left:2px solid var(--info-panel-border); border-right:2px solid var(--info-panel-border); padding:0 8px;">
                             ${renderSegmentationLegend()}
                             <div style="margin-top:8px; font-size:0.78em;"><strong style="margin-bottom:5px;">Metadata</strong></div>
                             <div>${renderMetadataTable(result.metadata)}</div>
