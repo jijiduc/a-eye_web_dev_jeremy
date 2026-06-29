@@ -24,7 +24,7 @@ function renderMetadataTable(fields) {
             <td style="word-break:break-all;">${display}</td>
         </tr>`;
     }).join('');
-    return `<table class="table table-sm table-bordered table-striped table-hover mb-0" style="font-size:0.8125em;">
+    return `<table class="table table-bordered table-striped   mb-0" style="font-size:0.875em;">
         <thead class="table-dark"><tr><th>Field</th><th>Value</th></tr></thead>
         <tbody>${rows}</tbody>
     </table>`;
@@ -143,7 +143,7 @@ function renderAxialLengthTable(sideData) {
             <td style="word-break:break-all;">${display}</td>
         </tr>`;
     }).join('');
-    return `<table class="table table-sm table-bordered table-striped table-hover mb-0" style="font-size:0.8125em;">
+    return `<table class="table table-bordered table-striped   mb-0" style="font-size:0.875em;">
         <thead class="table-dark"><tr><th>Measure</th><th>Value</th></tr></thead>
         <tbody>${rows}</tbody>
     </table>`;
@@ -166,7 +166,7 @@ function renderVolumetryTable(sideData) {
             <td style="word-break:break-all;">${display}</td>
         </tr>`;
     }).join('');
-    return `<table class="table table-sm table-bordered table-striped table-hover mb-0" style="font-size:0.8125em;">
+    return `<table class="table table-bordered table-striped   mb-0" style="font-size:0.875em;">
         <thead class="table-dark"><tr><th>Region</th><th>Volume</th></tr></thead>
         <tbody>${rows}</tbody>
     </table>`;
@@ -196,7 +196,7 @@ function renderBiomarkersDropdownContent(results) {
             Reference: <em>A-eye paper </em>
         </p>
     </details>
-    <div class="row g-2 align-items-stretch">
+    <div class="row g-3">
         ${['left', 'right'].map(side => {
         const data = results[side];
         if (!data || data.error) {

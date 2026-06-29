@@ -5,9 +5,9 @@
 {% block body_container %}container-fluid px-3{% endblock %}
 
 {% block content %}
-<div class="container" style="margin-top: 50px;">
+<div class="container-xl">
     <div class="text-center">
-        <h2 class="main-title">
+        <h2 class="main-title mt-3">
             Segmentation Tool
         </h2>
         <hr class="mx-auto mt-2 mb-0" style="width: 7rem; border-top: 2px solid #007849; opacity: 1;">
@@ -31,7 +31,7 @@
                     <ul class="mt-1 mb-0">
                         <li>the original input image (<code>_raw.nii.gz</code>)</li>
                         <li>per-eye segmentation masks — left, right, and merged (<code>.nii.gz</code>)</li>
-                        <li><em>if biomarkers were extracted:</em> axial length visualizations (<code>.png</code>) and a summary table (<code>biomarkers.csv</code>)</li>
+                        <li><em>if biomarkers are extracted:</em> axial length visualisations (<code>.png</code>) and a summary table (<code>biomarkers.csv</code>)</li>
                     </ul>
                 </p>
                 <p class="mt-1 mb-0 text-muted">
@@ -147,7 +147,13 @@
 
 <!-- segmentation results -->
 <div id="segmentation-result-section" style="display:none; margin-top: 30px;">
-    <ul id="result-file-list" class="list-group"></ul>
+    <div class="container-xl">
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <h5 class="mb-0 fw-semibold">Results</h5>
+            <hr class="flex-grow-1 my-0" style="border-top: 1px solid var(--link-color);">
+        </div>
+        <ul id="result-file-list" class="list-group"></ul>
+    </div>
 </div>
 
 <!-- modal -->
@@ -173,7 +179,7 @@
 <script src="/static/js/segmentation-pipeline.js"></script>
 <script type="module">
     import { Niivue } from "https://unpkg.com/@niivue/niivue@0.69.0/dist/index.js";
-    // based on the A-eye paper colors of visualization
+    // based on the A-eye paper colors of visualisation
     window.EYE_LABELS = [
         { name: 'background', color: [0, 0, 0] },
         { name: 'lens', color: [204, 5, 0] },
