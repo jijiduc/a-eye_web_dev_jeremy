@@ -15,40 +15,56 @@
     </p>
     <!-- buttons -->
     <div class="row text-center" style="margin-top: 30px;">
-        <div class="col-md-3">
+        <div class="col">
             <form id="select-file-form">
                 <input type="file" id="file-input" style="display: none;" multiple onchange="onSelectionFilter()">
                 <button type="button" class="btn btn-success btn-lg btn-block" id="select-file-button"
                     onclick="document.getElementById('file-input').click();">
-                    <i class="fas fa-mouse-pointer"></i> Select files
+                    <i class="fa-solid fa-mouse-pointer"></i> selection
                 </button>
             </form>
-            <small class="text-muted d-block mt-2">Supports .nii, .nii.gz, .zip and .7z. <br> Limited to 5 cases at once.</small>
+            <small class="text-muted d-block mt-2">Supports .nii, .nii.gz, .zip and .7z. <br> Limited to 5 cases at once. <br> NIfTI and DICOM can be processed.</small>
         </div>
-        <div class="col-md-3">
+        <div class="col">
             <form id="upload-form" method="post" enctype="multipart/form-data">
                 <button type="button" class="btn btn-secondary btn-lg btn-block" id="upload-button"
                     onclick="uploadFiles()" disabled>
-                    <i class="fas fa-upload"></i> Upload
+                    <i class="fa-solid fa-upload"></i> upload
                 </button>
             </form>
             <small class="text-muted d-block mt-2">Uploads the selected files to our server for processing.</small>
         </div>
-        <div class="col-md-3">
+        <div class="col">
             <form id="segment-form" method="post">
                 <button type="button" class="btn btn-secondary btn-lg btn-block" id="segment-button"
                     onclick="segmentFiles()" disabled>
-                    <i class="fas fa-cogs"></i> Segment
+                    <i class="fa-solid fa-scissors"></i> segmentation
                 </button>
             </form>
-            <small class="text-muted d-block mt-2 ">Infers the A-eye model to automatically segment the images</small>
+            <small class="text-muted d-block mt-2">Infers the A-eye model to automatically segment the images</small>
         </div>
-        <div class="col-md-3">
+        <div class="col">
+            <form id="biomarkers-form">
+                <button type="button" class="btn btn-secondary btn-lg btn-block" id="biomarkers-button"
+                    onclick="extractBiomarkers()" disabled>
+                    <i class="fa-solid fa-gear"></i> biomarkers
+                </button>
+            </form>
+            <small class="text-muted d-block mt-2">Compute axial length and volumetry biomarkers</small>
+        </div>
+        <div class="col">
             <form id="download-form" method="get" action="/download">
                 <button type="button" id="download-button" class="btn btn-secondary btn-lg btn-block" disabled>
-                    <i class="fas fa-download"></i> Download results
+                    <i class="fa-solid fa-download"></i> download
                 </button>
             </form>
+             <small class="text-muted d-block mt-2">Download results of segmentation with/without biomarkers</small>
+        </div>
+        <div class="col">
+            <button type="button" class="btn btn-info btn-lg btn-block" onclick="window.location.reload()">
+                <i class="fa-solid fa-arrow-rotate-right"></i> reset
+            </button>
+            <small class="text-muted d-block mt-2">Reset and start a new segmentation</small>
         </div>
     </div>
 
@@ -77,11 +93,6 @@
 
 <!-- segmentation results -->
 <div id="segmentation-result-section" style="display:none; margin-top: 30px;">
-    <div class="text-center mb-3">
-        <button type="button" class="btn btn-outline-secondary btn-lg px-5" onclick="window.location.reload()">
-            <i class="fas fa-redo me-2"></i> New segmentation
-        </button>
-    </div>
     <ul id="result-file-list" class="list-group"></ul>
 </div>
 
@@ -94,8 +105,9 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p>Please keep this window open until the segmentation completes.<br>
+                <p>Please keep the segmentation tool window open until the segmentation completes.<br>
                 Closing it will interrupt the process and results will be lost.</p>
+                <small style="color:#8a8d91;">This popup can safely be closed</small>
             </div>
         </div>
     </div>

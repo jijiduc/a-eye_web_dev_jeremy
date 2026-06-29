@@ -94,7 +94,7 @@ function renderFileList() {
         const cases = currentCaseCount();
         title.style.display = 'block';
         title.textContent = `${selection.length} file${selection.length > 1 ? 's' : ''} — ${cases} / ${MAX_CASES} cases`;
-        buildFileList(fileList, selection, unselectFile, '', null, null, selectionCaseInfoMap);
+        buildFileList(fileList, selection, unselectFile, [], selectionCaseInfoMap);
     } else {
         title.style.display = 'none';
         fileList.innerHTML = '';
@@ -135,7 +135,7 @@ function uploadFiles() {
     });
 
     const uploadFileList = document.getElementById('display-file-list');
-    buildFileList(uploadFileList, selection, null, '', null, null, selectionCaseInfoMap);
+    buildFileList(uploadFileList, selection, null, [], selectionCaseInfoMap);
 
     document.getElementById('status-section').style.display = 'block';
 
@@ -168,9 +168,12 @@ function uploadFiles() {
                         caseList.push({ name: file.name, metadata: fileMetadata[file.name] || {} });
                     }
                 });
-                buildFileList(uploadFileList, caseList, null, 'view metadata',
-                    (caseItem, idx, row) => { row.innerHTML = renderMetadataTable(caseItem.metadata); },
-                    null, null);
+                buildFileList(uploadFileList, caseList, null, [
+                    {
+                        label: 'view metadata',
+                        onOpen: (caseItem, idx, row) => { row.innerHTML = renderMetadataTable(caseItem.metadata); },
+                    }
+                ]);
                 alert(data.message);
 
                 const segmentButton = document.getElementById('segment-button');
@@ -230,43 +233,15 @@ function segmentFiles() {
                 downloadButton.classList.add('btn-success');
                 downloadButton.setAttribute('data-download-url', data.download_url);
 
+                const biomarkersButton = document.getElementById('biomarkers-button');
+                biomarkersButton.disabled = false;
+                biomarkersButton.classList.remove('btn-secondary');
+                biomarkersButton.classList.add('btn-success');
+
                 segmentationResult = data.result || [];
                 document.getElementById('status-section').style.display = 'none';
                 document.getElementById('segmentation-result-section').style.display = 'block';
-                buildFileList(
-                    document.getElementById('result-file-list'),
-                    segmentationResult,
-                    null,
-                    'view results',
-                    async (result, idx, row) => {
-                        row.innerHTML = `
-                            <div style="display:flex; width:100%; gap:8px; align-items:flex-start;">
-                                <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:4px;">
-                                    <small class="text-muted" style="margin-left: 2px;" >Both eyes overlaid on original image</small>
-                                    <canvas id="niivue-overlay-${idx}" style="display:block; width:100%; aspect-ratio:1/1;"></canvas>
-                                </div>
-                                <div id="info-panel-${idx}" style="flex:0 0 20%; overflow-y:auto; border-left:2px solid #33961d; border-right:2px solid #33961d; padding:0 8px;">
-                                    ${renderSegmentationLegend()}
-                                    <div style="margin-top:8px; font-size:0.78em; color:#212529;"><strong style="margin-bottom:5px;">Metadata</strong></div>
-                                    <div>${renderMetadataTable(result.metadata)}</div>
-                                </div>
-                                <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:4px;">
-                                    <small class="text-muted" style="margin-left: 2px;">Both eyes only</small>
-                                    <canvas id="niivue-eyes-${idx}" style="display:block; width:100%; aspect-ratio:1/1;"></canvas>
-                                </div>
-                            </div>`;
-                        // to keep the center panel height in sync with the overlay
-                        const overlay = document.getElementById(`niivue-overlay-${idx}`);
-                        const panel = document.getElementById(`info-panel-${idx}`);
-                        new ResizeObserver(() => {
-                            panel.style.maxHeight = overlay.offsetHeight + 'px';
-                        }).observe(overlay);
-
-                        await window.initNiivueOverlay(`niivue-overlay-${idx}`, `/result/${result.input_name}`, `/result/${result.both_name}`);
-                        await window.initNiivue(`niivue-eyes-${idx}`, `/result/${result.both_name}`, 'eye-seg', 0, 9);
-                    },
-                    (result, idx, row) => { row.innerHTML = ''; }
-                );
+                buildResultFileList(segmentationResult);
                 alert(data.message);
             } else {
                 throw new Error(data.message || 'segmentation failed');
@@ -282,6 +257,123 @@ function segmentFiles() {
             alert(error.message || 'An error occurred during segmentation.');
             console.error('Error:', error);
         });
+}
+
+
+/*
+* Handles the biomarkers extraction process:
+*   - managing UI state
+*   - initiating the server request
+*   - processing the response
+*/
+function extractBiomarkers() {
+    const biomarkersButton = document.getElementById('biomarkers-button');
+    biomarkersButton.disabled = true;
+    biomarkersButton.classList.remove('btn-success');
+    biomarkersButton.classList.add('btn-secondary');
+
+    // hide the metadata list
+    document.getElementById('display-file-list').style.display = 'none';
+    // add the progress bar
+    const bar = document.getElementById('progress-bar');
+    bar.classList.add('progress-bar-animated', 'progress-bar-striped');
+    bar.classList.remove('bg-success', 'bg-primary', 'bg-danger');
+    bar.classList.add('bg-warning');
+    bar.textContent = 'biomarkers extraction in progress...';
+
+    document.getElementById('status-section').style.display = 'block';
+
+    const caseNames = segmentationResult.map(r => r.name);
+
+    fetch('/biomarkers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ case_names: caseNames })
+    })
+        .then(response => response.json())
+        .then(data => {
+            bar.classList.remove('progress-bar-animated', 'progress-bar-striped');
+
+            if (data.status === 'success') {
+                bar.textContent = 'Biomarkers extraction complete';
+
+                biomarkersButton.disabled = true;
+                biomarkersButton.classList.remove('btn-success');
+                biomarkersButton.classList.add('btn-secondary');
+
+                document.getElementById('display-file-list').style.display = '';
+                document.getElementById('status-section').style.display = 'none';
+
+                // merge biomarker data into segmentationResult and rebuild the list
+                data.results.forEach(biomarkerResult => {
+                    const match = segmentationResult.find(r => r.name === biomarkerResult.case_name);
+                    if (match) match.biomarkers = biomarkerResult;
+                });
+                buildResultFileList(segmentationResult);
+                alert(data.message);
+            } else {
+                throw new Error(data.message || 'Extraction failed');
+            }
+        })
+        .catch(error => {
+            bar.classList.remove('progress-bar-animated', 'progress-bar-striped');
+            bar.classList.remove('bg-warning');
+            bar.classList.add('bg-danger');
+            bar.textContent = 'Biomarkers extraction failed';
+
+            document.getElementById('display-file-list').style.display = '';
+
+            alert(error.message || 'An error occurred during extraction.');
+            console.error('Error:', error);
+        });
+}
+
+
+/*
+* Build the result file list with a segmentation action per row
+*/
+function buildResultFileList(results) {
+    const dropdowns = [
+        {
+            label: 'segmentation results',
+            onOpen: async (result, idx, row) => {
+                row.innerHTML = `
+                    <div style="display:flex; width:100%; gap:8px; align-items:flex-start;">
+                        <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:4px;">
+                            <small class="text-muted" style="margin-left: 2px;">Both eyes overlaid on original image</small>
+                            <canvas id="niivue-overlay-${idx}" style="display:block; width:100%; aspect-ratio:1/1;"></canvas>
+                        </div>
+                        <div id="info-panel-${idx}" style="flex:0 0 20%; overflow-y:auto; border-left:2px solid #33961d; border-right:2px solid #33961d; padding:0 8px;">
+                            ${renderSegmentationLegend()}
+                            <div style="margin-top:8px; font-size:0.78em; color:#212529;"><strong style="margin-bottom:5px;">Metadata</strong></div>
+                            <div>${renderMetadataTable(result.metadata)}</div>
+                        </div>
+                        <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:4px;">
+                            <small class="text-muted" style="margin-left: 2px;">Both eyes only</small>
+                            <canvas id="niivue-eyes-${idx}" style="display:block; width:100%; aspect-ratio:1/1;"></canvas>
+                        </div>
+                    </div>`;
+                const overlay = document.getElementById(`niivue-overlay-${idx}`);
+                const panel = document.getElementById(`info-panel-${idx}`);
+                new ResizeObserver(() => {
+                    panel.style.maxHeight = overlay.offsetHeight + 'px';
+                }).observe(overlay);
+                await window.initNiivueOverlay(`niivue-overlay-${idx}`, `/result/${result.input_name}`, `/result/${result.both_name}`);
+                await window.initNiivue(`niivue-eyes-${idx}`, `/result/${result.both_name}`, 'eye-seg', 0, 9);
+            },
+            onClose: (result, idx, row) => { row.innerHTML = ''; }
+        }
+    ];
+
+    if (results.some(r => r.biomarkers)) {
+        dropdowns.push({
+            label: 'biomarkers',
+            onOpen: (result, idx, row) => { row.innerHTML = renderBiomarkersDropdownContent(result.biomarkers); },
+            onClose: (result, idx, row) => { row.innerHTML = ''; }
+        });
+    }
+
+    buildFileList(document.getElementById('result-file-list'), results, null, dropdowns);
 }
 
 document.addEventListener('DOMContentLoaded', function () {
