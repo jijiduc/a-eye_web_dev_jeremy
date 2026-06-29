@@ -1,3 +1,5 @@
+import csv
+import math
 import os
 import secrets
 import shutil
@@ -7,6 +9,7 @@ from datetime import datetime
 from pathlib import Path
 from urllib.parse import quote_plus, urlencode
 
+import matplotlib.pyplot as plt
 import nibabel as nib
 import pandas as pd
 import plotly.express as px
@@ -30,7 +33,17 @@ from app import oauth
 from config import LOGS_FOLDER
 from main import getSegmentation
 from models import UserPaths
-from module.quadrant import crop_quadrant, merge_quadrants, uncrop_quadrant
+from module.biomarkers.biomarkers import (
+    compute_axial_length_data,
+    compute_volumetry,
+    extract_axial_length_measurements,
+)
+from module.biomarkers.visualisations import plot_axial_length
+from module.quadrant_segmentation.quadrant import (
+    crop_quadrant,
+    merge_quadrants,
+    uncrop_quadrant,
+)
 from utils import (
     Message,
     allowed_file,
@@ -53,6 +66,53 @@ from utils import (
     upload_files,
     zip_folder,
 )
+
+
+def _process_eye(
+    paths: UserPaths,
+    case_name: str,
+    side: str,
+    left_side: bool,
+    raw_path: Path,
+) -> tuple[dict, dict | None]:
+    """Compute and make the visualisation for biomarkers for one eye.
+
+    Args:
+        paths (UserPaths): user paths
+        case_name (str): name of the case
+        side (str): "left" or "right"
+        left_side (bool): True if processing the left eye, False for the right
+        raw_path (Path): path to the raw  NIfTI file
+
+    Returns:
+        tuple[dict, dict | None]: biomarkers values, biomarkers values formatted for csv
+    """
+    segmentation_path = paths.download / f"{case_name}_{side}_cropped.nii.gz"
+
+    segmentation_image = nib.load(str(segmentation_path))
+    raw_image = crop_quadrant(raw_path, left_side=left_side)
+
+    volumes = compute_volumetry(segmentation_image)
+    axial_data = compute_axial_length_data(segmentation_image, raw_image)
+    axial_measures = extract_axial_length_measurements(axial_data)
+    # get the visualisation of AL
+    fig = plot_axial_length(axial_data, case_name=f"{case_name} ({side} eye)")
+    if fig is not None:
+        img_filename = f"{case_name}_{side}_axial_length.png"
+        fig.savefig(paths.download / img_filename, dpi=150, bbox_inches="tight")
+        plt.close(fig)
+        img_url = f"/result-image/{img_filename}"
+    else:
+        img_url = None
+
+    eye_data = {**volumes, **axial_measures, "axial_length_image": img_url}
+    # convert the nan to None to avoid json error
+    for key in eye_data:
+        if key != "axial_length_image" and math.isnan(eye_data[key]):
+            eye_data[key] = None
+
+    csv_row = {"case": case_name, "side": side, **volumes, **axial_measures}
+    return eye_data, csv_row
 
 
 def _cancel_job(paths: UserPaths) -> None:
@@ -379,7 +439,9 @@ def segment() -> tuple[Response, int]:
             paths.download / f"{case_name}_right_cropped.nii.gz",
         )
 
-        left_uncropped = uncrop_quadrant(left_segmented, original_shape, left_side=True)
+        left_uncropped = uncrop_quadrant(
+            left_segmented, original_shape, left_side=True
+        )
         right_uncropped = uncrop_quadrant(
             right_segmented, original_shape, left_side=False
         )
@@ -503,3 +565,79 @@ def serve_result(filename: str):
     file_path: Path = get_user_paths(user_email).download / filename
 
     return send_file(file_path, mimetype="application/gzip")
+
+
+@bp.route("/result-image/<filename>", methods=["GET"])
+def serve_result_image(filename: str):
+    """Serve images to be displayed on page"""
+    if "user" not in session:
+        return jsonify({"message": "Unauthorized"}), 401
+
+    user_email: str = session.get("user", {}).get("email", "unknown_user")
+    file_path: Path = get_user_paths(user_email).download / filename
+
+    return send_file(file_path)
+
+
+@bp.route("/biomarkers", methods=["POST"])
+def extract_biomarkers() -> tuple[Response, int]:
+    """Run biomarker extraction for all segmented cases.
+
+    1. loads cropped segmentation and raw images per eye
+    2. runs volumetry and axial length computation
+    3. saves PNG visualisations to the download folder
+    4. saves a summary CSV to the download folder
+
+    Returns:
+        tuple[Response, int]: JSON response with results and HTTP status code.
+            200 on success - 400 if no case names provided - 500 on failure
+    """
+    user_email: str = session.get("user", {}).get("email", "unknown_user")
+    paths: UserPaths = get_user_paths(user_email)
+    # get the body of the POST request made
+    body = request.get_json(force=True) or {}
+    case_names: list[str] = body.get("case_names", [])
+
+    if not case_names:
+        return jsonify({"message": "No case names provided", "status": "error"}), 400
+
+    results = []
+    csv_rows: list[dict] = []
+
+    try:
+        for case_name in case_names:
+            case_result: dict = {"case_name": case_name}
+            raw_path = paths.download / f"{case_name}_raw.nii.gz"
+
+            for side, left_side in (("left", True), ("right", False)):
+                eye_data, csv_row = _process_eye(
+                    paths, case_name, side, left_side, raw_path
+                )
+                case_result[side] = eye_data
+                if csv_row is not None:
+                    csv_rows.append(csv_row)
+
+            results.append(case_result)
+
+    except Exception as error:
+        current_app.logger.exception("Error during biomarker extraction")
+        return jsonify({
+            "message": f"Extraction failed: {error}",
+            "status": "error",
+        }), 500
+
+    if csv_rows:
+        csv_path = paths.download / "biomarkers.csv"
+        with open(csv_path, "w", newline="") as file:
+            writer = csv.DictWriter(file, fieldnames=csv_rows[0].keys())
+            writer.writeheader()
+            writer.writerows(csv_rows)
+
+    # regenerate the ZIP to include the csv and images
+    zip_folder(paths.download, paths.output_zip)
+
+    return jsonify({
+        "message": "Biomarkers extracted",
+        "status": "success",
+        "results": results,
+    }), 200
