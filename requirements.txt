@@ -6,6 +6,9 @@ dicom2nifti
 nibabel
 numpy
 scikit-learn
+scikit-image
+scipy
+matplotlib
 Pillow
 gunicorn
 py7zr
