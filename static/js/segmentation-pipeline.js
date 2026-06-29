@@ -93,7 +93,7 @@ function renderFileList() {
     if (selection.length > 0) {
         const cases = currentCaseCount();
         title.style.display = 'block';
-        title.textContent = `${selection.length} file${selection.length > 1 ? 's' : ''} — ${cases} / ${MAX_CASES} cases`;
+        title.innerHTML = `<span class="badge bg-secondary me-1">${selection.length} file${selection.length > 1 ? 's' : ''}</span> <span class="badge bg-sucess">${cases} / ${MAX_CASES} cases</span>`;
         buildFileList(fileList, selection, unselectFile, [], selectionCaseInfoMap);
     } else {
         title.style.display = 'none';
@@ -335,21 +335,25 @@ function extractBiomarkers() {
 function buildResultFileList(results) {
     const dropdowns = [
         {
-            label: 'segmentation results',
+            label: 'segmentation',
             onOpen: async (result, idx, row) => {
                 row.innerHTML = `
                     <div style="display:flex; width:100%; gap:8px; align-items:flex-start;">
                         <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:4px;">
-                            <small class="text-muted" style="margin-left: 2px;">Both eyes overlaid on original image</small>
+                            <span class="text-muted small fw-semibold" style="margin-left:2px;">
+                                Both eyes overlaid on original image
+                            </span>
                             <canvas id="niivue-overlay-${idx}" style="display:block; width:100%; aspect-ratio:1/1;"></canvas>
                         </div>
                         <div id="info-panel-${idx}" style="flex:0 0 20%; overflow-y:auto; border-left:2px solid #33961d; border-right:2px solid #33961d; padding:0 8px;">
                             ${renderSegmentationLegend()}
-                            <div style="margin-top:8px; font-size:0.78em; color:#212529;"><strong style="margin-bottom:5px;">Metadata</strong></div>
+                            <div style="margin-top:8px; font-size:0.78em;"><strong style="margin-bottom:5px;">Metadata</strong></div>
                             <div>${renderMetadataTable(result.metadata)}</div>
                         </div>
                         <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:4px;">
-                            <small class="text-muted" style="margin-left: 2px;">Both eyes only</small>
+                            <span class="text-muted small fw-semibold" style="margin-left:2px;">
+                                Both eyes only
+                            </span>
                             <canvas id="niivue-eyes-${idx}" style="display:block; width:100%; aspect-ratio:1/1;"></canvas>
                         </div>
                     </div>`;
