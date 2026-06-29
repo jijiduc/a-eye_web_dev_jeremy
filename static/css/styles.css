@@ -2,36 +2,93 @@
    CSS Custom Properties — light mode defaults
    ============================================================ */
 :root {
+    /* Layout & text */
     --bg-color: #ffffff;
     --text-color: #212529;
-    --card-bg: #c1e1be;
-    --title-bg: #ffffff;
-    --faq-odd-bg: #c1e1be;
-    --faq-even-bg: #ffffff;
-    --border-color: #ddd;
     --muted-text: #6c757d;
+    --border-color: #ddd;
+    --title-bg: #ffffff;
+
+    /* Links & accents */
     --link-color: #007849;
     --stat-value-color: green;
+    --info-panel-border: #33961d;
+    --summary-link-color: #0867c7;
+    --swatch-border: #999;
+
+    /* Cards, lists, progress */
+    --card-bg: #c1e1be;
     --list-item-bg: #ffffff;
     --list-item-border: #dee2e6;
     --progress-bg: #e9ecef;
+    --case-label-bg: #f0f4f8;
+
+    /* FAQ */
+    --faq-odd-bg: #c1e1be;
+    --faq-even-bg: #ffffff;
+
+    /* Buttons */
+    --btn-secondary-bg: #6c757d;
+    --btn-secondary-border: #6c757d;
 }
 
 /* Dark mode overrides */
 [data-theme="dark"] {
+    /* Layout & text */
     --bg-color: #1a1a1a;
     --text-color: #e0e0e0;
-    --card-bg: #1e3a2a;
-    --title-bg: #252525;
-    --faq-odd-bg: #1e3a2a;
-    --faq-even-bg: #2a2a2a;
-    --border-color: #444;
     --muted-text: #adb5bd;
+    --border-color: #444;
+    --title-bg: #252525;
+
+    /* Links & accents */
     --link-color: #49a93e;
     --stat-value-color: #49a93e;
+    --info-panel-border: #49a93e;
+    --summary-link-color: #4dabf7;
+    --swatch-border: #666;
+
+    /* Cards, lists, progress */
+    --card-bg: #1e3a2a;
     --list-item-bg: #2a2a2a;
     --list-item-border: #444;
     --progress-bg: #333333;
+    --case-label-bg: #333d44;
+
+    /* FAQ */
+    --faq-odd-bg: #1e3a2a;
+    --faq-even-bg: #2a2a2a;
+
+    /* Buttons */
+    --btn-secondary-bg: #555555;
+    --btn-secondary-border: #555555;
+
+    /* Bootstrap body */
+    --bs-body-color: #e0e0e0;
+    --bs-body-bg: #1a1a1a;
+    --bs-secondary-color: #adb5bd;
+    --bs-border-color: #444;
+    --bs-border-color-translucent: rgba(255, 255, 255, 0.15);
+
+    /* Bootstrap alerts */
+    --bs-success-bg-subtle: #0d2818;
+    --bs-success-text-emphasis: #75b798;
+    --bs-success-border-subtle: #1a4731;
+    --bs-warning-bg-subtle: #98730d;
+    --bs-warning-text-emphasis: #ffda6a;
+    --bs-warning-border-subtle: #a78a36;
+    --bs-dark-bg-subtle: #2a2a2a;
+    --bs-dark-text-emphasis: #dee2e6;
+    --bs-dark-border-subtle: #444;
+
+    /* Bootstrap cards */
+    --bs-card-bg: #252525;
+    --bs-card-cap-bg: #1e3a2a;
+    --bs-card-border-color: #444;
+
+    /* Bootstrap badge / bg-* utility colors (RGB form used by Bootstrap internally) */
+    --bs-secondary-rgb: 85, 85, 85;
+    --bs-success-rgb: 39, 174, 96;
 }
 
 /* ============================================================
@@ -356,8 +413,8 @@ a:hover {
 }
 
 .btn-secondary {
-    background-color: #6c757d;
-    border-color: #6c757d;
+    background-color: var(--btn-secondary-bg);
+    border-color: var(--btn-secondary-border);
     color: white;
 }
 
@@ -395,11 +452,18 @@ details[open] .summary-chevron {
 .fl-case-label {
     padding-left: 2.5rem !important;
     font-size: 0.875em;
-    background-color: #f0f4f8 !important;
+    background-color: var(--case-label-bg) !important;
 }
 
-[data-theme="dark"] .fl-case-label {
-    background-color: #333d44 !important;
+[data-theme="dark"] .table {
+    --bs-table-bg: var(--list-item-bg);
+    --bs-table-color: var(--text-color);
+    --bs-table-striped-bg: #242424;
+    --bs-table-striped-color: var(--text-color);
+    --bs-table-hover-bg: #383838;
+    --bs-table-hover-color: var(--text-color);
+    --bs-table-border-color: var(--border-color);
+    color: var(--text-color);
 }
 
 .progress {
@@ -442,17 +506,12 @@ details[open] .summary-chevron {
 /* ============================================================
    Dark mode — Bootstrap component overrides
    ============================================================ */
-[data-theme="dark"] .text-muted {
+.text-muted {
     color: var(--muted-text) !important;
 }
 
-[data-theme="dark"] a {
-    color: var(--link-color);
-}
-
-[data-theme="dark"] .btn-secondary {
-    background-color: #555555;
-    border-color: #555555;
+[data-theme="dark"] .btn-close {
+    filter: invert(1);
 }
 
 /* ============================================================

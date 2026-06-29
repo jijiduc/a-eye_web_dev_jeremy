@@ -37,7 +37,7 @@ function renderSegmentationLegend() {
     const labels = window.EYE_LABELS || [];
     const legends = labels.slice(1).map(({ name, color }) =>
         `<div style="display: flex; align-items: center; gap: 6px; padding: 2px 0;">
-            <span style="width: 12px; height: 12px; background: rgb(${color}); border: 1px solid #aaa; border-radius: 2px;"></span>
+            <span style="width: 12px; height: 12px; background: rgb(${color}); border: 1px solid var(--swatch-border); border-radius: 2px;"></span>
             <span>${name}</span>
         </div>`
     ).join('');
@@ -159,7 +159,7 @@ function renderVolumetryTable(sideData) {
         const display = val !== null ? val.toFixed(1) + ' mm³' : '—';
         const label = labels.find(label => label.name === displayName);
         const dot = label
-            ? `<span style="display:inline-block; width:10px; height:10px; background:rgb(${label.color}); border:1px solid #aaa; border-radius:2px; margin-right:4px;"></span>`
+            ? `<span style="display:inline-block; width:10px; height:10px; background:rgb(${label.color}); border:1px solid var(--swatch-border); border-radius:2px; margin-right:4px;"></span>`
             : '';
         return `<tr>
             <td style="white-space:nowrap; font-weight:500; width:60%;">${dot}${displayName}</td>
@@ -178,7 +178,7 @@ function renderVolumetryTable(sideData) {
 function renderBiomarkersDropdownContent(results) {
     return `<div>
     <details class="mb-3" style="font-size:0.82em;">
-        <summary style="cursor: pointer; font-weight: 600; list-style: none; display: flex; align-items: center; gap: 6px; color:#0867c7;">
+        <summary style="cursor: pointer; font-weight: 600; list-style: none; display: flex; align-items: center; gap: 6px; color:var(--summary-link-color);">
             <i class="fa-solid fa-circle-info"></i> How are biomarkers computed?
         </summary>
         <p class="mt-2 mb-1" style="line-height:1.5;"><strong>Axial length</strong><br>
