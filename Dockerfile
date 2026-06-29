@@ -17,9 +17,11 @@ RUN mkdir -p /root/.ssh && chmod 700 /root/.ssh
 # optimise build time by enhance caching usage
 COPY static/ ./static/
 COPY templates/ ./templates/
+COPY jobfiles/ ./jobfiles/
 
 COPY module/ ./module/
 COPY *.py .
+COPY LICENSE.txt .
 
 # Set environment variables
 ENV FLASK_DEBUG=1
