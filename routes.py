@@ -390,15 +390,6 @@ def segment() -> tuple[Response, int]:
 
     _cancel_job(paths)
 
-    def store_job_id(job_id: str) -> None:
-        """Store the job id
-
-        Args:
-            job_id (str): Slurm job ID
-        """
-        paths.active_job_file.parent.mkdir(parents=True, exist_ok=True)
-        paths.active_job_file.write_text(job_id)
-
     # keeping the original dimension of the file
     original_shapes: dict[str, tuple] = {}
 
@@ -421,7 +412,7 @@ def segment() -> tuple[Response, int]:
     copy_folder_to_hpc(str(paths.aux_input), paths.hpc_base_input)
 
     try:
-        getSegmentation(user_email, paths, ongoing_job_id=store_job_id)
+        getSegmentation(user_email, paths)
     except Exception as error:
         paths.active_job_file.unlink(missing_ok=True)
         print_and_log(f"[A-eye] Segmentation failed: {error}", "error", LOGS_FOLDER)

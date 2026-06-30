@@ -25,7 +25,6 @@ from utils import (
 def getSegmentation(
     user_email: str,
     paths: UserPaths,
-    ongoing_job_id: Callable[[str], None] | None = None,
 ) -> str:
     """Main function : performs inference on input folder and saves output in output folder
 
@@ -62,14 +61,14 @@ def getSegmentation(
     # Getting the job ID at submission
     job_id: str = ""
     id_value: str = process.stdout.readline()
-    found: bool = re.search(r"Submitted batch job (\d+)", id_value)
+    found: re.Match | None = re.search(r"Submitted batch job (\d+)", id_value)
 
     if found:
         job_id = found.group(1)
         print_and_log(f"[A-eye] Slurm job ID = {job_id}", "info", LOGS_FOLDER)
-        if ongoing_job_id:
-            ongoing_job_id(job_id)
-
+        if job_id:
+            paths.active_job_file.parent.mkdir(parents=True, exist_ok=True)
+            paths.active_job_file.write_text(job_id)
     try:
         _, sub_sdterr = process.communicate()
         if process.returncode != 0:
