@@ -43,6 +43,12 @@ NOT_TO_OUTPUT = [
     "prediction_time.txt",
     "*_cropped.nii.gz",
 ]
+# Adapted from (open-webui-graphiti-memory, Skyzi000, accessed 01.06.2026)
+# Line 472
+# URL: https://github.com/Skyzi000/open-webui-graphiti-memory/blob/main/functions/action/add_graphiti_memory_action.py 
+def clean_email(email: str) -> str:
+    """Clean the email by replacing @ and ."""
+    return  email.replace("@", "_at_").replace(".", "_")
 
 def _header_to_dict(
     header: nibabel.nifti1.Nifti1Header,
@@ -213,8 +219,7 @@ def get_user_paths(user_email: str) -> UserPaths:
     Returns:
         UserPaths: Dataclass holding the different path relative to the user
     """
-
-    cleaned_email: str = user_email.replace("@", "_at_").replace(".", "_")
+    cleaned_email: str = clean_email(user_email)
     base_path: Path = Path("./nnUNet/nnUNet_inference") / cleaned_email
 
     return UserPaths(
@@ -291,7 +296,7 @@ def convert_country_to_iso3(country_code):
 def copy_segmentation_data(user_email, input, output):
     zurich_time = datetime.now(ZoneInfo("Europe/Zurich"))
     timestamp = zurich_time.strftime("%Y%m%d_%H%M")
-    user_reference_email = user_email.replace("@", "_at_").replace(".", "_")
+    user_reference_email = clean_email(user_email)
     dest_dir = f"{DATA_FOLDER}/{user_reference_email}_{timestamp}"
 
     os.makedirs(dest_dir, exist_ok=True)
@@ -824,7 +829,7 @@ def modify_jobfile(
     """Modify the jobfile template with user-specific information"""
 
     # Make the email user_reference for paths
-    user_reference_email = user_email.replace("@", "_at_").replace(".", "_")
+    user_reference_email = clean_email(user_email)
 
     # Base results dir
     base_results_dir = "/home/jaime.barrancohernandez/results/nnunet"

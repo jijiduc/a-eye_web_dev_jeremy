@@ -8,6 +8,7 @@ from config import JOBFILE_HPC, JOBFILE_TEMPLATE, LOGS_FOLDER, OUTPUT_HPC, SSH_U
 from models import UserPaths
 from utils import (
     cancel_slurm_job,
+    clean_email,
     copy_file_to_hpc,
     copy_files_from_hpc,
     copy_folder,
@@ -37,7 +38,7 @@ def getSegmentation(
     """
     # We would need this for copying the resulting files from the HPC to the local machine
     # Make the email safe for paths
-    safe_email = user_email.replace("@", "_at_").replace(".", "_")
+    safe_email = clean_email(user_email)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     jobfile = paths.jobfile
