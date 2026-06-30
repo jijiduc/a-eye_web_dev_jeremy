@@ -190,7 +190,7 @@ function uploadFiles() {
             bar.classList.add('bg-danger');
             bar.textContent = 'Upload failed';
 
-            alert(error.message || 'An error occurred while uploading files.');
+            alert(error.message);
             console.error('Error:', error);
         });
 }
@@ -254,7 +254,7 @@ function segmentFiles() {
             bar.classList.add('bg-danger');
             bar.textContent = 'segmentation failed';
 
-            alert(error.message || 'An error occurred during segmentation.');
+            alert(error.message);
             console.error('Error:', error);
         });
 }
@@ -323,7 +323,7 @@ function extractBiomarkers() {
 
             document.getElementById('display-file-list').style.display = '';
 
-            alert(error.message || 'An error occurred during extraction.');
+            alert(error.message);
             console.error('Error:', error);
         });
 }
