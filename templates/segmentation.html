@@ -10,11 +10,11 @@
         <h2 class="main-title mt-3">
             Segmentation Tool
         </h2>
-        <hr class="mx-auto mt-2 mb-0" style="width: 7rem; border-top: 2px solid #007849; opacity: 1;">
+        <hr class="mx-auto mt-2 mb-0" style="width: 7rem; border-top: 2px solid #0B79C2; opacity: 1;">
     </div>
 
     <details class="mt-4">
-        <summary style="cursor: pointer; list-style: none; display: flex; align-items: center; gap: 4px; color: #007849; font-weight: 600;">
+        <summary style="cursor: pointer; list-style: none; display: flex; align-items: center; gap: 4px; color: #0B79C2; font-weight: 600;">
             <i class="fa-solid fa-chevron-right summary-chevron"></i>
             About the segmentation tool
         </summary>
@@ -74,51 +74,51 @@
                 <input type="file" id="file-input" style="display: none;" multiple onchange="onSelectionFilter()">
                 <button type="button" class="btn btn-success btn-lg btn-block" id="select-file-button"
                     onclick="document.getElementById('file-input').click();">
-                    <i class="fa-solid fa-mouse-pointer"></i> selection
+                    <i class="fa-solid fa-mouse-pointer"></i> Select
                 </button>
-                 <small class="text-muted d-block mt-2">1. select cases to process</small>
+                 <small class="text-muted d-block mt-2">1. Select cases to process</small>
             </form>
         </div>
         <div class="col">
             <form id="upload-form" method="post" enctype="multipart/form-data">
                 <button type="button" class="btn btn-secondary btn-lg btn-block" id="upload-button"
                     onclick="uploadFiles()" disabled>
-                    <i class="fa-solid fa-upload"></i> upload
+                    <i class="fa-solid fa-upload"></i> Upload
                 </button>
-                <small class="text-muted d-block mt-2">2. upload data to our server</small>
+                <small class="text-muted d-block mt-2">2. Upload data to the server</small>
             </form>
         </div>
         <div class="col">
             <form id="segment-form" method="post">
                 <button type="button" class="btn btn-secondary btn-lg btn-block" id="segment-button"
                     onclick="segmentFiles()" disabled>
-                    <i class="fa-solid fa-scissors"></i> segmentation
+                    <i class="fa-solid fa-scissors"></i> Segment
                 </button>
-                <small class="text-muted d-block mt-2">3. segment the cases</small>
+                <small class="text-muted d-block mt-2">3. Run segmentation</small>
             </form>
         </div>
         <div class="col">
             <form id="biomarkers-form">
                 <button type="button" class="btn btn-secondary btn-lg btn-block" id="biomarkers-button"
                     onclick="extractBiomarkers()" disabled>
-                    <i class="fa-solid fa-gear"></i> biomarkers
+                    <i class="fa-solid fa-gear"></i> Biomarkers
                 </button>
-                <small class="text-muted d-block mt-2">4. extract biomarkers</small>
+                <small class="text-muted d-block mt-2">4. Extract biomarkers</small>
             </form>
         </div>
         <div class="col">
             <form id="download-form" method="get" action="/download">
                 <button type="button" id="download-button" class="btn btn-secondary btn-lg btn-block" disabled>
-                    <i class="fa-solid fa-download"></i> download
+                    <i class="fa-solid fa-download"></i> Download
                 </button>
-                <small class="text-muted d-block mt-2">5. download results</small>
+                <small class="text-muted d-block mt-2">5. Download results</small>
             </form>
         </div>
         <div class="col">
             <button type="button" class="btn btn-info btn-lg btn-block" onclick="window.location.reload()">
-                <i class="fa-solid fa-arrow-rotate-right"></i> reset
+                <i class="fa-solid fa-arrow-rotate-right"></i> Reset
             </button>
-            <small class="text-muted d-block mt-2">reset the process</small>
+            <small class="text-muted d-block mt-2">Reset the process</small>
         </div>
     </div>
 
