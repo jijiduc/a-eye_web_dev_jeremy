@@ -1,5 +1,6 @@
 /**
  * JS worker for inspecting .zip/.7z archive contents in the counting cases process.
+ * Adapted from https://github.com/GMH-Code/JS7
  */
 
 importScripts('/static/js/js7z/js7z.js');
@@ -20,12 +21,12 @@ self.onmessage = async function (event) {
             self.postMessage({ id, paths: parsePaths(unzipped) });
         } else {
             // error handling
-             self.postMessage({ id, error: '[js7z] Error during archive unzipping...' });
+            self.postMessage({ id, error: '[js7z] Error during archive unzipping...' });
         }
     };
     js7z.onAbort = (cause) => {
-      self.postMessage({ id, error: `[js7z] Process aborted: ${cause}` });
-  };
+        self.postMessage({ id, error: `[js7z] Process aborted: ${cause}` });
+    };
 
 
     // Using Emscripten as part of js7z, writing the files in
