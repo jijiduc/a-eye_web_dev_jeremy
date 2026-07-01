@@ -1,12 +1,123 @@
 {% extends "base.html" %}
 
-{% block title %}Welcome{% endblock %}
+{% block title %}A-Eye — Automated Eye MRI Segmentation{% endblock %}
+
+{% block body_container %}p-0{% endblock %}
 
 {% block content %}
-<div class="animated-background"></div>
-<div class="welcome-container">
-    <img src="{{ url_for('static', filename='images/A-eye_logo_square.png') }}" alt="A-Eye Logo">
-    <h1>A-Eye Web Platform</h1>
-    <p>Automated 3D MRI Segmentation of Human Eye Structures</p>
-</div>
+<!-- Hero -->
+<section class="welcome-hero">
+    <div class="welcome-hero-inner">
+        <img src="{{ url_for('static', filename='images/A-eye_logo_square.png') }}" alt="A-Eye Logo" class="welcome-logo">
+        <h1 class="welcome-title">A-Eye Web Platform</h1>
+        <p class="welcome-tagline">Automated 3D MRI Segmentation of Human Eye Structures</p>
+        <p class="welcome-description">
+            Upload a T1-weighted orbital MRI and receive fully-automated segmentation masks for
+            <strong>9 structures</strong> of the eye, together with quantitative biomarkers —
+            axial length and volumetry — delivered as a ready-to-use <code>.zip</code> archive.
+        </p>
+        <div class="welcome-cta-row">
+            <a href="{{ url_for('routes.segmentation') }}" class="welcome-btn-primary">
+                <i class="fa-solid fa-brain"></i> Start Segmentation
+            </a>
+            <a href="{{ url_for('routes.faq') }}" class="welcome-btn-secondary">
+                <i class="fa-solid fa-circle-question"></i> FAQ
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Stats bar -->
+<section class="welcome-stats-bar">
+    <div class="welcome-stats-inner">
+        <div class="welcome-stat">
+            <span class="welcome-stat-value">{{ cases_processed }}</span>
+            <span class="welcome-stat-label">MRI cases processed</span>
+        </div>
+        <div class="welcome-stat-divider"></div>
+        <div class="welcome-stat">
+            <span class="welcome-stat-value">9</span>
+            <span class="welcome-stat-label">eye structures segmented</span>
+        </div>
+        <div class="welcome-stat-divider"></div>
+        <div class="welcome-stat">
+            <span class="welcome-stat-value">1,245</span>
+            <span class="welcome-stat-label">subjects in training cohort</span>
+        </div>
+    </div>
+</section>
+
+<!-- What it segments -->
+<section class="welcome-section welcome-section-light">
+    <div class="welcome-section-inner">
+        <h2 class="welcome-section-title">What does A-Eye segment?</h2>
+        <p class="welcome-section-lead">
+            The pipeline is based on nnU-Net and was trained on a large-scale, multi-centre cohort of
+            healthy adult subjects. It provides segmentation masks and quantitative biomarkers for the following structures:
+        </p>
+        <div class="welcome-structures-grid">
+            {% set structures = [
+                ('1.png', 'Lens',             'The crystalline lens'),
+                ('2.png', 'Globe',            'The full eyeball volume'),
+                ('3.png', 'Optic Nerve',      'The optic nerve trunk'),
+                ('4.png', 'Intraconal Fat',   'Fat inside the muscle cone'),
+                ('5.png', 'Extraconal Fat',   'Fat outside the muscle cone'),
+                ('6.png', 'Lateral Rectus',   'Lateral rectus muscle'),
+                ('7.png', 'Medial Rectus',    'Medial rectus muscle'),
+                ('8.png', 'Inferior Rectus',  'Inferior rectus muscle'),
+                ('9.png', 'Superior Rectus',  'Superior rectus muscle'),
+            ] %}
+            {% for img, name, desc in structures %}
+            <div class="welcome-structure-card">
+                <img src="{{ url_for('static', filename='images/eye_structures/' ~ img) }}"
+                     alt="{{ name }}"
+                     class="welcome-structure-img">
+                <span class="welcome-structure-name">{{ name }}</span>
+                <span class="welcome-structure-desc">{{ desc }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Pipeline -->
+<section class="welcome-section welcome-section-dark">
+    <div class="welcome-section-inner">
+        <h2 class="welcome-section-title welcome-section-title-light">Pipeline Overview</h2>
+        <p class="welcome-section-lead welcome-section-lead-light">
+            A-Eye uses nnU-Net, a self-configuring deep-learning framework for biomedical image segmentation.
+            The model was validated on 1,245 healthy adult subjects and achieves state-of-the-art performance
+            across all nine orbital structures.
+        </p>
+        <img src="{{ url_for('static', filename='images/pipeline_unet.png') }}"
+             alt="nnU-Net pipeline overview"
+             class="welcome-pipeline-img">
+    </div>
+</section>
+
+<!-- Accepted formats -->
+<section class="welcome-section welcome-section-light">
+    <div class="welcome-section-inner welcome-formats-grid">
+        <div class="welcome-format-block">
+            <h3 class="welcome-format-title"><i class="fa-solid fa-file-medical"></i> Accepted input formats</h3>
+            <ul class="welcome-format-list">
+                <li><code>.nii</code> — NIfTI image</li>
+                <li><code>.nii.gz</code> — compressed NIfTI</li>
+                <li><code>.zip</code> / <code>.7z</code> — archive of NIfTI or DICOM files</li>
+                <li><code>.dcm</code> — DICOM (inside an archive)</li>
+            </ul>
+            <p class="welcome-format-note">T1-weighted sequences only. Up to 5 cases per submission.</p>
+        </div>
+        <div class="welcome-format-block">
+            <h3 class="welcome-format-title"><i class="fa-solid fa-file-zipper"></i> What you get back</h3>
+            <ul class="welcome-format-list">
+                <li>Original input image (<code>_raw.nii.gz</code>)</li>
+                <li>Per-eye masks — left, right, merged (<code>.nii.gz</code>)</li>
+                <li>Axial length visualisations (<code>.png</code>)</li>
+                <li>Biomarkers summary table (<code>biomarkers.csv</code>)</li>
+            </ul>
+            <p class="welcome-format-note">All results packaged in a single <code>.zip</code> download.</p>
+        </div>
+    </div>
+</section>
 {% endblock %}
