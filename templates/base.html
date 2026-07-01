@@ -23,11 +23,22 @@
     <nav class="navbar navbar-expand-lg d-flex fixed-top custom-header">
         <div class="container d-flex justify-content-between align-items-center">
             <!-- Logo -->
-            <div class="logo_container d-flex align-items-center">
-                <a class="navbar-brand" href="{{ url_for('routes.welcome') }}">
-                    <img src="https://fondation-gelbert.ch/wp-content/uploads/2019/08/logo-entete.png"
-                        alt="Fondation Gelbert Logo"
-                        class="gelbert-logo">
+            <div class="logo_container d-flex align-items-center gap-2">
+                <a class="navbar-brand" href="{{ url_for('routes.welcome') }}" title="Home">
+                    <img src="{{ url_for('static', filename='images/A-eye_logo_square.png') }}"
+                        alt="A-Eye"
+                        class="aeye-nav-logo">
+                </a>
+                <div class="nav-logo-divider"></div>
+                <a href="https://cibm.ch" target="_blank" rel="noopener" title="CIBM — Center for Biomedical Imaging">
+                    <img src="{{ url_for('static', filename='images/partners/CIBM.png') }}"
+                        alt="CIBM Logo"
+                        class="partner-nav-logo">
+                </a>
+                <a href="https://www.hevs.ch/en/schools/school-of-engineering/" target="_blank" rel="noopener" title="HES-SO Valais-Wallis School of Engineering">
+                    <img src="{{ url_for('static', filename='images/partners/HES-SO_HEI.png') }}"
+                        alt="HES-SO School of Engineering Logo"
+                        class="partner-nav-logo">
                 </a>
             </div>
 

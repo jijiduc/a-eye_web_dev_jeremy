@@ -141,10 +141,14 @@ bp = Blueprint("routes", __name__)
 high_scale_nb_users = 100
 
 
-@bp.route("/")  # In flask, by default a route only answer to GET request.
-# Need to use the methods arguments of the route() decorator to handlie different/multiple HTTP methods.
+@bp.route("/")
 def welcome():
-    return render_template("welcomepage.html")
+    try:
+        cases_processed = get_cases_processed()
+    except Exception:
+        current_app.logger.exception("Could not read cases_processed from stats file")
+        cases_processed = 0
+    return render_template("welcomepage.html", cases_processed=cases_processed)
 
 
 @bp.route("/callback", methods=["GET", "POST"])
@@ -290,6 +294,8 @@ def segmentation():
     if "user" in session:
         user_email: str = session.get("user", {}).get("email", "unknown_user")
         _cancel_job(get_user_paths(user_email))
+        return render_template("segmentation.html")
+    if current_app.debug:
         return render_template("segmentation.html")
     return redirect(url_for("routes.login"))
 
