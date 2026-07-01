@@ -42,6 +42,7 @@ NOT_TO_OUTPUT = [
     "postprocessing.json",
     "prediction_time.txt",
     "*_cropped.nii.gz",
+    "*_raw.nii.gz",
 ]
 # Adapted from (open-webui-graphiti-memory, Skyzi000, accessed 01.06.2026)
 # Line 472
