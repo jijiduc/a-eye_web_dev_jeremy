@@ -1,3 +1,5 @@
+# Adapted from (quadrant_segmentation.ipynb, jaimebarran, accessed 26.05.2026)
+# URL: https://github.com/jaimebarran/a-eye_preprocessing/blob/main/Code/quadrant_segmentation.ipynb
 from pathlib import Path
 
 import nibabel as nib
