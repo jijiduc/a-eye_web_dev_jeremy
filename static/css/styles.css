@@ -729,7 +729,7 @@ details[open] .summary-chevron {
     background-color: var(--case-label-bg) !important;
 }
 
-[data-theme="dark"] .table {
+[data-theme="dark"] .styled-table {
     --bs-table-bg: var(--list-item-bg);
     --bs-table-color: var(--text-color);
     --bs-table-striped-bg: #242424;
@@ -739,7 +739,9 @@ details[open] .summary-chevron {
     --bs-table-border-color: var(--border-color);
     color: var(--text-color);
 }
-
+/* ============================================================
+   table
+   ============================================================ */
 /* Adapted from : https://dev.to/dcodeyt/creating-beautiful-html-tables-with-css-428l*/
 .styled-table {
     border-collapse: collapse;;
@@ -802,6 +804,26 @@ details[open] .summary-chevron {
 
 .progress-bar.bg-success {
     background-color: #E5007D !important;
+}
+/* ============================================================
+   segmentation legend
+   ============================================================ */
+.seg-legend-bloc{
+    display: flex;
+    align-items: center;
+    gap: 6px; 
+    padding:2px 0;
+}
+
+.seg-legend {
+    font-size: 0.8125em;
+}
+
+.seg-legend-swatch {
+    width: 12px;
+    height: 12px;
+    border: 1px solid var(--swatch-border);
+    border-radius: 2px;
 }
 
 /* ============================================================
@@ -1022,3 +1044,4 @@ details[open] .summary-chevron {
         padding: 0.55rem 0.75rem;
     }
 }
+

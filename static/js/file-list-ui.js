@@ -51,14 +51,15 @@ function renderMetadataTable(fields) {
 *   To render the legends of ROI after segmentation
 */
 function renderSegmentationLegend() {
-    const labels = window.EYE_LABELS || [];
-    const legends = labels.slice(1).map(({ name, color }) =>
-        `<div style="display: flex; align-items: center; gap: 6px; padding: 2px 0;">
-            <span style="width: 12px; height: 12px; background: rgb(${color}); border: 1px solid var(--swatch-border); border-radius: 2px;"></span>
+    const legends = window.EYE_LABELS.slice(1).map(({ name, color }) =>
+        `<div class="seg-legend-bloc">
+            <span class="seg-legend-swatch" style="background: rgb(${color})"></span>
             <span>${name}</span>
         </div>`
     ).join('');
-    return `<div style="font-size:0.8125em;"><strong>Labels of segmentation</strong>${legends}</div>`;
+    return `<div class="seg-legend">
+                <strong>Labels of segmentation</strong>${legends}
+            </div>`;
 }
 
 // Appends sub-rows for each case in a selected file
