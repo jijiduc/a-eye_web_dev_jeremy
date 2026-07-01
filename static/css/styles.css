@@ -762,6 +762,18 @@ details[open] .summary-chevron {
     padding: 8px 12px;
 }
 
+.styled-table td.label-cell {
+    white-space: nowrap;
+    font-weight: 500;
+    width: 60%;
+}
+
+.styled-table td.value-cell {
+    word-break: break-all;
+    width: 40%;
+}
+
+
 .styled-table td:first-child,
 .styled-table th:first-child{
     border-right: 1px solid var(--link-color);
