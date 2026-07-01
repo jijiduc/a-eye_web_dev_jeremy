@@ -52,7 +52,7 @@ async function onSelectionFilter() {
         onRejectionNotice(rejectedFileNames, rejectedReasons);
     }
     // to reset a previously selected input
-    document.getElementById('file-input').value='';
+    document.getElementById('file-input').value = '';
     renderFileList();
 }
 
@@ -214,7 +214,7 @@ function segmentFiles() {
     bar.classList.remove('bg-success', 'bg-danger');
     bar.classList.add('bg-primary');
     bar.textContent = 'segmentation in progress...';
-    
+
     const popup = new bootstrap.Modal(document.getElementById('segmentation-popup-notice'));
     popup.show();
 
@@ -380,13 +380,8 @@ function buildResultFileList(results) {
     buildFileList(document.getElementById('result-file-list'), results, null, dropdowns);
 }
 
-document.addEventListener('DOMContentLoaded', function () {
-    document.getElementById('download-button').addEventListener('click', function () {
-        const downloadUrl = this.getAttribute('data-download-url');
-        if (downloadUrl) {
-            window.location.href = downloadUrl;
-        } else {
-            alert('No file available for download. Please run segmentation first.');
-        }
-    });
+
+// add the click behaviour on the download button
+document.getElementById('download-button').addEventListener('click', function () {
+    window.location.href = this.getAttribute('data-download-url');
 });
