@@ -11,24 +11,41 @@ const VOLUME_LABELS = {
     vol_total: 'Total segmented volume',
 };
 
-/*
-* Make the extracted metadata table for display in file list
-*/
+/**
+ * Render the metadata table
+ * @param {string} fields - The key-values object containing the metadata
+ */
+
 function renderMetadataTable(fields) {
-    if (!fields || !Object.keys(fields).length)
-        return '<em class="text-muted p-2 d-block">No metadata available.</em>';
-    const rows = Object.entries(fields).map(([key, val]) => {
-        const display = Array.isArray(val) ? val.join(', ') : String(val);
-        return `<tr>
-            <td style="white-space:nowrap; font-weight:500; width:40%;">${key}</td>
-            <td style="word-break:break-all;">${display}</td>
-        </tr>`;
-    }).join('');
-    return `<table class="table table-bordered table-striped   mb-0" style="font-size:0.875em;">
-        <thead class="table-dark"><tr><th>Field</th><th>Value</th></tr></thead>
-        <tbody>${rows}</tbody>
+    // check that the fields dictionnary isn't empty
+    if (!Object.keys(fields).length) {
+        return `<p class="text-warning d-block"> Metadata not available...</p>`
+    }
+    let row=``;
+    for (const key in fields) {
+        const value = fields?.[key];
+        const cleanedValue = Array.isArray(value) ? value.join(', ') : String(value);
+
+        row += `
+            <tr>
+                <td>${key}</td>
+                <td>${cleanedValue}</td>
+            </tr>`;
+    }
+    return `
+    <table class="styled-table">
+        <thead>
+            <tr>
+                <th>Fields</th>
+                <th>Values</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${row}
+        </tbody>
     </table>`;
 }
+
 
 /*
 *   To render the legends of ROI after segmentation

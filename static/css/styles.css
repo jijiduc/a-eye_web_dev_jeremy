@@ -740,6 +740,50 @@ details[open] .summary-chevron {
     color: var(--text-color);
 }
 
+/* Adapted from : https://dev.to/dcodeyt/creating-beautiful-html-tables-with-css-428l*/
+.styled-table {
+    border-collapse: collapse;;
+    font-size: 0.875em;
+    min-width: 100%;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+}
+
+.styled-table thead tr {
+    background-color: var(--link-color);
+    color: #ffffff;
+    text-align: left;
+}
+
+.styled-table th,
+.styled-table td {
+    width: 50%;
+    padding: 8px 12px;
+}
+
+.styled-table td:first-child,
+.styled-table th:first-child{
+    border-right: 1px solid var(--link-color);
+}
+
+.styled-table tbody tr {
+    background-color: var(--list-item-bg);
+    color: var(--text-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.styled-table tbody tr:nth-of-type(even) {
+    background-color: var(--case-label-bg);
+}
+
+.styled-table tbody tr:last-of-type {
+    border-bottom: 2px solid var(--link-color);
+}
+
+.styled-table tbody tr.active-row {
+    font-weight: bold;
+    color: var(--link-color);
+}
+
 .progress {
     width: 100%;
     background-color: var(--progress-bg);
