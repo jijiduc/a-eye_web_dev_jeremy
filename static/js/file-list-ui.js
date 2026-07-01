@@ -240,7 +240,7 @@ function renderBiomarkersDropdownContent(results) {
                         <p class="text-muted small fw-semibold text-uppercase mb-2 text-center">
                             Axial length visualisation
                         </p>
-                        <img src="${data.axial_length_image}" class="img-fluid rounded" style="background:#000; width:100%;" alt="Axial length ${side} eye">
+                        <img src="${data.axial_length_image}" class="img-fluid rounded bg-black w-100" alt="Axial length ${side} eye">
                     </div>` : ''}
                     <div>
                         <p class="text-muted small fw-semibold text-uppercase mb-2 text-center">

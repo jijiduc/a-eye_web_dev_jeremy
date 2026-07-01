@@ -93,7 +93,7 @@ function renderFileList() {
     if (selection.length > 0) {
         const cases = currentCaseCount();
         title.style.display = 'block';
-        title.innerHTML = `<span class="badge me-1" style="background:var(--link-color);">${selection.length} file${selection.length > 1 ? 's' : ''}</span><span class="badge" style="background:var(--btn-secondary-bg);">${cases} / ${MAX_CASES} cases</span>`;
+        title.innerHTML = `<span class="badge me-1" style="background:var(--btn-secondary-bg);">${selection.length} file${selection.length > 1 ? 's' : ''}</span><span class="badge" style="background:var(--link-color);">${cases} / ${MAX_CASES} cases</span>`;
         buildFileList(fileList, selection, unselectFile, [], selectionCaseInfoMap);
     } else {
         title.style.display = 'none';
