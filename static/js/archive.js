@@ -1,5 +1,5 @@
 let archiveWorker = null;
-
+// adapted from https://byte-explorer.medium.com/promise-practice-of-web-worker-8c713d1c0754, accessed on 16.06.2026
 // Listing the files in a .zip/.7z via worker
 function listArchiveEntries(file) {
     return new Promise((resolve, reject) => {
