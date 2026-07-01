@@ -28,8 +28,8 @@ function renderMetadataTable(fields) {
 
         row += `
             <tr>
-                <td>${key}</td>
-                <td>${cleanedValue}</td>
+                <td class="label-cell">${key}</td>
+                <td class="value-cell">${cleanedValue}</td>
             </tr>`;
     }
     return `
@@ -157,12 +157,12 @@ function renderAxialLengthTable(sideData) {
     ].map(([label, value, unit]) => {
         const display = value !== null ? value.toFixed(2) + ' ' + unit : '—';
         return `<tr>
-            <td style="white-space:nowrap; font-weight:500; width:60%;">${label}</td>
-            <td style="word-break:break-all;">${display}</td>
+            <td class="label-cell">${label}</td>
+            <td class="value-cell">${display}</td>
         </tr>`;
     }).join('');
-    return `<table class="table table-bordered table-striped   mb-0" style="font-size:0.875em;">
-        <thead class="table-dark"><tr><th>Measure</th><th>Value</th></tr></thead>
+    return `<table class="styled-table">
+        <thead><tr><th>Measure</th><th>Value</th></tr></thead>
         <tbody>${rows}</tbody>
     </table>`;
 }
@@ -180,12 +180,12 @@ function renderVolumetryTable(sideData) {
             ? `<span style="display:inline-block; width:10px; height:10px; background:rgb(${label.color}); border:1px solid var(--swatch-border); border-radius:2px; margin-right:4px;"></span>`
             : '';
         return `<tr>
-            <td style="white-space:nowrap; font-weight:500; width:60%;">${dot}${displayName}</td>
-            <td style="word-break:break-all;">${display}</td>
+            <td class="label-cell">${dot}${displayName}</td>
+            <td class="value-cell">${display}</td>
         </tr>`;
     }).join('');
-    return `<table class="table table-bordered table-striped   mb-0" style="font-size:0.875em;">
-        <thead class="table-dark"><tr><th>Region</th><th>Volume</th></tr></thead>
+    return `<table class="styled-table">
+        <thead><tr><th>Region</th><th>Volume</th></tr></thead>
         <tbody>${rows}</tbody>
     </table>`;
 }
