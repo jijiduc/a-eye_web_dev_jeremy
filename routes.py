@@ -469,35 +469,22 @@ def segment() -> tuple[Response, int]:
 
     # 4. add result file and metadata
     result: list = []
-    try:
-        for case_name in sorted(original_shapes.keys()):
-            # extract_nifti_metadata provide results in a dict : [filename : metadata]
-            input_metadata_dict = extract_nifti_metadata(
-                str(paths.download / f"{case_name}_raw.nii.gz")
-            )
-            input_metadata = input_metadata_dict.get(f"{case_name}_raw.nii", {})
 
-            result.append({
-                "name": case_name,
-                "input_name": f"{case_name}_raw.nii.gz",
-                "left_name": f"{case_name}_left.nii.gz",
-                "right_name": f"{case_name}_right.nii.gz",
-                "both_name": f"{case_name}_both.nii.gz",
-                "metadata": input_metadata,
-            })
-
-    except FileNotFoundError as error:
-        current_app.logger.exception(
-            "Missing input file while collecting segmentation results"
+    for case_name in sorted(original_shapes.keys()):
+        # extract_nifti_metadata provide results in a dict : [filename : metadata]
+        input_metadata_dict = extract_nifti_metadata(
+            str(paths.download / f"{case_name}_raw.nii.gz")
         )
-        return jsonify({
-            "message": f"Segmentation completed but an input file was missing: {error}"
-        }), 500
-    except Exception as error:
-        current_app.logger.exception("Error collecting segmentation results")
-        return jsonify({
-            "message": f"Segmentation completed but results could not be collected: {error}"
-        }), 500
+        input_metadata = input_metadata_dict.get(f"{case_name}_raw.nii", {})
+
+        result.append({
+            "name": case_name,
+            "input_name": f"{case_name}_raw.nii.gz",
+            "left_name": f"{case_name}_left.nii.gz",
+            "right_name": f"{case_name}_right.nii.gz",
+            "both_name": f"{case_name}_both.nii.gz",
+            "metadata": input_metadata,
+        })
 
     return jsonify({
         "message": "Segmentation completed",
