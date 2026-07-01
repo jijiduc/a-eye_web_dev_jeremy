@@ -1,3 +1,5 @@
+# Adapted from (extract_biometrics.ipynb, jaimebarran, accessed 26.05.2026)
+# URL: https://github.com/jaimebarran/a-eye_segmentation/blob/main/deep_learning/3D_multilabel/extract_biometrics.ipynb
 import nibabel as nib
 import numpy as np
 import numpy.typing as npt
