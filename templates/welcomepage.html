@@ -20,8 +20,63 @@
             <a href="{{ url_for('routes.segmentation') }}" class="welcome-btn-primary">
                 <i class="fa-solid fa-eye"></i> Start Segmentation
             </a>
+            <div class="dropdown welcome-license-dropdown">
+                <button class="welcome-btn-secondary dropdown-toggle" type="button" id="welcomeLicenseDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fa-solid fa-file-contract"></i> License
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="welcomeLicenseDropdown">
+                    <li>
+                        <a class="dropdown-item" href="{{ url_for('static', filename='LICENSE.txt') }}" target="_blank" rel="noopener">
+                            <i class="fa-solid fa-eye"></i> View license
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="{{ url_for('static', filename='LICENSE.txt') }}" download>
+                            <i class="fa-solid fa-download"></i> Download license (.txt)
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <div class="dropdown welcome-downloads-dropdown">
+                <button class="welcome-btn-secondary dropdown-toggle" type="button" id="welcomeDownloadsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fa-solid fa-download"></i> Downloads
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="welcomeDownloadsDropdown">
+                    <li>
+                        <a class="dropdown-item" href="https://doi.org/10.5281/zenodo.13325369" target="_blank" rel="noopener">
+                            <i class="fa-solid fa-database"></i> Eye atlases &amp; model weights (Zenodo)
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="https://hub.docker.com/repository/docker/jaimebarran/fw_gear_aeye/tags/0.0.1" target="_blank" rel="noopener">
+                            <i class="fa-brands fa-docker"></i> Docker image (Docker Hub)
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="#run-it-yourself">
+                            <i class="fa-solid fa-terminal"></i> Docker usage instructions
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="https://github.com/jaimebarran/a-eye" target="_blank" rel="noopener">
+                            <i class="fa-brands fa-github"></i> Source code (GitHub)
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0352257&amp;type=printable" target="_blank" rel="noopener">
+                            <i class="fa-solid fa-file-pdf"></i> Paper (PDF)
+                        </a>
+                    </li>
+                </ul>
+            </div>
             <a href="{{ url_for('routes.faq') }}" class="welcome-btn-secondary">
                 <i class="fa-solid fa-circle-question"></i> FAQ
+            </a>
+            <a href="#cite-this-work" class="welcome-btn-secondary">
+                <i class="fa-solid fa-quote-left"></i> Cite this work
+            </a>
+            <a href="https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0352257" target="_blank" rel="noopener" class="welcome-btn-secondary">
+                <i class="fa-solid fa-file-lines"></i> Read the paper
             </a>
         </div>
     </div>
@@ -115,8 +170,100 @@
                 <li>Axial length visualisations (<code>.png</code>)</li>
                 <li>Biomarkers summary table (<code>biomarkers.csv</code>)</li>
             </ul>
-            <p class="welcome-format-note">All results packaged in a single <code>.zip</code> download.</p>
+            <p class="welcome-format-note">All results packaged in a single <code>.zip</code> download, together with the <a href="{{ url_for('static', filename='LICENSE.txt') }}" download>license agreement</a>.</p>
         </div>
+    </div>
+</section>
+
+<!-- Citation -->
+<section id="cite-this-work" class="welcome-section welcome-section-dark">
+    <div class="welcome-section-inner">
+        <h2 class="welcome-section-title welcome-section-title-light"><i class="fa-solid fa-quote-left"></i> Cite this work</h2>
+        <p class="welcome-section-lead welcome-section-lead-light">
+            If A-Eye contributes to your research, please cite the associated publication and dataset:
+        </p>
+        <blockquote class="welcome-citation">
+            Jaime Barranco, Adrian Luyken, Hamza Kebiri, Philipp Stachs, Pedro M. Gordaliza, Oscar Esteban,
+            Yasser Aleman, Raphael Sznitman, Oliver Stachs, Sönke Langner, Benedetta Franceschiello, Meritxell Bach Cuadra.
+            A-eye: Automated 3D MRI Segmentation and Morphometric Feature Extraction for Eye and Orbit Atlas Construction.
+            <em>PLOS ONE</em>.
+            <a href="https://doi.org/10.1371/journal.pone.0352257" target="_blank" rel="noopener">https://doi.org/10.1371/journal.pone.0352257</a>
+        </blockquote>
+        <blockquote class="welcome-citation">
+            Barranco J, Luyken A, Stachs P, Esteban O, Aleman-Gomez Y, Stachs O, et al. MR-Eye atlas: a large-scale
+            atlas of the eye based on T1-weighted MR imaging [dataset]. Zenodo; 2024.
+            <a href="https://doi.org/10.5281/zenodo.13325371" target="_blank" rel="noopener">https://doi.org/10.5281/zenodo.13325371</a>
+        </blockquote>
+        <div class="welcome-cta-row">
+            <a href="https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0352257" target="_blank" rel="noopener" class="welcome-btn-secondary">
+                <i class="fa-solid fa-file-lines"></i> Read the paper
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Resources &amp; downloads -->
+<section class="welcome-section welcome-section-light">
+    <div class="welcome-section-inner">
+        <h2 class="welcome-section-title">Resources &amp; downloads</h2>
+        <p class="welcome-section-lead">
+            All code, data, and pretrained models behind A-Eye are openly available.
+        </p>
+        <div class="welcome-resources-grid">
+            <a class="welcome-resource-card" href="https://github.com/jaimebarran/a-eye" target="_blank" rel="noopener">
+                <i class="fa-brands fa-github"></i>
+                <span class="welcome-resource-title">GitHub</span>
+                <span class="welcome-resource-desc">Source code of the A-Eye pipeline and web platform.</span>
+            </a>
+            <a class="welcome-resource-card" href="https://doi.org/10.5281/zenodo.13325369" target="_blank" rel="noopener">
+                <i class="fa-solid fa-database"></i>
+                <span class="welcome-resource-title">Zenodo</span>
+                <span class="welcome-resource-desc">
+                    Eye atlases — male (594), female (616) and combined (1,210) subjects — with their
+                    majority-voting segmentations, the manual segmentation of the combined atlas,
+                    the pretrained model weights, and a reference to the Docker image.
+                </span>
+            </a>
+            <a class="welcome-resource-card" href="https://hub.docker.com/repository/docker/jaimebarran/fw_gear_aeye/tags/0.0.1" target="_blank" rel="noopener">
+                <i class="fa-brands fa-docker"></i>
+                <span class="welcome-resource-title">Docker Hub</span>
+                <span class="welcome-resource-desc">Docker image with nnU-Net and the pretrained model weights already installed, for plug-and-play segmentation.</span>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Run it yourself -->
+<section id="run-it-yourself" class="welcome-section welcome-section-dark">
+    <div class="welcome-section-inner">
+        <h2 class="welcome-section-title welcome-section-title-light"><i class="fa-solid fa-terminal"></i> Run it yourself</h2>
+        <p class="welcome-section-lead welcome-section-lead-light">
+            Prefer to run the model locally or on your own infrastructure? Use the ready-to-use Docker
+            image, or install the pretrained weights into your own nnU-Net setup.
+        </p>
+
+        <h3 class="welcome-format-title welcome-format-title-light">Using the Docker image</h3>
+        <p class="welcome-section-lead-light">
+            The <a href="https://hub.docker.com/repository/docker/jaimebarran/fw_gear_aeye/tags/0.0.1" target="_blank" rel="noopener">Docker image</a>
+            ships with nnU-Net and the pretrained weights already installed:
+        </p>
+        <pre class="welcome-code-block"><code>nnUNet_predict \
+    -i /input \
+    -o /output \
+    -tr nnUNetTrainerV2 \
+    -ctr nnUNetTrainerV2CascadeFullRes \
+    -m 3d_fullres \
+    -p nnUNetPlansv2.1 \
+    -t Task313_Eye</code></pre>
+
+        <h3 class="welcome-format-title welcome-format-title-light">Using the model weights directly</h3>
+        <p class="welcome-section-lead-light">
+            The pretrained model weights (soon available directly on
+            <a href="https://doi.org/10.5281/zenodo.13325369" target="_blank" rel="noopener">Zenodo</a>)
+            can be installed into any existing nnU-Net environment:
+        </p>
+        <pre class="welcome-code-block"><code>nnUNet_install_pretrained_model_from_zip A-eye_nnUNet_model_weights.zip
+nnUNet_predict -i /input -o /output -t Task313_Eye -m 3d_fullres -tr nnUNetTrainerV2</code></pre>
     </div>
 </section>
 {% endblock %}
