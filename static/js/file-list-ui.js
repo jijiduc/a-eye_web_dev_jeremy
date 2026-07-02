@@ -62,95 +62,12 @@ function renderSegmentationLegend() {
             </div>`;
 }
 
-// Appends sub-rows for each case in a selected file
-function addLabelRow(ulElement, labels) {
-    labels.forEach(label => {
-        const row = document.createElement('li');
-        row.className = 'list-group-item fl-case-label';
-        row.textContent = label;
-        ulElement.appendChild(row);
-    });
-}
 
-/*
-*   Build a file list with an optional remove button and dropdowns buttons
-*/
-function buildFileList(ulElement, files, onRemove = null, dropdowns = [], caseInfoMap = null) {
-    ulElement.innerHTML = '';
-
-    const header = document.createElement('li');
-    header.className = 'list-group-item d-flex justify-content-between align-items-center';
-    header.style.backgroundColor = 'var(--progress-bg)';
-    header.style.color = 'var(--text-color)';
-
-    const headerFilename = document.createElement('span');
-    headerFilename.style.fontWeight = 'bold';
-    headerFilename.textContent = 'Selected files/cases';
-    header.appendChild(headerFilename);
-    ulElement.appendChild(header);
-
-    files.forEach((file, index) => {
-        const fileRow = document.createElement('li');
-        fileRow.className = 'list-group-item d-flex justify-content-between align-items-center';
-
-        const nameSpan = document.createElement('span');
-        nameSpan.textContent = file.name;
-        fileRow.appendChild(nameSpan);
-
-        if (onRemove) {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'btn btn-danger btn-sm';
-            btn.textContent = 'remove';
-            btn.onclick = () => onRemove(index);
-            fileRow.appendChild(btn);
-        }
-
-        if (dropdowns.length > 0) {
-            const btnGroup = document.createElement('div');
-            btnGroup.className = 'd-flex gap-2';
-            fileRow.appendChild(btnGroup);
-            ulElement.appendChild(fileRow);
-
-            dropdowns.forEach(({ label, onOpen, onClose }) => {
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = 'btn btn-primary btn-sm';
-                btn.textContent = label;
-                btnGroup.appendChild(btn);
-
-                const dropdownRow = document.createElement('li');
-                dropdownRow.className = 'list-group-item';
-                dropdownRow.style.display = 'none';
-                ulElement.appendChild(dropdownRow);
-
-                btn.onclick = async () => {
-                    const collapsed = dropdownRow.style.display === 'none';
-                    dropdownRow.style.display = collapsed ? 'block' : 'none';
-                    btn.textContent = collapsed ? 'hide' : label;
-                    if (collapsed) {
-                        await onOpen(file, index, dropdownRow);
-                    } else if (onClose) {
-                        onClose(file, index, dropdownRow);
-                    }
-                };
-            });
-        } else {
-            ulElement.appendChild(fileRow);
-        }
-
-        const info = caseInfoMap?.get(file);
-        if (info?.labels) {
-            addLabelRow(ulElement, info.labels);
-        }
-    });
-}
-
-/*
+/**
 * Render the axial length measurements table
 * @param {string} sideData - The key-values object containing the AL measurements
 * @param {bool} displayReference - wether to display the reference too
-*/
+**/
 function renderAxialLengthTable(sideData, displayReference = false) {
     if (!Object.keys(sideData).length) {
         return `<p class="text-warning d-block"> No axial length data available...</p>`
@@ -211,7 +128,7 @@ function renderAxialLengthTable(sideData, displayReference = false) {
 }
 
 
-/*
+/**
 * Render the volumetry measurements table
 * @param {string} sideData - The key-values object containing the AL measurements
 * @param {bool} displayReference - wether to display the reference too
@@ -276,7 +193,7 @@ function renderVolumetryTable(sideData, displayReference = false) {
         </table>`;
 }
 
-/*
+/**
 * Build the HTML content shown inside the segmentation dropdown row
 * @param {object} result - the case result
 * @param {number} idx - the row index, to build unique elements
@@ -313,7 +230,7 @@ function renderSegmentationDropdownContent(result, idx) {
         </div>`;
 }
 
-/*
+/**
 * Build the HTML content shown inside the biomarkers dropdown row
 * @param {object} results - containing per-eye biomarkers object with references
 */
@@ -406,7 +323,7 @@ function renderBiomarkersDropdownContent(results) {
 </div>`;
 }
 
-/*
+/**
 * Build the HTML content shown inside the statistical analysis dropdown row
 * @param {object} results - containing per-eye biomarkers object with references
 */
@@ -460,4 +377,88 @@ function renderStatisticalDropdownContent(results) {
             ${title}
             ${columns}
             </div>`;
+}
+
+// Appends sub-rows for each case in a selected file
+function addLabelRow(ulElement, labels) {
+    labels.forEach(label => {
+        const row = document.createElement('li');
+        row.className = 'list-group-item fl-case-label';
+        row.textContent = label;
+        ulElement.appendChild(row);
+    });
+}
+
+/*
+*   Build a file list with an optional remove button and dropdowns buttons
+*/
+function buildFileList(ulElement, files, onRemove = null, dropdowns = [], caseInfoMap = null) {
+    ulElement.innerHTML = '';
+
+    const header = document.createElement('li');
+    header.className = 'list-group-item d-flex justify-content-between align-items-center';
+    header.style.backgroundColor = 'var(--progress-bg)';
+    header.style.color = 'var(--text-color)';
+
+    const headerFilename = document.createElement('span');
+    headerFilename.style.fontWeight = 'bold';
+    headerFilename.textContent = 'Selected files/cases';
+    header.appendChild(headerFilename);
+    ulElement.appendChild(header);
+
+    files.forEach((file, index) => {
+        const fileRow = document.createElement('li');
+        fileRow.className = 'list-group-item d-flex justify-content-between align-items-center';
+
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = file.name;
+        fileRow.appendChild(nameSpan);
+
+        if (onRemove) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'btn btn-danger btn-sm';
+            btn.textContent = 'remove';
+            btn.onclick = () => onRemove(index);
+            fileRow.appendChild(btn);
+        }
+
+        if (dropdowns.length > 0) {
+            const btnGroup = document.createElement('div');
+            btnGroup.className = 'd-flex gap-2';
+            fileRow.appendChild(btnGroup);
+            ulElement.appendChild(fileRow);
+
+            dropdowns.forEach(({ label, onOpen, onClose }) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'btn btn-primary btn-sm';
+                btn.textContent = label;
+                btnGroup.appendChild(btn);
+
+                const dropdownRow = document.createElement('li');
+                dropdownRow.className = 'list-group-item';
+                dropdownRow.style.display = 'none';
+                ulElement.appendChild(dropdownRow);
+
+                btn.onclick = async () => {
+                    const collapsed = dropdownRow.style.display === 'none';
+                    dropdownRow.style.display = collapsed ? 'block' : 'none';
+                    btn.textContent = collapsed ? 'hide' : label;
+                    if (collapsed) {
+                        await onOpen(file, index, dropdownRow);
+                    } else if (onClose) {
+                        onClose(file, index, dropdownRow);
+                    }
+                };
+            });
+        } else {
+            ulElement.appendChild(fileRow);
+        }
+
+        const info = caseInfoMap?.get(file);
+        if (info?.labels) {
+            addLabelRow(ulElement, info.labels);
+        }
+    });
 }
