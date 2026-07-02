@@ -31,6 +31,14 @@
     /* Buttons */
     --btn-secondary-bg: #6c757d;
     --btn-secondary-border: #6c757d;
+
+    /* Bootstrap alerts */
+    --bs-success-bg-subtle: #e7f2f9;
+    --bs-success-text-emphasis: #04304e;
+    --bs-success-border-subtle: #c2def0;
+
+    /* Bootstrap badge */
+    --bs-success-rgb: 55, 160, 230;
 }
 
 /* Dark mode overrides */
@@ -78,18 +86,14 @@
     --bs-warning-bg-subtle: #98730d;
     --bs-warning-text-emphasis: #ffda6a;
     --bs-warning-border-subtle: #a78a36;
-    --bs-dark-bg-subtle: #2a2a2a;
-    --bs-dark-text-emphasis: #dee2e6;
-    --bs-dark-border-subtle: #444;
 
     /* Bootstrap cards */
     --bs-card-bg: #252525;
     --bs-card-cap-bg: #1a2e42;
     --bs-card-border-color: #444;
 
-    /* Bootstrap badge / bg-* utility colors (RGB form used by Bootstrap internally) */
-    --bs-secondary-rgb: 85, 85, 85;
-    --bs-success-rgb: 11, 121, 194;
+    /* Bootstrap badge */
+    --bs-success-rgb: 6, 74, 120;
 }
 
 /* ============================================================
@@ -729,16 +733,6 @@ details[open] .summary-chevron {
     background-color: var(--case-label-bg) !important;
 }
 
-[data-theme="dark"] .styled-table {
-    --bs-table-bg: var(--list-item-bg);
-    --bs-table-color: var(--text-color);
-    --bs-table-striped-bg: #242424;
-    --bs-table-striped-color: var(--text-color);
-    --bs-table-hover-bg: #383838;
-    --bs-table-hover-color: var(--text-color);
-    --bs-table-border-color: var(--border-color);
-    color: var(--text-color);
-}
 /* ============================================================
    table
    ============================================================ */
