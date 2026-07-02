@@ -1,6 +1,7 @@
 import csv
 import math
 import os
+import re
 import secrets
 import shutil
 import subprocess
@@ -44,6 +45,7 @@ from module.quadrant_segmentation.quadrant import (
     merge_quadrants,
     uncrop_quadrant,
 )
+from module.statistical_analysis.analysis import references_means
 from utils import (
     Message,
     allowed_file,
@@ -110,6 +112,14 @@ def _process_eye(
     for key in eye_data:
         if key != "axial_length_image" and math.isnan(eye_data[key]):
             eye_data[key] = None
+
+    # add the references
+    references = references_means(side)
+    eye_data["reference"] = {}
+    
+    for key, value in references.items() :
+        if key in eye_data :
+            eye_data["reference"][key] = value
 
     csv_row = {"case": case_name, "side": side, **volumes, **axial_measures}
     return eye_data, csv_row

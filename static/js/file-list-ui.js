@@ -1,13 +1,13 @@
 const VOLUME_LABELS = {
     vol_lens: 'lens',
     vol_globe: 'globe',
-    vol_optic_nerve: 'optic nerve',
-    vol_intraconal_fat: 'intraconal fat',
-    vol_extraconal_fat: 'extraconal fat',
-    vol_lateral_rectus_muscle: 'lateral rectus muscle',
-    vol_medial_rectus_muscle: 'medial rectus muscle',
-    vol_inferior_rectus_muscle: 'inferior rectus muscle',
-    vol_superior_rectus_muscle: 'superior rectus muscle',
+    vol_nerve: 'optic nerve',
+    vol_int_fat: 'intraconal fat',
+    vol_ext_fat: 'extraconal fat',
+    vol_lat_mus: 'lateral rectus muscle',
+    vol_med_mus: 'medial rectus muscle',
+    vol_inf_mus: 'inferior rectus muscle',
+    vol_sup_mus: 'superior rectus muscle',
     vol_total: 'Total segmented volume',
 };
 
@@ -21,7 +21,7 @@ function renderMetadataTable(fields) {
     if (!Object.keys(fields).length) {
         return `<p class="text-warning d-block"> Metadata not available...</p>`
     }
-    let row=``;
+    let row = ``;
     for (const key in fields) {
         const value = fields?.[key];
         const cleanedValue = Array.isArray(value) ? value.join(', ') : String(value);
@@ -33,7 +33,7 @@ function renderMetadataTable(fields) {
             </tr>`;
     }
     return `
-    <table class="styled-table">
+    <table class="measure-table">
         <thead>
             <tr>
                 <th>Fields</th>
@@ -148,47 +148,133 @@ function buildFileList(ulElement, files, onRemove = null, dropdowns = [], caseIn
 
 /*
 * Render the axial length measurements table
+* @param {string} sideData - The key-values object containing the AL measurements
+* @param {bool} displayReference - wether to display the reference too
 */
-function renderAxialLengthTable(sideData) {
-    const rows = [
-        ['Axial length', sideData.axial_length, 'mm'],
-        ['AL (cornea)', sideData.axial_length_cornea, 'mm'],
-        ['Extra anterior', sideData.extra_anterior, 'mm'],
-    ].map(([label, value, unit]) => {
-        const display = value !== null ? value.toFixed(2) + ' ' + unit : '—';
-        return `<tr>
-            <td class="label-cell">${label}</td>
-            <td class="value-cell">${display}</td>
-        </tr>`;
-    }).join('');
-    return `<table class="styled-table">
-        <thead><tr><th>Measure</th><th>Value</th></tr></thead>
-        <tbody>${rows}</tbody>
-    </table>`;
+function renderAxialLengthTable(sideData, displayReference = false) {
+    if (!Object.keys(sideData).length) {
+        return `<p class="text-warning d-block"> No axial length data available...</p>`
+    }
+    let row = ``;
+    const data = [
+        ['Axial length', `axial_length`, 'mm'],
+        ['AL (cornea)', `axial_length_cornea`, 'mm'],
+        ['Extra anterior', `extra_ant`, 'mm'],];
+
+    for (const [label, key, unit] of data) {
+        const value = sideData?.[key];
+        const cleanedValue = (value !== null && value !== undefined) ? `${value.toFixed(2)} ${unit}` : '—';
+        let refTd = ``;
+        if (displayReference) {
+            const refValue = sideData?.reference?.[key];
+            const refCleanedValue = (refValue !== null && refValue !== undefined) ? `${refValue.toFixed(2)} ${unit}` : '—';
+            refTd = `<td class="value-cell">${refCleanedValue}</td>`;
+        }
+        row += `
+                <tr>
+                    <td class="label-cell">${label}</td>
+                    <td class="value-cell">${cleanedValue}</td>
+                    ${refTd}
+                </tr>`;
+    }
+    let refHeader = ``
+    if (displayReference) {
+        refHeader = `<th>Reference mean</th>`;
+        return `
+            <table class="measure-table-ref">
+            <thead>
+                <tr>
+                    <th>Measures</th>
+                    <th>Values</th>
+                    ${refHeader}
+                </tr>
+            </thead>
+            <tbody>
+                ${row}
+            </tbody>
+        </table>`;
+    }
+    return `
+            <table class="measure-table">
+            <thead>
+                <tr>
+                    <th>Measures</th>
+                    <th>Values</th>
+                    ${refHeader}
+                </tr>
+            </thead>
+            <tbody>
+                ${row}
+            </tbody>
+        </table>`;
 }
 
+
 /*
-* Render a table for volumetry measurements
+* Render the volumetry measurements table
+* @param {string} sideData - The key-values object containing the AL measurements
+* @param {bool} displayReference - wether to display the reference too
 */
-function renderVolumetryTable(sideData) {
-    const labels = window.EYE_LABELS || [];
-    const rows = Object.entries(VOLUME_LABELS).map(([key, displayName]) => {
-        const val = sideData[key];
-        const display = val !== null ? val.toFixed(1) + ' mm³' : '—';
-        const label = labels.find(label => label.name === displayName);
-        const dot = label
-            ? `<span style="display:inline-block; width:10px; height:10px; background:rgb(${label.color}); border:1px solid var(--swatch-border); border-radius:2px; margin-right:4px;"></span>`
-            : '';
-        return `<tr>
-            <td class="label-cell">${dot}${displayName}</td>
-            <td class="value-cell">${display}</td>
-        </tr>`;
-    }).join('');
-    return `<table class="styled-table">
-        <thead><tr><th>Region</th><th>Volume</th></tr></thead>
-        <tbody>${rows}</tbody>
-    </table>`;
+function renderVolumetryTable(sideData, displayReference = false) {
+
+    if (!Object.keys(sideData).length) {
+        return `<p class="text-warning d-block"> No volumetry data available...</p>`
+    }
+
+    let row = ``;
+    const data = Object.entries(VOLUME_LABELS)
+
+    for (const [key, label] of data) {
+        const value = sideData?.[key];
+        const cleanedValue = (value !== null && value !== undefined) ? `${value.toFixed(1)} mm³` : '—';
+        let refTd = ``;
+
+        if (displayReference) {
+            const refValue = sideData?.reference?.[key];
+            const refCleanedValue = (refValue !== null && refValue !== undefined) ? `${refValue.toFixed(1)} mm³` : '—';
+            refTd = `<td class="value-cell">${refCleanedValue}</td>`;
+        }
+
+        row += `
+            <tr>
+                <td class="label-cell">${label}</td>
+                <td class="value-cell">${cleanedValue}</td>
+                ${refTd}
+            </tr>`;
+    }
+    let refHeader = ``;
+    if (displayReference) {
+        refHeader = `<th>Reference mean</th>`;
+        return `
+            <table class="measure-table-ref">
+                <thead>
+                    <tr>
+                        <th>Region</th>
+                        <th>Volume</th>
+                        ${refHeader}
+                    </tr>
+                </thead>
+                <tbody>
+                    ${row}
+                </tbody>
+            </table>`;
+    }
+
+    return `
+        <table class="measure-table">
+            <thead>
+                <tr>
+                    <th>Region</th>
+                    <th>Volume</th>
+                    ${refHeader}
+                </tr>
+            </thead>
+            <tbody>
+                ${row}
+            </tbody>
+        </table>`;
 }
+
 
 /*
 * Build the HTML content shown inside the biomarkers dropdown row
@@ -219,9 +305,11 @@ function renderBiomarkersDropdownContent(results) {
         const data = results[side];
         if (!data || data.error) {
             return `<div class="col-6">
-                    <p class="text-danger">${data?.error || 'No data'}</p>
+                    <p class="text-warning d-block"> ${data?.error || 'No data'}</p>
                 </div>`;
         }
+
+
         return `<div class="col-12 col-md-6">
             <div class="card h-100 shadow-sm border-0">
                 <div class="card-header d-flex align-items-center gap-2" style="background:var(--card-bg);">
@@ -254,4 +342,52 @@ function renderBiomarkersDropdownContent(results) {
     }).join('')}
     </div>
 </div>`;
+}
+
+/*
+* Build the HTML content shown inside the statistical analysis dropdown row
+* @param {object} results - per-eye biomarkers object with references
+*/
+function renderStatisticalDropdownContent(results) {
+    let columns = ``;
+    const sides = [`left`, `right`];
+
+    for (const side of sides) {
+        const data = results?.[side];
+
+        if (!data || data.error) {
+            columns += `
+                    <div class="col-6">
+                        <p class="text-danger">${data?.error || 'No data'}</p>
+                    </div>`;
+        } else {
+            columns += `
+                    <div class="col-12 col-md-6">
+                        <div class="card h-100 shadow-sm border-0">
+                            <div class="card-header d-flex align-items-center gap-2 justify-content-center" style="background:var(--card-bg);">
+                                <i class="fa-solid fa-eye fa-fw text-success"></i>
+                                <strong class="text-capitalize">${side} eye</strong>
+                            </div>
+                            <div class="card-body d-flex flex-column gap-4">
+
+                                <div>
+                                    <p class="text-muted small fw-semibold text-uppercase mb-2 text-center">
+                                        Volumetry
+                                    </p>
+                                    ${renderVolumetryTable(data, true)}
+                                </div>
+                                
+                                <div>
+                                    <p class="text-muted small fw-semibold text-uppercase mb-2 text-center">
+                                        Axial length
+                                    </p>
+                                    ${renderAxialLengthTable(data, true)}
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>`;
+        }
+    }
+    return `<div class="row g-3"> ${columns} </div>`;
 }

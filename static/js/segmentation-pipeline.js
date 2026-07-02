@@ -313,6 +313,7 @@ function extractBiomarkers() {
                 alert(data.message);
             } else {
                 throw new Error(data.message || 'Extraction failed');
+                document.getElementById('display-file-list').style.display = '';
             }
         })
         .catch(error => {
@@ -373,6 +374,14 @@ function buildResultFileList(results) {
         dropdowns.push({
             label: 'biomarkers',
             onOpen: (result, idx, row) => { row.innerHTML = renderBiomarkersDropdownContent(result.biomarkers); },
+            onClose: (result, idx, row) => { row.innerHTML = ''; }
+        });
+    }
+
+    if ((results.some(r => r.biomarkers?.left?.reference || r.biomarkers?.right?.reference))) {
+        dropdowns.push({
+            label: 'statistics',
+            onOpen: (result, idx, row) => { row.innerHTML = renderStatisticalDropdownContent(result.biomarkers); },
             onClose: (result, idx, row) => { row.innerHTML = ''; }
         });
     }
