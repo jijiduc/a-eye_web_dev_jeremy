@@ -93,7 +93,10 @@ function renderFileList() {
     if (selection.length > 0) {
         const cases = currentCaseCount();
         title.style.display = 'block';
-        title.innerHTML = `<span class="badge me-1" style="background:var(--btn-secondary-bg);">${selection.length} file${selection.length > 1 ? 's' : ''}</span><span class="badge" style="background:var(--link-color);">${cases} / ${MAX_CASES} cases</span>`;
+        title.innerHTML = ` <span class="badge me-1" style="background:var(--btn-secondary-bg);">
+                                ${selection.length} file ${selection.length > 1 ? 's' : ''}</span>
+                            <span class="badge" style="background:var(--link-color);">
+                                ${cases} / ${MAX_CASES} cases</span>`;
         buildFileList(fileList, selection, unselectFile, [], selectionCaseInfoMap);
     } else {
         title.style.display = 'none';
@@ -338,32 +341,18 @@ function buildResultFileList(results) {
         {
             label: 'segmentation',
             onOpen: async (result, idx, row) => {
-                row.innerHTML = `
-                    <div style="display:flex; width:100%; gap:8px; align-items:flex-start;">
-                        <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:4px;">
-                            <span class="text-muted small fw-semibold" style="margin-left:2px;">
-                                Both eyes overlaid on original image
-                            </span>
-                            <canvas id="niivue-overlay-${idx}" style="display:block; width:100%; aspect-ratio:1/1;"></canvas>
-                        </div>
-                        <div id="info-panel-${idx}" style="flex:0 0 20%; overflow-y:auto; border-left:2px solid var(--info-panel-border); border-right:2px solid var(--info-panel-border); padding:0 8px;">
-                            ${renderSegmentationLegend()}
-                            <div style="margin-top:8px; font-size:0.78em;"><strong style="margin-bottom:5px;">Metadata</strong></div>
-                            <div>${renderMetadataTable(result.metadata)}</div>
-                        </div>
-                        <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:4px;">
-                            <span class="text-muted small fw-semibold" style="margin-left:2px;">
-                                Both eyes only
-                            </span>
-                            <canvas id="niivue-eyes-${idx}" style="display:block; width:100%; aspect-ratio:1/1;"></canvas>
-                        </div>
-                    </div>`;
+                row.innerHTML = renderSegmentationDropdownContent(result, idx);
+
                 const overlay = document.getElementById(`niivue-overlay-${idx}`);
                 const panel = document.getElementById(`info-panel-${idx}`);
+
                 new ResizeObserver(() => {
                     panel.style.maxHeight = overlay.offsetHeight + 'px';
                 }).observe(overlay);
-                await window.initNiivueOverlay(`niivue-overlay-${idx}`, `/result/${result.input_name}`, `/result/${result.both_name}`);
+
+                await window.initNiivueOverlay(`niivue-overlay-${idx}`,
+                                                 `/result/${result.input_name}`,
+                                                  `/result/${result.both_name}`);
                 await window.initNiivue(`niivue-eyes-${idx}`, `/result/${result.both_name}`, 'eye-seg', 0, 9);
             },
             onClose: (result, idx, row) => { row.innerHTML = ''; }
