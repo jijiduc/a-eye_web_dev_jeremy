@@ -12,13 +12,13 @@ from .al_data import ALData
 LABELS: dict[int, str] = {
     1: "vol_lens",
     2: "vol_globe",
-    3: "vol_optic_nerve",
-    4: "vol_intraconal_fat",
-    5: "vol_extraconal_fat",
-    6: "vol_lateral_rectus_muscle",
-    7: "vol_medial_rectus_muscle",
-    8: "vol_inferior_rectus_muscle",
-    9: "vol_superior_rectus_muscle",
+    3: "vol_nerve",
+    4: "vol_int_fat",
+    5: "vol_ext_fat",
+    6: "vol_lat_mus",
+    7: "vol_med_mus",
+    8: "vol_inf_mus",
+    9: "vol_sup_mus",
 }
 
 
@@ -258,12 +258,12 @@ def extract_axial_length_measurements(ray_data: ALData | None) -> dict[str, floa
         ray_data (ALData | None): computed data for a single eye's axial length biomarker
 
     Returns:
-        dict[str, float]: axial_length, axial_length_cornea and extra_anterior measurements in mm, NaN if not available
+        dict[str, float]: axial_length, axial_length_cornea and extra_ant measurements in mm, NaN if not available
 
     """
     nan = float("nan")
     if ray_data is None:
-        return {"axial_length": nan, "axial_length_cornea": nan, "extra_anterior": nan}
+        return {"axial_length": nan, "axial_length_cornea": nan, "extra_ant": nan}
 
     if ray_data.axial_length_cornea_mm is not None:
         axial_length_cornea = ray_data.axial_length_cornea_mm
@@ -278,7 +278,7 @@ def extract_axial_length_measurements(ray_data: ALData | None) -> dict[str, floa
     return {
         "axial_length": ray_data.axial_length_mm,
         "axial_length_cornea": axial_length_cornea,
-        "extra_anterior": extra_anterior,
+        "extra_ant": extra_anterior,
     }
 
 

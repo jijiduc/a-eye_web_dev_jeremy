@@ -20,3 +20,4 @@ six
 pandas
 plotly
 pycountry
+polars

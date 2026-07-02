@@ -39,6 +39,12 @@
 
     /* Bootstrap badge */
     --bs-success-rgb: 55, 160, 230;
+
+    /*reference column*/
+    --ref-header: #db14ad;
+    --ref-border: #850c68;
+    --ref-cell: #e34ec095;
+    --ref-cell-uneven: #b06da092;
 }
 
 /* Dark mode overrides */
@@ -94,7 +100,13 @@
 
     /* Bootstrap badge */
     --bs-success-rgb: 6, 74, 120;
-}
+
+    /*reference column*/
+    --ref-header: #9c0f7a;  
+    --ref-border: #4d073d;
+    --ref-cell: #2a0b23;
+    --ref-cell-uneven : #61425a
+}   
 
 /* ============================================================
    Base
@@ -867,63 +879,152 @@ details[open] .summary-chevron {
 }
 
 /* ============================================================
-   table
+   Measures tables
    ============================================================ */
 /* Adapted from : https://dev.to/dcodeyt/creating-beautiful-html-tables-with-css-428l*/
-.styled-table {
+.measure-table {
     border-collapse: collapse;;
     font-size: 0.875em;
     min-width: 100%;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
 }
 
-.styled-table thead tr {
+.measure-table thead tr {
     background-color: var(--link-color);
     color: #ffffff;
     text-align: left;
 }
 
-.styled-table th,
-.styled-table td {
+.measure-table th,
+.measure-table td {
     width: 50%;
     padding: 8px 12px;
 }
 
-.styled-table td.label-cell {
+.measure-table td.label-cell {
     white-space: nowrap;
     font-weight: 500;
     width: 60%;
 }
 
-.styled-table td.value-cell {
+.measure-table td.value-cell {
     word-break: break-all;
     width: 40%;
 }
 
 
-.styled-table td:first-child,
-.styled-table th:first-child{
+.measure-table td:first-child,
+.measure-table th:first-child{
     border-right: 1px solid var(--link-color);
 }
 
-.styled-table tbody tr {
+
+.measure-table tbody tr {
     background-color: var(--list-item-bg);
     color: var(--text-color);
     border-bottom: 1px solid var(--border-color);
 }
 
-.styled-table tbody tr:nth-of-type(even) {
+.measure-table tbody tr:nth-of-type(even) {
     background-color: var(--case-label-bg);
 }
 
-.styled-table tbody tr:last-of-type {
+.measure-table tbody tr:last-of-type {
     border-bottom: 2px solid var(--link-color);
 }
 
-.styled-table tbody tr.active-row {
+.measure-table tbody tr.active-row {
     font-weight: bold;
     color: var(--link-color);
 }
+
+/* table with a third reference values column*/
+
+.measure-table-ref {
+    border-collapse: collapse;
+    font-size: 0.875em;
+    min-width: 100%;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+}
+
+.measure-table-ref thead tr {
+    background-color: var(--link-color);
+    color: #ffffff;
+    text-align: left;
+}
+
+.measure-table-ref th,
+.measure-table-ref td {
+    padding: 8px 12px;
+}
+
+.measure-table-ref td.label-cell {
+    white-space: nowrap;
+    font-weight: 500;
+    width: 40%;
+}
+
+.measure-table-ref td.value-cell {
+    word-break: break-all;
+    width: 30%;
+}
+
+.measure-table-ref td.ref-cell,
+.measure-table-ref th.ref-cell {
+    width: 30%;
+    background-color: var(--bs-success-bg-subtle);
+    border-left: 2px solid var(--link-color);
+}
+
+.measure-table-ref td:first-child,
+.measure-table-ref th:first-child {
+    border-right: 1px solid var(--link-color);
+}
+
+.measure-table-ref td:last-child,
+.measure-table-ref th:last-child {
+    border-right: 1px solid var(--ref-border);
+    border-bottom: 1px solid var(--ref-border);
+}
+
+.measure-table-ref th:last-child {
+    background-color: var(--ref-header);
+}
+
+.measure-table-ref tbody tr:nth-of-type(odd) td:last-child {
+    background-color: var(--ref-cell);
+}
+
+.measure-table-ref tbody tr:nth-of-type(even) td:last-child {
+    background-color: var(--ref-cell-uneven);
+}
+
+.measure-table-ref tbody tr {
+    background-color: var(--list-item-bg);
+    color: var(--text-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.measure-table-ref tbody tr:nth-of-type(even) {
+    background-color: var(--case-label-bg);
+}
+
+.measure-table-ref tbody tr:last-of-type {
+    border-bottom: 2px solid var(--link-color);
+}
+
+.measure-table-ref tbody tr:last-of-type td:last-child{
+    border-bottom: 2px solid var(--ref-border);
+}
+
+.measure-table-ref tbody tr.active-row {
+    font-weight: bold;
+    color: var(--link-color);
+}
+
+/* ============================================================
+   Progress bar
+   ============================================================ */
 
 .progress {
     width: 100%;
