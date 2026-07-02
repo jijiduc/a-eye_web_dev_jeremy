@@ -167,7 +167,8 @@ function renderAxialLengthTable(sideData, displayReference = false) {
         let refTd = ``;
         if (displayReference) {
             const refValue = sideData?.reference?.[key];
-            const refCleanedValue = (refValue !== null && refValue !== undefined) ? `${refValue.toFixed(2)} ${unit}` : '—';
+            const refCleanedValue = (refValue !== null && refValue !== undefined)
+                                     ? `${refValue.toFixed(2)} ${unit}` : '—';
             refTd = `<td class="value-cell">${refCleanedValue}</td>`;
         }
         row += `
@@ -275,80 +276,145 @@ function renderVolumetryTable(sideData, displayReference = false) {
         </table>`;
 }
 
+/*
+* Build the HTML content shown inside the segmentation dropdown row
+* @param {object} result - the case result
+* @param {number} idx - the row index, to build unique elements
+*/
+function renderSegmentationDropdownContent(result, idx) {
+    return `
+        <div class="d-flex align-items-center gap-2 mb-3">
+                <h4 class="mb-0 fw-semibold" style="color: var(--stat-value-color)">Segmentation</h4>
+                <hr class="flex-grow-1 my-0" style="border-top: 1px solid var( --summary-link-color);">
+         </div>
+        <div style="display:flex; width:100%; gap:8px; align-items:flex-start;">
+            <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:4px;">
+                <span class="text-muted small fw-semibold" style="margin-left:2px;">
+                    Both eyes overlaid on original image
+                </span>
+                <canvas id="niivue-overlay-${idx}" style="display:block; width:100%; aspect-ratio:1/1;"></canvas>
+            </div>
+            <div id="info-panel-${idx}" style="flex:0 0 20%; overflow-y:auto;
+                                                 border-left:2px solid var(--info-panel-border); 
+                                                 border-right:2px solid var(--info-panel-border);
+                                                 padding:0 8px;">
+                ${renderSegmentationLegend()}
+                <div style="margin-top:8px; font-size:0.78em;">
+                    <strong style="margin-bottom:5px;">Metadata</strong>
+                </div>
+                <div>${renderMetadataTable(result.metadata)}</div>
+            </div>
+            <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:4px;">
+                <span class="text-muted small fw-semibold" style="margin-left:2px;">
+                    Both eyes only
+                </span>
+                <canvas id="niivue-eyes-${idx}" style="display:block; width:100%; aspect-ratio:1/1;"></canvas>
+            </div>
+        </div>`;
+}
 
 /*
 * Build the HTML content shown inside the biomarkers dropdown row
+* @param {object} results - containing per-eye biomarkers object with references
 */
 function renderBiomarkersDropdownContent(results) {
-    return `<div>
-    <details class="mb-3" style="font-size:0.82em;">
-        <summary style="cursor: pointer; font-weight: 600; list-style: none; display: flex; align-items: center; gap: 6px; color:var(--summary-link-color);">
-            <i class="fa-solid fa-circle-info"></i> How are biomarkers computed?
-        </summary>
-        <p class="mt-2 mb-1" style="line-height:1.5;"><strong>Axial length</strong><br>
-            The axial length is defined as the distance from the anterior surface of the cornea to the posterior pole of the ocular bulb. The base measurement spans from the anterior lens surface to the posterior globe surface; the corneal extension is added separately to obtain the full axial length.
-            The method inputs both the automated segmented labels and T1w images.
-            A ray is traced between the centroids of the lens and globe segmentations and extended to the full volume bounding box. The anterior lens edge and posterior globe edge are identified as the extreme intersection points of that ray with those structures.
-            The corneal boundary is then estimated from the T1-weighted intensity gradient along the same ray. It corresponds to the first gradient peak after the first major drop in the region anterior to the lens.
-            Both eyes are extracted independently.
-        </p>
-        <p class="mb-1" style="line-height:1.5;"><strong>Volumetry</strong><br>
-            The volume of each segmented structure is computed by counting the number of voxels belonging to that label
-            and multiplying by the physical voxel volume (in mm³).
-        </p>
-        <p class="mt-1 mb-0 text-muted">
-            Reference: <em>A-eye paper </em>
-        </p>
-    </details>
-    <div class="row g-3">
-        ${['left', 'right'].map(side => {
-        const data = results[side];
-        if (!data || data.error) {
-            return `<div class="col-6">
-                    <p class="text-warning d-block"> ${data?.error || 'No data'}</p>
+    const title = `<div class="d-flex align-items-center gap-2 mb-3">
+                        <h4 class="mb-0 fw-semibold" style="color: var(--stat-value-color)">Biomarkers</h4>
+                        <hr class="flex-grow-1 my-0" style="border-top: 1px solid var( --summary-link-color);">
                 </div>`;
+    const details = `<details class="mb-3" style="font-size:0.82em;">
+                        <summary style="cursor: pointer; font-weight: 600; list-style: none; display: inline-flex;
+                                         align-items: center; gap: 6px; color:var(--summary-link-color); 
+                                         line-height:1.5;">
+                            <i class="fa-solid fa-circle-info"></i> How are biomarkers computed?
+                        </summary>
+
+                        <p class="mt-2 mb-1">
+                            <strong>Axial length</strong><br>
+                            The axial length is defined as the distance from the anterior surface of the cornea to 
+                             the posterior pole of the ocular bulb. The base measurement spans from the anterior lens 
+                            surface to the posterior globe surface; the corneal extension is added separately 
+                            to obtain the full axial length. The method inputs both the automated 
+                            segmented labels and T1w images. A ray is traced between the centroids of the lens
+                             and globe segmentations and extended to the full volume bounding box. The anterior lens 
+                            edge and posterior globe edge are identified as the extreme intersection points of that ray
+                             with those structures. The corneal boundary is then estimated 
+                             from the T1-weighted intensity gradient along the same ray. It corresponds to the first 
+                             gradient peak after the first major drop in the region anterior to the lens.
+                             Both eyes are extracted independently.
+                        </p>
+                        <p class="mb-1"><strong>Volumetry</strong><br>
+                            The volume of each segmented structure is computed by counting
+                             the number of voxels belonging to that label
+                            and multiplying by the physical voxel volume (in mm³).
+                        </p>
+                        <p class="mt-1 mb-0 text-muted">
+                            Reference: <em>A-eye paper : </em>
+                        </p>
+                    </details>`;
+    let columns = ``;
+    const sides = [`left`, `right`];
+
+    for (const side of sides) {
+        const data = results?.[side];
+
+        if (!data || data.error) {
+            columns += `
+                    <div class="col-6">
+                        <p class="text-warning d-block">${data?.error || 'No data'}</p>
+                    </div>`;
+        } else {
+            columns += `
+                    <div class="col-12 col-md-6">
+                        <div class="card h-100 shadow-sm border-0">
+                            <div class="card-header d-flex align-items-center gap-2 justify-content-center" 
+                            style="background:var(--card-bg);">
+                                <i class="fa-solid fa-eye fa-fw text-success"></i>
+                                <strong class="text-capitalize">${side} eye</strong>
+                            </div>
+                            <div class="card-body d-flex flex-column gap-4">
+                                <div>
+                                    <p class="text-muted small fw-semibold text-uppercase mb-2 text-center">
+                                        Volumetry
+                                    </p>
+                                    ${renderVolumetryTable(data)}
+                                </div>
+                                ${data.axial_length_image ? `
+                                    <div>
+                                        <p class="text-muted small fw-semibold text-uppercase mb-2 text-center">
+                                            Axial length visualisation
+                                        </p>
+                                        <img src="${data.axial_length_image}" class="img-fluid bg-black"
+                                        alt="Axial length ${side} eye">
+                                    </div>` : ''}
+                                <div>
+                                    <p class="text-muted small fw-semibold text-uppercase mb-2 text-center">
+                                        Axial length
+                                    </p>
+                                    ${renderAxialLengthTable(data)}
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
         }
+    }
 
-
-        return `<div class="col-12 col-md-6">
-            <div class="card h-100 shadow-sm border-0">
-                <div class="card-header d-flex align-items-center gap-2" style="background:var(--card-bg);">
-                    <i class="fa-solid fa-eye fa-fw text-success"></i>
-                    <strong class="text-capitalize">${side} eye</strong>
-                </div>
-                <div class="card-body d-flex flex-column gap-4">
-                    <div>
-                        <p class="text-muted small fw-semibold text-uppercase mb-2 text-center">
-                            Volumetry
-                        </p>
-                        ${renderVolumetryTable(data)}
-                    </div>
-                    ${data.axial_length_image ? `
-                    <div>
-                        <p class="text-muted small fw-semibold text-uppercase mb-2 text-center">
-                            Axial length visualisation
-                        </p>
-                        <img src="${data.axial_length_image}" class="img-fluid rounded bg-black w-100" alt="Axial length ${side} eye">
-                    </div>` : ''}
-                    <div>
-                        <p class="text-muted small fw-semibold text-uppercase mb-2 text-center">
-                            Axial length
-                        </p>
-                        ${renderAxialLengthTable(data)}
-                    </div>
-                </div>
-            </div>
-        </div>`;
-    }).join('')}
-    </div>
+    return `<div>
+    ${title}
+    ${details}
+    <div class="row g-3"> ${columns} </div>
 </div>`;
 }
 
 /*
 * Build the HTML content shown inside the statistical analysis dropdown row
-* @param {object} results - per-eye biomarkers object with references
+* @param {object} results - containing per-eye biomarkers object with references
 */
 function renderStatisticalDropdownContent(results) {
+    const title = `<div class="d-flex align-items-center gap-2 mb-3">
+                    <h4 class="mb-0 fw-semibold" style="color: var(--stat-value-color)">Statistics</h4>
+                    <hr class="flex-grow-1 my-0" style="border-top: 1px solid var( --summary-link-color);">
+            </div>`;
     let columns = ``;
     const sides = [`left`, `right`];
 
@@ -364,7 +430,8 @@ function renderStatisticalDropdownContent(results) {
             columns += `
                     <div class="col-12 col-md-6">
                         <div class="card h-100 shadow-sm border-0">
-                            <div class="card-header d-flex align-items-center gap-2 justify-content-center" style="background:var(--card-bg);">
+                            <div class="card-header d-flex align-items-center gap-2 justify-content-center"
+                                style="background:var(--card-bg);">
                                 <i class="fa-solid fa-eye fa-fw text-success"></i>
                                 <strong class="text-capitalize">${side} eye</strong>
                             </div>
@@ -389,5 +456,8 @@ function renderStatisticalDropdownContent(results) {
                     </div>`;
         }
     }
-    return `<div class="row g-3"> ${columns} </div>`;
+    return `<div class="row g-3"> 
+            ${title}
+            ${columns}
+            </div>`;
 }
