@@ -14,6 +14,41 @@
     </a>
 </div>
 <div class="title-container">
+    <h2 class="main-title">Acknowledgements</h2>
+</div>
+<div class="row justify-content-center mb-5">
+    <div class="col-md-4 mb-4">
+        <div class="acknowledgement-card">
+            <a href="https://cibm.ch" target="_blank" rel="noopener">
+                <img src="{{ url_for('static', filename='images/partners/CIBM.png') }}" alt="CIBM Logo" class="acknowledgement-logo">
+            </a>
+            <div class="acknowledgement-desc">
+                <strong>CIBM</strong> — for the scientific and clinical expertise in medical image analysis.
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="acknowledgement-card">
+            <a href="https://www.hevs.ch/en/schools/school-of-engineering/" target="_blank" rel="noopener">
+                <img src="{{ url_for('static', filename='images/partners/HES-SO_Valais-Wallis.png') }}" alt="HES-SO Logo" class="acknowledgement-logo">
+            </a>
+            <div class="acknowledgement-desc">
+                <strong>HES-SO</strong> — for the computing resources, including servers and HPC infrastructure.
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="acknowledgement-card">
+            <a href="https://fondation-gelbert.ch/" target="_blank" rel="noopener">
+                <img src="{{ url_for('static', filename='images/partners/GELBERT2.png') }}" alt="Gelbert Foundation Logo" class="acknowledgement-logo">
+            </a>
+            <div class="acknowledgement-desc">
+                <strong>Gelbert Foundation</strong> — for the funding and trust in the project.
+            </div>
+        </div>
+    </div>
+</div>
+<div class="title-container">
     <h2 class="main-title">A-Eye Team</h2>
 </div>
 <div class="row">
@@ -173,12 +208,21 @@
     <h2 class="main-title">Partners</h2>
 </div>
 <div class="row justify-content-center">
-    {% set partners = ['CIBM.png', 'CHUV.png', 'UNIL.png', 'HES-SO_Valais-Wallis.png', 'ROSTOCK.png', 'BERN.png'] %}
-    {% for partner in partners %}
+    {% set partners = [
+        ('CIBM.png', 'https://cibm.ch'),
+        ('CHUV.png', 'https://www.chuv.ch'),
+        ('UNIL.png', 'https://www.unil.ch'),
+        ('HES-SO_Valais-Wallis.png', 'https://www.hevs.ch/en/schools/school-of-engineering/'),
+        ('ROSTOCK.png', 'https://www.uni-rostock.de'),
+        ('BERN.png', 'https://www.unibe.ch'),
+    ] %}
+    {% for partner, url in partners %}
     <div class="col-md-2 mb-4">
-        <div class="partner-card">
-            <img src="{{ url_for('static', filename='images/partners/' ~ partner) }}" class="img-fluid" alt="Partner Logo">
-        </div>
+        <a href="{{ url }}" target="_blank" rel="noopener">
+            <div class="partner-card">
+                <img src="{{ url_for('static', filename='images/partners/' ~ partner) }}" class="img-fluid" alt="Partner Logo">
+            </div>
+        </a>
     </div>
     {% endfor %}
 </div>

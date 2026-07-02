@@ -139,6 +139,7 @@ static/*
 !static/images/**
 !static/css/
 !static/css/**
+!static/LICENSE.txt
 
 
 
