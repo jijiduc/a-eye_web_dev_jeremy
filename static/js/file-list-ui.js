@@ -249,7 +249,7 @@ function renderBiomarkersDropdownContent(results) {
                         <p class="mt-2 mb-1">
                             <strong>Axial length</strong><br>
                             The axial length is defined as the distance from the anterior surface of the cornea to 
-                             the posterior pole of the ocular bulb. The base measurement spans from the anterior lens 
+                             the posterior pole of the ocular bulb. The base measurement spans from the posterior lens 
                             surface to the posterior globe surface; the corneal extension is added separately 
                             to obtain the full axial length. The method inputs both the automated 
                             segmented labels and T1w images. A ray is traced between the centroids of the lens
@@ -266,7 +266,10 @@ function renderBiomarkersDropdownContent(results) {
                             and multiplying by the physical voxel volume (in mm³).
                         </p>
                         <p class="mt-1 mb-0 text-muted">
-                            Reference: <em>A-eye paper : </em>
+                            Reference: 
+                                <em>
+                                    <a href="https://doi.org/10.1371/journal.pone.0352257">A-eye paper </a>
+                                </em>
                         </p>
                     </details>`;
     let columns = ``;
