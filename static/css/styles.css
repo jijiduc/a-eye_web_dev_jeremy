@@ -495,6 +495,139 @@ a:hover {
     background: #444;
 }
 
+/* License & Downloads dropdowns (hero) */
+.welcome-license-dropdown .dropdown-toggle::after,
+.welcome-downloads-dropdown .dropdown-toggle::after {
+    margin-left: 0.5rem;
+}
+
+.welcome-license-dropdown .dropdown-item i,
+.welcome-downloads-dropdown .dropdown-item i {
+    width: 1.1rem;
+    text-align: center;
+    margin-right: 0.35rem;
+}
+
+/* Citation block */
+.welcome-citation {
+    background: rgba(255,255,255,0.08);
+    border-left: 4px solid #E5007D;
+    padding: 1rem 1.25rem;
+    border-radius: 4px;
+    font-size: clamp(0.85rem, 2vw, 0.95rem);
+    line-height: 1.8;
+    color: rgba(255,255,255,0.9);
+    margin-bottom: 1.5rem;
+}
+
+.welcome-citation a {
+    color: #f060aa;
+}
+
+/* Resources grid */
+.welcome-resources-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+}
+
+.welcome-resource-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+    background: #fff;
+    border: 1px solid #e0e8f0;
+    border-radius: 8px;
+    padding: 1.25rem;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.welcome-resource-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+    color: inherit;
+    text-decoration: none;
+}
+
+.welcome-resource-card i {
+    font-size: 1.6rem;
+    color: #0B79C2;
+}
+
+.welcome-resource-title {
+    font-weight: 700;
+    font-size: 1.05rem;
+}
+
+.welcome-resource-desc {
+    font-size: 0.85rem;
+    color: #6c757d;
+    line-height: 1.6;
+}
+
+/* Code blocks */
+.welcome-format-title-light {
+    color: #fff;
+}
+
+#run-it-yourself,
+#cite-this-work {
+    scroll-margin-top: 100px;
+}
+
+.welcome-code-block {
+    background: #04203a;
+    color: #d9ecfb;
+    padding: 1rem 1.25rem;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-size: clamp(0.78rem, 1.8vw, 0.88rem);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+
+/* Acknowledgements (About page) */
+.acknowledgement-card {
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 1.25rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.9rem;
+    background-color: var(--bg-color);
+    transition: background-color 0.2s ease;
+}
+
+.acknowledgement-logo {
+    max-height: 90px;
+    max-width: 100%;
+}
+
+.acknowledgement-desc {
+    text-align: center;
+    font-size: 0.92rem;
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .welcome-resource-card {
+    background: #2a2a2a;
+    border-color: #3a4a5a;
+    color: #e0e0e0;
+}
+
+[data-theme="dark"] .welcome-resource-desc {
+    color: #adb5bd;
+}
+
+@media (max-width: 767.98px) {
+    .welcome-resources-grid { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 575.98px) {
     .welcome-title { font-size: 1.9rem; }
     .welcome-tagline { font-size: 1rem; }
