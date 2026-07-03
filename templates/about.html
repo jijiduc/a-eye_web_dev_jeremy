@@ -209,18 +209,18 @@
 </div>
 <div class="row justify-content-center">
     {% set partners = [
-        ('CIBM.png', 'https://cibm.ch'),
-        ('CHUV.png', 'https://www.chuv.ch'),
-        ('UNIL.png', 'https://www.unil.ch'),
-        ('HES-SO_Valais-Wallis.png', 'https://www.hevs.ch/en/schools/school-of-engineering/'),
-        ('ROSTOCK.png', 'https://www.uni-rostock.de'),
-        ('BERN.png', 'https://www.unibe.ch'),
+        ('CIBM.png', 'https://cibm.ch', 'CIBM'),
+        ('CHUV.png', 'https://www.chuv.ch', 'CHUV'),
+        ('UNIL.png', 'https://www.unil.ch', 'UNIL'),
+        ('HES-SO_Valais-Wallis.png', 'https://www.hevs.ch/en/schools/school-of-engineering/', 'HES-SO Valais-Wallis'),
+        ('ROSTOCK.png', 'https://www.uni-rostock.de', 'University of Rostock'),
+        ('BERN.png', 'https://www.unibe.ch', 'University of Bern'),
     ] %}
-    {% for partner, url in partners %}
+    {% for partner, url, name in partners %}
     <div class="col-md-2 mb-4">
         <a href="{{ url }}" target="_blank" rel="noopener">
             <div class="partner-card">
-                <img src="{{ url_for('static', filename='images/partners/' ~ partner) }}" class="img-fluid" alt="Partner Logo">
+                <img src="{{ url_for('static', filename='images/partners/' ~ partner) }}" class="img-fluid" alt="{{ name }} Logo">
             </div>
         </a>
     </div>
