@@ -39,6 +39,7 @@ REF_RIGHT_AL = "data/reference_biomarkers/axial_length_nnunet_3D_N1157_right_eye
 REF_LEFT_AL = "data/reference_biomarkers/axial_length_nnunet_3D_N1157_left_eyes(in).csv"
 REF_RIGHT_VOL= "data/reference_biomarkers/volumes_nnunet_right_eye_qc1_qc2_qc3(in).csv"
 REF_LEFT_VOL = "data/reference_biomarkers/volumes_nnunet_left_eye_qc1_qc2_qc3(in).csv"
+REF_METADATA = "data/reference_biomarkers/sub_metadata_non_labeled_dataset(in).csv"
 
 # Flask configuration
 class Config:
