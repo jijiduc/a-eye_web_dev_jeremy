@@ -22,8 +22,8 @@ class ALData:
         cornea_boundary:            First cornea voxel along the ray; None if not found
         intfat_boundary:            First intraconal fat voxel along the ray; None if not found
         axial_length_mm:            Distance from lens to globe, in mm
-        extra_ant_mm:               Distance from cornea to lens, in mm; None if no cornea found
-        axial_length_cornea_mm:     Distance from cornea to globe, in mm; None if no cornea found
+        extra_ant_mm:               Distance from cornea to lens, in mm; if no cornea found, median fallback value
+        axial_length_cornea_mm:     Distance from cornea to globe, in mm; if no cornea found, median fallback value
     """
 
     raw_image_array: np.ndarray
@@ -40,5 +40,5 @@ class ALData:
     cornea_boundary: np.ndarray | None
     intfat_boundary: np.ndarray | None
     axial_length_mm: float
-    extra_ant_mm: float | None
-    axial_length_cornea_mm: float | None
+    extra_ant_mm: float
+    axial_length_cornea_mm: float

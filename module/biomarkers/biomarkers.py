@@ -21,6 +21,7 @@ LABELS: dict[int, str] = {
     9: "vol_sup_mus",
 }
 
+EXTRA_ANT_MEDIAN = 2.72
 
 def _centroid_of_mask(mask: npt.NDArray[np.int_]) -> npt.NDArray[np.float64]:
     """Return centroid (x,y,z) in voxel coordinates as float array"""
@@ -224,12 +225,13 @@ def compute_axial_length_data(
     lens_to_globe_vec_mm = (lens_anterior_boundary - globe_posterior_boundary) * voxel_dim
     axial_length_mm = float(np.round(np.linalg.norm(lens_to_globe_vec_mm), 2))
 
-    extra_ant_mm = None
-    axial_length_cornea_mm = None
     if cornea_boundary is not None:
         cornea_to_lens_vec_mm = (cornea_boundary - lens_anterior_boundary) * voxel_dim
         extra_ant_mm = float(np.round(np.linalg.norm(cornea_to_lens_vec_mm), 2))
-        axial_length_cornea_mm = float(np.round(extra_ant_mm + axial_length_mm, 2))
+    else:
+        # cornea is undetected, use the median fallback
+        extra_ant_mm = EXTRA_ANT_MEDIAN
+    axial_length_cornea_mm = float(np.round(extra_ant_mm + axial_length_mm, 2))
 
     return ALData(
         raw_image_array=raw_image_array,
@@ -265,20 +267,10 @@ def extract_axial_length_measurements(ray_data: ALData | None) -> dict[str, floa
     if ray_data is None:
         return {"axial_length": nan, "axial_length_cornea": nan, "extra_ant": nan}
 
-    if ray_data.axial_length_cornea_mm is not None:
-        axial_length_cornea = ray_data.axial_length_cornea_mm
-    else:
-        axial_length_cornea = nan
-
-    if ray_data.extra_ant_mm is not None:
-        extra_anterior = ray_data.extra_ant_mm
-    else:
-        extra_anterior = nan
-
     return {
         "axial_length": ray_data.axial_length_mm,
-        "axial_length_cornea": axial_length_cornea,
-        "extra_ant": extra_anterior,
+        "axial_length_cornea": ray_data.axial_length_cornea_mm,
+        "extra_ant": ray_data.extra_ant_mm,
     }
 
 
