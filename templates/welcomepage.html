@@ -247,14 +247,22 @@
             The <a href="https://hub.docker.com/repository/docker/jaimebarran/fw_gear_aeye/tags/0.0.1" target="_blank" rel="noopener">Docker image</a>
             ships with nnU-Net and the pretrained weights already installed:
         </p>
-        <pre class="welcome-code-block"><code>nnUNet_predict \
-    -i /input \
-    -o /output \
-    -tr nnUNetTrainerV2 \
-    -ctr nnUNetTrainerV2CascadeFullRes \
-    -m 3d_fullres \
-    -p nnUNetPlansv2.1 \
-    -t Task313_Eye</code></pre>
+        <pre class="welcome-code-block">
+            <code>
+            docker run --rm --gpus all --shm-size=10gb \
+            -v /path/to/local/input:/input \
+            -v /path/to/local/output:/output \
+            jaimebarran/fw_gear_aeye:0.0.1 \
+            nnUNet_predict \
+                -i /input \
+                -o /output \
+                -tr nnUNetTrainerV2 \
+                -ctr nnUNetTrainerV2CascadeFullRes \
+                -m 3d_fullres \
+                -p nnUNetPlansv2.1 \
+                -t Task313_Eyee
+            </code>
+        </pre>
 
         <h3 class="welcome-format-title welcome-format-title-light">Using the model weights directly</h3>
         <p class="welcome-section-lead-light">
