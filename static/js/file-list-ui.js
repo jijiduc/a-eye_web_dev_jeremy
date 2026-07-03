@@ -363,7 +363,18 @@ function renderStatisticalDropdownContent(results) {
                                     </p>
                                     ${renderVolumetryTable(data, true)}
                                 </div>
-                                
+
+                                ${data.vol_violin_image ? `
+                                    <div>
+                                        <p class="text-muted small fw-semibold text-uppercase mb-2 text-center">
+                                            Volumetry visualisation
+                                        </p>
+                                        <p class="text-muted small text-uppercase mb-2 text-center">
+                                            case compared to reference dataset
+                                        </p>
+                                        <img src="${data.vol_violin_image}" class="img-fluid bg-black"
+                                        alt="Volumetry violin plot ${side} eye">
+                                    </div>` : ''}
                                 <div>
                                     <p class="text-muted small fw-semibold text-uppercase mb-2 text-center">
                                         Axial length

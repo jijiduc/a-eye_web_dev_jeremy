@@ -231,6 +231,7 @@ def get_user_paths(user_email: str) -> UserPaths:
         download=base_path / "output",
         jobfile=Path("./jobfiles") / f"nnunet_inference_{cleaned_email}.sh",
         active_job_file=Path("./static/active_jobs") / f"{cleaned_email}.txt",
+        visualisation=base_path / "visualisation",
         hpc_base_input=f"{BASE_INPUT_HPC}/{cleaned_email}",
         hpc_input=f"{BASE_INPUT_HPC}/{cleaned_email}/input",
     )
@@ -743,6 +744,8 @@ def clean_folders(user_email: str) -> None:
     clear_folder(paths.aux_input)
     delete_files_in_folder(paths.aux_base)
 
+    user_reference_rmtree(paths.visualisation)
+    paths.visualisation.mkdir(parents=True, exist_ok=True)
     user_reference_rmtree(paths.download)
     paths.download.mkdir(parents=True, exist_ok=True)
     paths.jobfile.unlink(missing_ok=True)

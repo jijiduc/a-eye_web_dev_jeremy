@@ -45,7 +45,11 @@ from module.quadrant_segmentation.quadrant import (
     merge_quadrants,
     uncrop_quadrant,
 )
-from module.statistical_analysis.analysis import references_means
+from module.statistical_analysis.analysis import (
+    load_reference,
+    references_means,
+)
+from module.statistical_analysis.visualisations import plot_volumetry_violin
 from utils import (
     Message,
     allowed_file,
@@ -120,6 +124,16 @@ def _process_eye(
     for key, value in references.items() :
         if key in eye_data :
             eye_data["reference"][key] = value
+
+    # add the violin plot with this case's own value marked on it
+    vol_violin_filename = f"{case_name}_{side}_vol_violin_plot.png"
+    vol_violin_path = paths.visualisation / vol_violin_filename
+    vol_reference = load_reference(side, volumetry=True)
+    violin_fig = plot_volumetry_violin(vol_reference, volumes)
+    violin_fig.savefig(vol_violin_path, dpi=150, bbox_inches="tight")
+    plt.close(violin_fig)
+    eye_data["vol_violin_image"] = f"/display-image/{vol_violin_filename}"
+
 
     csv_row = {"case": case_name, "side": side, **volumes, **axial_measures}
     return eye_data, csv_row
@@ -562,12 +576,23 @@ def serve_result(filename: str):
 
 @bp.route("/result-image/<filename>", methods=["GET"])
 def serve_result_image(filename: str):
-    """Serve images to be displayed on page"""
+    """Serve image that are displayed in the page and will be in the output download"""
     if "user" not in session:
         return jsonify({"message": "Unauthorized"}), 401
 
     user_email: str = session.get("user", {}).get("email", "unknown_user")
     file_path: Path = get_user_paths(user_email).download / filename
+
+    return send_file(file_path)
+
+@bp.route("/display-image/<filename>", methods=["GET"])
+def serve_display_image(filename: str):
+    """Serve image that are displayed in the page"""
+    if "user" not in session:
+        return jsonify({"message": "Unauthorized"}), 401
+
+    user_email: str = session.get("user", {}).get("email", "unknown_user")
+    file_path: Path = get_user_paths(user_email).visualisation / filename
 
     return send_file(file_path)
 
