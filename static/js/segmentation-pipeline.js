@@ -284,6 +284,11 @@ function extractBiomarkers() {
     bar.classList.add('bg-warning');
     bar.textContent = 'biomarkers extraction in progress...';
 
+    const downloadButton = document.getElementById('download-button');
+    downloadButton.classList.remove('btn-success');
+    downloadButton.classList.add('btn-secondary');
+    downloadButton.disabled = true;
+
     document.getElementById('status-section').style.display = 'block';
 
     const caseNames = segmentationResult.map(r => r.name);
@@ -303,6 +308,10 @@ function extractBiomarkers() {
                 biomarkersButton.disabled = true;
                 biomarkersButton.classList.remove('btn-success');
                 biomarkersButton.classList.add('btn-secondary');
+
+                downloadButton.disabled = false;
+                downloadButton.classList.remove('btn-secondary');
+                downloadButton.classList.add('btn-success');
 
                 document.getElementById('display-file-list').style.display = '';
                 document.getElementById('status-section').style.display = 'none';
@@ -324,6 +333,10 @@ function extractBiomarkers() {
             bar.classList.remove('bg-warning');
             bar.classList.add('bg-danger');
             bar.textContent = 'Biomarkers extraction failed';
+
+            downloadButton.disabled = false;
+            downloadButton.classList.remove('btn-secondary');
+            downloadButton.classList.add('btn-success');
 
             document.getElementById('display-file-list').style.display = '';
 
