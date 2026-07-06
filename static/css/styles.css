@@ -20,6 +20,7 @@
     /* Cards, lists, progress */
     --card-bg: #ddeaf7;
     --list-item-bg: #ffffff;
+    --list-label-bg: #fbebfa;
     --list-item-border: #dee2e6;
     --progress-bg: #e9ecef;
     --case-label-bg: #eef3f8;
@@ -65,7 +66,8 @@
 
     /* Cards, lists, progress */
     --card-bg: #1a2e42;
-    --list-item-bg: #2a2a2a;
+    --list-item-bg: #1d1d1d;
+    --list-label-bg: #1b131c;
     --list-item-border: #444;
     --progress-bg: #333333;
     --case-label-bg: #222d38;
@@ -870,6 +872,10 @@ details[open] .summary-chevron {
     border-color: var(--list-item-border);
     color: var(--text-color);
     transition: background-color 0.2s ease;
+}
+
+.fl-item-row {
+    background-color: var(--list-label-bg) !important;
 }
 
 .fl-case-label {

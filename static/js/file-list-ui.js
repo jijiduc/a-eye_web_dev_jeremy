@@ -426,7 +426,14 @@ function addLabelRow(ulElement, labels) {
     labels.forEach(label => {
         const row = document.createElement('li');
         row.className = 'list-group-item fl-case-label';
-        row.textContent = label;
+
+        const qualifier = document.createElement('span');
+        qualifier.style.color = 'var(--summary-link-color)';
+        qualifier.style.fontWeight ='bold';
+        qualifier.textContent = 'CASE · ';
+        row.appendChild(qualifier);
+        row.appendChild(document.createTextNode(label));
+
         ulElement.appendChild(row);
     });
 }
@@ -434,7 +441,7 @@ function addLabelRow(ulElement, labels) {
 /*
 *   Build a file list with an optional remove button and dropdowns buttons
 */
-function buildFileList(ulElement, files, onRemove = null, dropdowns = [], caseInfoMap = null) {
+function buildFileList(ulElement, files, onRemove = null, dropdowns = [], caseInfoMap = null, headerBadge = null) {
     ulElement.innerHTML = '';
 
     const header = document.createElement('li');
@@ -444,16 +451,29 @@ function buildFileList(ulElement, files, onRemove = null, dropdowns = [], caseIn
 
     const headerFilename = document.createElement('span');
     headerFilename.style.fontWeight = 'bold';
-    headerFilename.textContent = 'Selected files/cases';
+    headerFilename.textContent = 'Selection';
     header.appendChild(headerFilename);
+
+    if (headerBadge) {
+        const badge = document.createElement('span');
+        badge.innerHTML = headerBadge;
+        header.appendChild(badge);
+    }
+
     ulElement.appendChild(header);
 
     files.forEach((file, index) => {
         const fileRow = document.createElement('li');
-        fileRow.className = 'list-group-item d-flex justify-content-between align-items-center';
+        fileRow.className = 'list-group-item fl-item-row d-flex justify-content-between align-items-center';
 
         const nameSpan = document.createElement('span');
-        nameSpan.textContent = file.name;
+        const qualifier = document.createElement('span');
+        qualifier.style.color = file instanceof File ? 'var(--link-color)' : 'var(--summary-link-color)';
+        qualifier.textContent = file instanceof File ? 'FILE · ' : 'CASE · ';
+        qualifier.style.fontWeight = 'bold';
+        nameSpan.appendChild(qualifier);
+        nameSpan.appendChild(document.createTextNode(file.name));
+
         fileRow.appendChild(nameSpan);
 
         if (onRemove) {
