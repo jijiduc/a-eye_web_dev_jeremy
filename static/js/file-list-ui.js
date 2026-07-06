@@ -94,10 +94,11 @@ function renderAxialLengthTable(sideData, displayReference = false) {
         return `<p class="text-warning d-block"> No axial length data available...</p>`
     }
     let row = ``;
-    const data = [
-        ['Axial length', `axial_length`, 'mm'],
-        ['AL (cornea)', `axial_length_cornea`, 'mm'],
-        ['Extra anterior', `extra_ant`, 'mm'],];
+    const data = displayReference ? [['Axial length (until cornea)', `axial_length_cornea`, 'mm']] : [
+            ['Axial length (until lens)', `axial_length`, 'mm'],
+            ['Axial length (until cornea)', `axial_length_cornea`, 'mm'],
+            ['Extra anterior', `extra_ant`, 'mm'],
+        ];
 
     for (const [label, key, unit] of data) {
         const value = sideData?.[key];
