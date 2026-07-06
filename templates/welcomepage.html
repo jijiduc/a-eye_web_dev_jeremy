@@ -26,12 +26,12 @@
                 </button>
                 <ul class="dropdown-menu" aria-labelledby="welcomeLicenseDropdown">
                     <li>
-                        <a class="dropdown-item" href="{{ url_for('static', filename='LICENSE.txt') }}" target="_blank" rel="noopener">
+                        <a class="dropdown-item" href="{{ url_for('routes.serve_license') }}" target="_blank" rel="noopener">
                             <i class="fa-solid fa-eye"></i> View license
                         </a>
                     </li>
                     <li>
-                        <a class="dropdown-item" href="{{ url_for('static', filename='LICENSE.txt') }}" download>
+                        <a class="dropdown-item" href="{{ url_for('routes.serve_license') }}" download>
                             <i class="fa-solid fa-download"></i> Download license (.txt)
                         </a>
                     </li>
@@ -170,7 +170,7 @@
                 <li>Axial length visualisations (<code>.png</code>)</li>
                 <li>Biomarkers summary table (<code>biomarkers.csv</code>)</li>
             </ul>
-            <p class="welcome-format-note">All results packaged in a single <code>.zip</code> download, together with the <a href="{{ url_for('static', filename='LICENSE.txt') }}" download>license agreement</a>.</p>
+            <p class="welcome-format-note">All results packaged in a single <code>.zip</code> download, together with the <a href="{{ url_for('routes.serve_license') }}" download>license agreement</a>.</p>
         </div>
     </div>
 </section>
