@@ -12,6 +12,27 @@ const VOLUME_LABELS = {
 };
 
 /**
+* Add a panzoom component a the image. 
+* Enable to zoom on it with Shift + mouse Wheel.
+* @param {Element} row - The container to search in : '.wheel-zoom img', to attach panzoom to
+* Adapted from :
+*       - https://github.com/timmywil/panzoom
+*       - https://timmywil.com/panzoom/demo/
+*/
+function addMouseWheelZoom(row) {
+    row.querySelectorAll('.wheel-zoom img').forEach((image) => {
+        const panzoom = Panzoom(image, { minScale: 1, maxScale: 5, panOnlyWhenZoomed: true, canvas: true });
+        image.panzoom = panzoom;
+
+        const parent = image.parentElement;
+        parent.addEventListener('wheel', function (event) {
+            if (!event.shiftKey) return;
+            panzoom.zoomWithWheel(event);
+        });
+    });
+}
+
+/**
  * Render the metadata table
  * @param {string} fields - The key-values object containing the metadata
  */
@@ -203,7 +224,7 @@ function renderSegmentationDropdownContent(result, idx) {
         <div class="d-flex align-items-center gap-2 mb-3">
                 <h4 class="mb-0 fw-semibold" style="color: var(--stat-value-color)">Segmentation</h4>
                 <hr class="flex-grow-1 my-0" style="border-top: 1px solid var( --summary-link-color);">
-         </div>
+        </div>
         <div style="display:flex; width:100%; gap:8px; align-items:flex-start;">
             <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:4px;">
                 <span class="text-muted small fw-semibold" style="margin-left:2px;">
@@ -304,8 +325,8 @@ function renderBiomarkersDropdownContent(results) {
                                         <p class="text-muted small fw-semibold text-uppercase mb-2 text-center">
                                             Axial length visualisation
                                         </p>
-                                        <img src="${data.axial_length_image}" class="img-fluid bg-black"
-                                        alt="Axial length ${side} eye">
+                                         <img src="${data.axial_length_image}" class="img-fluid bg-black"
+                                            alt="Axial length ${side} eye">
                                     </div>` : ''}
                                 <div>
                                     <p class="text-muted small fw-semibold text-uppercase mb-2 text-center">
@@ -372,8 +393,15 @@ function renderStatisticalDropdownContent(results) {
                                         <p class="text-muted small text-uppercase mb-2 text-center">
                                             case compared to reference dataset
                                         </p>
-                                        <img src="${data.vol_violin_image}" class="img-fluid bg-black"
-                                        alt="Volumetry violin plot ${side} eye">
+                                        <div class='wheel-zoom'>
+                                            <img src="${data.vol_violin_image}" class="img-fluid bg-black"
+                                            alt="Volumetry violin plot ${side} eye">
+                                        </div>
+                                        <p class="text-center mt-2 mb-0">
+                                            <span class="zoom-hint">
+                                                <kbd>Shift</kbd> + <kbd>mouse wheel</kbd> to zoom &middot; <kbd>Esc</kbd> to reset view
+                                            </span>
+                                        </p>
                                     </div>` : ''}
                                 <div>
                                     <p class="text-muted small fw-semibold text-uppercase mb-2 text-center">

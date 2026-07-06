@@ -877,6 +877,36 @@ details[open] .summary-chevron {
     font-size: 0.875em;
     background-color: var(--case-label-bg) !important;
 }
+/* ============================================================
+   Image to be zoomed in
+   ============================================================ */
+.wheel-zoom {
+  overflow: hidden;
+}
+
+.wheel-zoom img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.zoom-hint {
+  display: inline-block;
+  font-size: 0.8125rem;
+  padding: 8px 4px;
+  color: var(--link-color);
+  background-color: var(--card-bg);
+  border: 1px solid var(--info-panel-border);
+  border-radius: 10px;
+}
+
+.zoom-hint kbd {
+  font-weight: 600;
+  color: var(--summary-link-color);
+  background-color: var(--bg-color);
+  border: 1px solid var(--info-panel-border);
+  border-radius: 3px;
+}
 
 /* ============================================================
    Measures tables

@@ -370,7 +370,10 @@ function buildResultFileList(results) {
     if ((results.some(r => r.biomarkers?.left?.reference || r.biomarkers?.right?.reference))) {
         dropdowns.push({
             label: 'statistics',
-            onOpen: (result, idx, row) => { row.innerHTML = renderStatisticalDropdownContent(result.biomarkers); },
+            onOpen: (result, idx, row) => {
+                row.innerHTML = renderStatisticalDropdownContent(result.biomarkers);
+                addMouseWheelZoom(row);
+            },
             onClose: (result, idx, row) => { row.innerHTML = ''; }
         });
     }
@@ -379,7 +382,13 @@ function buildResultFileList(results) {
 }
 
 
-// add the click behaviour on the download button
+// Click behaviour on the download button
 document.getElementById('download-button').addEventListener('click', function () {
     window.location.href = this.getAttribute('data-download-url');
+});
+
+// for .wheel-zoom image : escape pressed -> image back to its original form
+document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    document.querySelectorAll('.wheel-zoom img').forEach((img) => img.panzoom?.reset());
 });
