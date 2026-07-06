@@ -11,7 +11,9 @@ VOL_REF= {"left" : REF_LEFT_VOL,
 
 def references_means(side:str) -> dict[str, str | int | float]:
     """Provide the means of the reference"""
-    al_df: pl.DataFrame = pl.read_csv(AL_REF[side]).mean().to_dicts()[0]
+    al_df: pl.DataFrame = pl.read_csv(AL_REF[side]).mean().with_columns(
+        (pl.col("axial_length") + pl.col("extra_ant")).alias("axial_length_cornea")
+        ).drop("axial_length", "extra_ant").to_dicts()[0]
     vol_df: pl.DataFrame = pl.read_csv(VOL_REF[side]).mean().to_dicts()[0]
     return {**al_df, **vol_df}
 
