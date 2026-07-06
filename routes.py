@@ -659,3 +659,7 @@ def extract_biomarkers() -> tuple[Response, int]:
         "status": "success",
         "results": results,
     }), 200
+
+@bp.route("/license")
+def serve_license():
+    return send_file(Path("LICENSE.txt"), mimetype="text/plain")
