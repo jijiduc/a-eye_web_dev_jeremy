@@ -53,7 +53,7 @@ async function onSelectionFilter() {
     }
     // to reset a previously selected input
     document.getElementById('file-input').value = '';
-    renderFileList();
+    buildSelectionFileList();
 }
 
 function currentCaseCount() {
@@ -83,23 +83,19 @@ function onRejectionNotice(names, reasons) {
 function unselectFile(index) {
     selectionCaseInfoMap.delete(selection[index]);
     selection.splice(index, 1);
-    renderFileList();
+    buildSelectionFileList();
 }
 
-function renderFileList() {
+function buildSelectionFileList() {
     let fileList = document.getElementById('file-list');
-    let title = document.getElementById('selected-files-title');
 
     if (selection.length > 0) {
         const cases = currentCaseCount();
-        title.style.display = 'block';
-        title.innerHTML = ` <span class="badge me-1" style="background:var(--btn-secondary-bg);">
-                                ${selection.length} file ${selection.length > 1 ? 's' : ''}</span>
-                            <span class="badge" style="background:var(--link-color);">
-                                ${cases} / ${MAX_CASES} cases</span>`;
-        buildFileList(fileList, selection, unselectFile, [], selectionCaseInfoMap);
+        const casesBadge = `<span class="badge" style="background:var(--link-color);">
+                                ${cases} / ${MAX_CASES} cases
+                            </span>`;
+        buildFileList(fileList, selection, unselectFile, [], selectionCaseInfoMap, casesBadge);
     } else {
-        title.style.display = 'none';
         fileList.innerHTML = '';
     }
 
@@ -126,7 +122,7 @@ function uploadFiles() {
 
     selection.forEach(file => formData.append('files[]', file));
 
-    ['rejection-tooltip', 'selected-files-title', 'file-list'].forEach(id => {
+    ['rejection-tooltip', 'file-list'].forEach(id => {
         document.getElementById(id).style.display = 'none';
     });
 
