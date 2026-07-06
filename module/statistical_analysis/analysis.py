@@ -34,4 +34,5 @@ def load_reference(side:str, volumetry: bool=False, axial_length:bool = False) -
         return df.merge(metadata[["Subject", "Sex"]], on="Subject", how="left")
     if axial_length:
         df: pd.DataFrame = pd.read_csv(AL_REF[side])
+        df["axial_length_cornea"] = df["axial_length"] + df["extra_ant"]
         return df

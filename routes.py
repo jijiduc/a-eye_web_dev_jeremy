@@ -49,7 +49,10 @@ from module.statistical_analysis.analysis import (
     load_reference,
     references_means,
 )
-from module.statistical_analysis.visualisations import plot_volumetry_violin
+from module.statistical_analysis.visualisations import (
+    plot_axial_length_violin,
+    plot_volumetry_violin,
+)
 from utils import (
     Message,
     allowed_file,
@@ -133,6 +136,14 @@ def _process_eye(
     violin_fig.savefig(vol_violin_path, dpi=150, bbox_inches="tight")
     plt.close(violin_fig)
     eye_data["vol_violin_image"] = f"/display-image/{vol_violin_filename}"
+
+    al_violin_filename = f"{case_name}_{side}_al_violin_plot.png"
+    al_violin_path = paths.visualisation / al_violin_filename
+    al_reference = load_reference(side, axial_length=True)
+    al_violin_fig = plot_axial_length_violin(al_reference, axial_measures)
+    al_violin_fig.savefig(al_violin_path, dpi=150, bbox_inches="tight")
+    plt.close(al_violin_fig)
+    eye_data["al_violin_image"] = f"/display-image/{al_violin_filename}"
 
 
     csv_row = {"case": case_name, "side": side, **volumes, **axial_measures}
