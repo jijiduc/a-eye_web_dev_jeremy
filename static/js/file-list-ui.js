@@ -411,12 +411,24 @@ function renderStatisticalDropdownContent(results) {
                                     ${renderAxialLengthTable(data, true)}
                                 </div>
 
+                                ${data.al_violin_image ? `
+                                    <div>
+                                        <p class="text-muted small fw-semibold text-uppercase mb-2 text-center">
+                                            Axial length visualisation
+                                        </p>
+                                        <p class="text-muted small text-uppercase mb-2 text-center">
+                                            case compared to reference dataset
+                                        </p>
+                                        <img src="${data.al_violin_image}" class="img-fluid bg-black"
+                                        alt="Axial length violin plot ${side} eye">
+                                    </div>` : ''}
+
                             </div>
                         </div>
                     </div>`;
         }
     }
-    return `<div class="row g-3"> 
+    return `<div class="row g-3">
             ${title}
             ${columns}
             </div>`;
