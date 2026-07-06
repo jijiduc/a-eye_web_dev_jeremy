@@ -7,7 +7,7 @@
 {% block content %}
 <div class="container-xl">
     <div class="text-center">
-        <h2 class="main-title mt-3">
+        <h2 class="main-title mt-5 fw-bold">
             Segmentation Tool
         </h2>
         <hr class="mx-auto mt-2 mb-0" style="width: 7rem; border-top: 2px solid var(--link-color); opacity: 1;">
@@ -85,7 +85,7 @@
                     onclick="uploadFiles()" disabled>
                     <i class="fa-solid fa-upload"></i> Upload
                 </button>
-                <small class="text-muted d-block mt-2">2. Upload data to the server</small>
+                <small class="text-muted d-block mt-2">2. Upload to server</small>
             </form>
         </div>
         <div class="col">
@@ -101,7 +101,7 @@
             <form id="biomarkers-form">
                 <button type="button" class="btn btn-secondary btn-lg btn-block" id="biomarkers-button"
                     onclick="extractBiomarkers()" disabled>
-                    <i class="fa-solid fa-gear"></i> Biomarkers
+                    <i class="fa-solid fa-gear"></i> Extract
                 </button>
                 <small class="text-muted d-block mt-2">4. Extract biomarkers</small>
             </form>
@@ -166,7 +166,7 @@
             <div class="modal-body">
                 <p>Please keep the segmentation tool window open until the segmentation completes.<br>
                 Closing it will interrupt the process and results will be lost.</p>
-                <small class="text-muted">This popup can safely be closed</small>
+                <small class="text-muted"><i>This popup can safely be closed</i></small>
             </div>
         </div>
     </div>
