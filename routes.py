@@ -123,17 +123,18 @@ def _process_eye(
 
     # add the references and outliers
     references = references_means(side)
-    bounds = references_iqr_bounds(side)
+    bounds = {"F": references_iqr_bounds(side, "F"), "M": references_iqr_bounds(side, "M")}
     eye_data["reference"] = {}
-    eye_data["outliers"] = {}
+    eye_data["outliers"] = {"F": {}, "M": {}}
 
     for key, value in references.items() :
         if key in eye_data :
             eye_data["reference"][key] = value
             case_value = eye_data[key]
             if case_value is not None:
-                lower_bound, upper_bound = bounds[key]
-                eye_data["outliers"][key] = case_value < lower_bound or case_value > upper_bound
+                for sex in ("F", "M"):
+                    lower_bound, upper_bound = bounds[sex][key]
+                    eye_data["outliers"][sex][key] = case_value < lower_bound or case_value > upper_bound
 
     # add the violin plot with this case's own value marked on it
     vol_violin_filename = f"{case_name}_{side}_vol_violin_plot.png"
