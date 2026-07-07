@@ -47,6 +47,7 @@ from module.quadrant_segmentation.quadrant import (
 )
 from module.statistical_analysis.analysis import (
     load_reference,
+    references_iqr_bounds,
     references_means,
 )
 from module.statistical_analysis.visualisations import (
@@ -120,13 +121,19 @@ def _process_eye(
         if key != "axial_length_image" and math.isnan(eye_data[key]):
             eye_data[key] = None
 
-    # add the references
+    # add the references and outliers
     references = references_means(side)
+    bounds = references_iqr_bounds(side)
     eye_data["reference"] = {}
-    
+    eye_data["outliers"] = {}
+
     for key, value in references.items() :
         if key in eye_data :
             eye_data["reference"][key] = value
+            case_value = eye_data[key]
+            if case_value is not None:
+                lower_bound, upper_bound = bounds[key]
+                eye_data["outliers"][key] = case_value < lower_bound or case_value > upper_bound
 
     # add the violin plot with this case's own value marked on it
     vol_violin_filename = f"{case_name}_{side}_vol_violin_plot.png"

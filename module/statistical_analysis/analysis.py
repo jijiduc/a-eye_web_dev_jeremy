@@ -9,8 +9,25 @@ AL_REF= {"left" : REF_LEFT_AL,
 VOL_REF= {"left" : REF_LEFT_VOL,
          "right": REF_RIGHT_VOL,}
 
+def references_iqr_bounds(side:str) -> dict[str, tuple[float, float]]:
+    """Compute the IQR outlier bounds of the reference datasets"""
+    al_df: pl.DataFrame = pl.read_csv(AL_REF[side]).with_columns(
+        (pl.col("axial_length") + pl.col("extra_ant")).alias("axial_length_cornea")
+        ).drop("axial_length", "extra_ant", "Subject", "Sex", "Age", "Height", "Weight", "BMI")
+    vol_df: pl.DataFrame = pl.read_csv(VOL_REF[side]).drop("Subject")
+
+    bounds: dict[str, tuple[float, float]] = {}
+    for df in (al_df, vol_df):
+        for column in df.columns:
+            # Using Tuckey method
+            q1 = df[column].quantile(0.25, interpolation="linear")
+            q3 = df[column].quantile(0.75, interpolation="linear")
+            iqr = q3 - q1
+            bounds[column] = (q1 - 1.5 * iqr, q3 + 1.5 * iqr)
+    return bounds
+
 def references_means(side:str) -> dict[str, str | int | float]:
-    """Provide the means of the reference"""
+    """Provide the means of the reference datasets"""
     al_df: pl.DataFrame = pl.read_csv(AL_REF[side]).mean().with_columns(
         (pl.col("axial_length") + pl.col("extra_ant")).alias("axial_length_cornea")
         ).drop("axial_length", "extra_ant").to_dicts()[0]

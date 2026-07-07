@@ -46,6 +46,11 @@
     --ref-border: #850c68;
     --ref-cell: #e34ec095;
     --ref-cell-uneven: #b06da092;
+
+    /* outlier highlight */
+    --outlier-bg: var(--bs-warning-bg-subtle);
+    --outlier-text: var(--bs-warning-text-emphasis);
+    --outlier-border: var(--bs-warning-border-subtle);
 }
 
 /* Dark mode overrides */
@@ -107,8 +112,13 @@
     --ref-header: #9c0f7a;  
     --ref-border: #4d073d;
     --ref-cell: #2a0b23;
-    --ref-cell-uneven : #61425a
-}   
+    --ref-cell-uneven : #61425a;
+
+    /* outlier highlight*/
+    --outlier-bg: var(--bs-warning-bg-subtle);
+    --outlier-text: var(--bs-warning-text-emphasis);
+    --outlier-border: var(--bs-warning-border-subtle);
+}
 
 /* ============================================================
    Base
@@ -969,11 +979,6 @@ details[open] .summary-chevron {
     border-bottom: 2px solid var(--link-color);
 }
 
-.measure-table tbody tr.active-row {
-    font-weight: bold;
-    color: var(--link-color);
-}
-
 /* table with a third reference values column*/
 
 .measure-table-ref {
@@ -1055,7 +1060,9 @@ details[open] .summary-chevron {
 
 .measure-table-ref tbody tr.active-row {
     font-weight: bold;
-    color: var(--link-color);
+    color: var(--outlier-text);
+    background-color: var(--outlier-bg);
+    border: 1px solid var(--outlier-border);
 }
 
 /* ============================================================
