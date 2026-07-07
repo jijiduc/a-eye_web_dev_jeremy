@@ -9,12 +9,15 @@ AL_REF= {"left" : REF_LEFT_AL,
 VOL_REF= {"left" : REF_LEFT_VOL,
          "right": REF_RIGHT_VOL,}
 
-def references_iqr_bounds(side:str) -> dict[str, tuple[float, float]]:
-    """Compute the IQR outlier bounds of the reference datasets"""
-    al_df: pl.DataFrame = pl.read_csv(AL_REF[side]).with_columns(
+def references_iqr_bounds(side:str, sex:str) -> dict[str, tuple[float, float]]:
+    """Compute the IQR outlier bounds of the reference datasets, by sex"""
+    al_df: pl.DataFrame = pl.read_csv(AL_REF[side]).filter(pl.col("Sex") == sex).with_columns(
         (pl.col("axial_length") + pl.col("extra_ant")).alias("axial_length_cornea")
         ).drop("axial_length", "extra_ant", "Subject", "Sex", "Age", "Height", "Weight", "BMI")
-    vol_df: pl.DataFrame = pl.read_csv(VOL_REF[side]).drop("Subject")
+
+    metadata: pl.DataFrame = pl.read_csv(REF_METADATA).select("Subject", "Sex")
+    vol_df: pl.DataFrame = pl.read_csv(VOL_REF[side]).join(metadata, on="Subject", how="left") \
+        .filter(pl.col("Sex") == sex).drop("Subject", "Sex")
 
     bounds: dict[str, tuple[float, float]] = {}
     for df in (al_df, vol_df):

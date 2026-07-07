@@ -37,22 +37,38 @@ function addMouseWheelZoom(row) {
 }
 
 /**
-* Render a the outliers detected message
+* Render the outliers detected message
 * @param {object} sideData - The key-values object containing measurements and outliers
 * @param {object} labelsMap - Mapping of biomarker key to its display label
 */
 function renderOutlierAlert(sideData, labelsMap) {
-    const labels = [];
+    const femaleLabels = [];
+    const maleLabels = [];
     for (const key in labelsMap) {
-        if (sideData?.outliers?.[key]) {
-            labels.push(labelsMap[key]);
+        if (sideData.outliers.F[key]) {
+            femaleLabels.push(labelsMap[key]);
+        }
+        if (sideData.outliers.M[key]) {
+            maleLabels.push(labelsMap[key]);
         }
     }
     
+    if (!femaleLabels.length && !maleLabels.length) {
+        return '';
+    }
+
+    const message = [];
+    if (femaleLabels.length) {
+        message.push(`<br> → if <strong>female</strong>: <strong>${femaleLabels.join(', ')}</strong>`);
+    }
+    if (maleLabels.length) {
+        message.push(`<br> → if <strong>male</strong>: <strong>${maleLabels.join(', ')}</strong>`);
+    }
+
     return `<div class="alert alert-warning mb-2" role="alert">
                 <i class="fa-solid fa-triangle-exclamation"></i>
-                Comparing the extracted results and the reference mean revealed 
-                <strong>${labels.join(', ')}</strong> as outlier.
+                Comparing the extracted results and the reference mean revealed outliers
+                depending on the case's sex : ${message.join('')}
             </div>`;
 }
 
@@ -134,7 +150,7 @@ function renderAxialLengthTable(sideData, displayReference = false) {
             const refCleanedValue = (refValue !== null && refValue !== undefined)
                                      ? `${refValue.toFixed(2)} ${unit}` : '—';
             refTd = `<td class="value-cell">${refCleanedValue}</td>`;
-            rowClass = sideData.outliers[key] ? ` class="active-row"` : ``;
+            rowClass = sideData.outliers.F[key] || sideData.outliers.M[key] ? ` class="active-row"` : ``;
         }
         row += `
                 <tr${rowClass}>
@@ -200,7 +216,7 @@ function renderVolumetryTable(sideData, displayReference = false) {
             const refValue = sideData?.reference?.[key];
             const refCleanedValue = (refValue !== null && refValue !== undefined) ? `${refValue.toFixed(1)} mm³` : '—';
             refTd = `<td class="value-cell">${refCleanedValue}</td>`;
-            rowClass = sideData.outliers[key] ? ` class="active-row"` : ``;
+            rowClass = sideData.outliers.F[key] || sideData.outliers.M[key] ? ` class="active-row"` : ``;
         }
 
         row += `
