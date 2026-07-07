@@ -11,6 +11,10 @@ const VOLUME_LABELS = {
     vol_total: 'Total segmented volume',
 };
 
+const AXIAL_LENGTH_LABELS = {
+    axial_length_cornea: 'axial length (until cornea)',
+};
+
 /**
 * Add a panzoom component a the image. 
 * Enable to zoom on it with Shift + mouse Wheel.
@@ -30,6 +34,26 @@ function addMouseWheelZoom(row) {
             panzoom.zoomWithWheel(event);
         });
     });
+}
+
+/**
+* Render a the outliers detected message
+* @param {object} sideData - The key-values object containing measurements and outliers
+* @param {object} labelsMap - Mapping of biomarker key to its display label
+*/
+function renderOutlierAlert(sideData, labelsMap) {
+    const labels = [];
+    for (const key in labelsMap) {
+        if (sideData?.outliers?.[key]) {
+            labels.push(labelsMap[key]);
+        }
+    }
+    
+    return `<div class="alert alert-warning mb-2" role="alert">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                Comparing the extracted results and the reference mean revealed 
+                <strong>${labels.join(', ')}</strong> as outlier.
+            </div>`;
 }
 
 /**
@@ -86,7 +110,7 @@ function renderSegmentationLegend() {
 
 /**
 * Render the axial length measurements table
-* @param {string} sideData - The key-values object containing the AL measurements
+* @param {object} sideData - The key-values object containing the AL measurements
 * @param {bool} displayReference - wether to display the reference too
 **/
 function renderAxialLengthTable(sideData, displayReference = false) {
@@ -104,14 +128,16 @@ function renderAxialLengthTable(sideData, displayReference = false) {
         const value = sideData?.[key];
         const cleanedValue = (value !== null && value !== undefined) ? `${value.toFixed(2)} ${unit}` : '—';
         let refTd = ``;
+        let rowClass = ``;
         if (displayReference) {
             const refValue = sideData?.reference?.[key];
             const refCleanedValue = (refValue !== null && refValue !== undefined)
                                      ? `${refValue.toFixed(2)} ${unit}` : '—';
             refTd = `<td class="value-cell">${refCleanedValue}</td>`;
+            rowClass = sideData.outliers[key] ? ` class="active-row"` : ``;
         }
         row += `
-                <tr>
+                <tr${rowClass}>
                     <td class="label-cell">${label}</td>
                     <td class="value-cell">${cleanedValue}</td>
                     ${refTd}
@@ -152,7 +178,7 @@ function renderAxialLengthTable(sideData, displayReference = false) {
 
 /**
 * Render the volumetry measurements table
-* @param {string} sideData - The key-values object containing the AL measurements
+* @param {object} sideData - The key-values object containing the AL measurements
 * @param {bool} displayReference - wether to display the reference too
 */
 function renderVolumetryTable(sideData, displayReference = false) {
@@ -168,15 +194,17 @@ function renderVolumetryTable(sideData, displayReference = false) {
         const value = sideData?.[key];
         const cleanedValue = (value !== null && value !== undefined) ? `${value.toFixed(1)} mm³` : '—';
         let refTd = ``;
+        let rowClass = ``;
 
         if (displayReference) {
             const refValue = sideData?.reference?.[key];
             const refCleanedValue = (refValue !== null && refValue !== undefined) ? `${refValue.toFixed(1)} mm³` : '—';
             refTd = `<td class="value-cell">${refCleanedValue}</td>`;
+            rowClass = sideData.outliers[key] ? ` class="active-row"` : ``;
         }
 
         row += `
-            <tr>
+            <tr${rowClass}>
                 <td class="label-cell">${label}</td>
                 <td class="value-cell">${cleanedValue}</td>
                 ${refTd}
@@ -383,6 +411,7 @@ function renderStatisticalDropdownContent(results) {
                                     <p class="text-muted small fw-semibold text-uppercase mb-2 text-center">
                                         Volumetry
                                     </p>
+                                    ${renderOutlierAlert(data, VOLUME_LABELS)}
                                     ${renderVolumetryTable(data, true)}
                                 </div>
 
@@ -400,7 +429,8 @@ function renderStatisticalDropdownContent(results) {
                                         </div>
                                         <p class="text-center mt-2 mb-0">
                                             <span class="zoom-hint">
-                                                <kbd>Shift</kbd> + <kbd>mouse wheel</kbd> to zoom &middot; <kbd>Esc</kbd> to reset view
+                                                <kbd>Shift</kbd> + <kbd>mouse wheel</kbd> to zoom &middot; 
+                                                <kbd>Esc</kbd> to reset view
                                             </span>
                                         </p>
                                     </div>` : ''}
@@ -408,6 +438,7 @@ function renderStatisticalDropdownContent(results) {
                                     <p class="text-muted small fw-semibold text-uppercase mb-2 text-center">
                                         Axial length
                                     </p>
+                                    ${renderOutlierAlert(data, AXIAL_LENGTH_LABELS)}
                                     ${renderAxialLengthTable(data, true)}
                                 </div>
 
