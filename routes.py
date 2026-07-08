@@ -49,6 +49,8 @@ from module.statistical_analysis.analysis import (
     load_reference,
     references_iqr_bounds,
     references_means,
+    references_size,
+    references_standard_deviation,
 )
 from module.statistical_analysis.visualisations import (
     plot_axial_length_violin,
@@ -122,14 +124,18 @@ def _process_eye(
             eye_data[key] = None
 
     # add the references and outliers
-    references = references_means(side)
+    ref_means = references_means(side)
+    ref_standard_deviation = references_standard_deviation(side)
     bounds = {"F": references_iqr_bounds(side, "F"), "M": references_iqr_bounds(side, "M")}
-    eye_data["reference"] = {}
+    eye_data["reference_mean"] = {}
+    eye_data["reference_std"] = {}
+    eye_data["reference_count"] = references_size(side)
     eye_data["outliers"] = {"F": {}, "M": {}}
 
-    for key, value in references.items() :
+    for key, value in ref_means.items() :
         if key in eye_data :
-            eye_data["reference"][key] = value
+            eye_data["reference_mean"][key] = value
+            eye_data["reference_std"][key] = ref_standard_deviation[key]
             case_value = eye_data[key]
             if case_value is not None:
                 for sex in ("F", "M"):

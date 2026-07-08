@@ -37,6 +37,21 @@ def references_means(side:str) -> dict[str, str | int | float]:
     vol_df: pl.DataFrame = pl.read_csv(VOL_REF[side]).mean().to_dicts()[0]
     return {**al_df, **vol_df}
 
+def references_standard_deviation(side:str) -> dict[str, str | int | float]:
+    """Provide the standard deviations of the reference datasets"""
+    al_df: pl.DataFrame = pl.read_csv(AL_REF[side]).with_columns(
+        (pl.col("axial_length") + pl.col("extra_ant")).alias("axial_length_cornea")
+        ).drop("axial_length", "extra_ant").std().to_dicts()[0]
+    vol_df: pl.DataFrame = pl.read_csv(VOL_REF[side]).std().to_dicts()[0]
+    return {**al_df, **vol_df}
+
+def references_size(side:str) -> dict[str, int]:
+    """Provide the number of samples in the reference datasets"""
+    return {
+        "axial_length": pl.read_csv(AL_REF[side]).height,
+        "volumetry": pl.read_csv(VOL_REF[side]).height,
+    }
+
 def load_reference(side:str, volumetry: bool=False, axial_length:bool = False) -> pd.DataFrame:
     """To load the reference data in pandas dataframe
 

@@ -151,7 +151,38 @@
             <h5 class="mb-0 fw-semibold">Results</h5>
             <hr class="flex-grow-1 my-0" style="border-top: 1px solid var(--link-color);">
         </div>
-        <ul id="result-file-list" class="list-group"></ul>
+
+        <div class="accordion dataset-accordion mb-2" id="dataset-comparison-accordion" style="display:none;">
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#dataset-comparison-collapse" aria-expanded="true"
+                        aria-controls="dataset-comparison-collapse">
+                        Dataset comparison : cases selected vs reference
+                    </button>
+                </h2>
+                <div id="dataset-comparison-collapse" class="accordion-collapse collapse show">
+                    <div class="accordion-body" id="dataset-comparison-content"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion dataset-accordion mb-2" id="processed-cases-accordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#processed-cases-collapse" aria-expanded="true"
+                        aria-controls="processed-cases-collapse">
+                        Processed cases details
+                    </button>
+                </h2>
+                <div id="processed-cases-collapse" class="accordion-collapse collapse show">
+                    <div class="accordion-body">
+                        <ul id="result-file-list" class="list-group"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 

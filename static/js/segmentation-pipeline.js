@@ -376,7 +376,10 @@ function buildResultFileList(results) {
         });
     }
 
-    if ((results.some(r => r.biomarkers?.left?.reference || r.biomarkers?.right?.reference))) {
+    const comparisonAccordion = document.getElementById('dataset-comparison-accordion');
+    if (results.some(r => r.biomarkers?.left?.reference_mean || r.biomarkers?.right?.reference_mean)) {
+        document.getElementById('dataset-comparison-content').innerHTML = renderComparisonAccordion(results);
+        comparisonAccordion.style.display = 'block';
         dropdowns.push({
             label: 'statistics',
             onOpen: (result, idx, row) => {
@@ -385,6 +388,8 @@ function buildResultFileList(results) {
             },
             onClose: (result, idx, row) => { row.innerHTML = ''; }
         });
+    } else {
+        comparisonAccordion.style.display = 'none';
     }
 
     buildFileList(document.getElementById('result-file-list'), results, null, dropdowns);
