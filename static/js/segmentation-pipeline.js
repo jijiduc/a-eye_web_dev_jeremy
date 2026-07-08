@@ -99,16 +99,7 @@ function buildSelectionFileList() {
         fileList.innerHTML = '';
     }
 
-    let uploadButton = document.getElementById('upload-button');
-    if (selection.length > 0) {
-        uploadButton.classList.remove('btn-secondary');
-        uploadButton.classList.add('btn-success');
-        uploadButton.disabled = false;
-    } else {
-        uploadButton.classList.remove('btn-success');
-        uploadButton.classList.add('btn-secondary');
-        uploadButton.disabled = true;
-    }
+    updateUploadButtonState();
 }
 
 /*
@@ -415,4 +406,23 @@ function resetSession() {
     fetch('/reset', { method: 'POST' })
         .catch(error => console.error('Error:', error))
         .finally(() => window.location.reload());
+}
+
+/*
+* Consent checkboxes to condition access to the "Upload" button
+*/
+function updateUploadButtonState() {
+    const consent = document.getElementById('consent-authorization-checkbox').checked
+        && document.getElementById('consent-storage-checkbox').checked;
+
+    const uploadButton = document.getElementById('upload-button');
+    if (consent && selection.length > 0) {
+        uploadButton.disabled = false;
+        uploadButton.classList.add('btn-success');
+        uploadButton.classList.remove('btn-secondary');
+    } else {
+        uploadButton.disabled = true;
+        uploadButton.classList.remove('btn-success');
+        uploadButton.classList.add('btn-secondary');
+    }
 }
