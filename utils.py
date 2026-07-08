@@ -347,6 +347,8 @@ def unzip_file(file_type, source, destination):
 def copy_folder(source, destination):
     os.makedirs(destination, exist_ok=True)
     for item in os.listdir(source):
+        if fnmatch.fnmatch(item, "*_raw.nii.gz"):
+            continue
         s = os.path.join(source, item)
         d = os.path.join(destination, item)
         if os.path.isdir(s):
