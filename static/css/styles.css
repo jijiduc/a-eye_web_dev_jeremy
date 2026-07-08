@@ -1236,6 +1236,16 @@ details[open] .summary-chevron {
 .progress-bar.bg-success {
     background-color: #E5007D !important;
 }
+
+/* ============================================================
+   consent 
+   ============================================================ */
+.consent-box {
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 1rem;
+}
+
 /* ============================================================
    segmentation legend
    ============================================================ */
