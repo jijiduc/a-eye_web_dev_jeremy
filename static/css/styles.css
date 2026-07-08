@@ -146,6 +146,20 @@ a:hover {
     text-decoration: underline;
 }
 
+.container-wide {
+    width: 100%;
+    padding-right: 0.75rem;
+    padding-left: 0.75rem;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+@media (min-width: 1800px) {
+    .container-wide {
+        max-width: 1600px;
+    }
+}
+
 /* ============================================================
    Navbar
    ============================================================ */
@@ -943,6 +957,10 @@ details[open] .summary-chevron {
     text-align: center;
 }
 
+.measure-table th:first-child {
+    text-align: left;
+}
+
 .measure-table th,
 .measure-table td {
     width: 50%;
@@ -953,11 +971,13 @@ details[open] .summary-chevron {
     white-space: nowrap;
     font-weight: 500;
     width: 60%;
+    text-align: left;
 }
 
 .measure-table td.value-cell {
     word-break: break-all;
     width: 40%;
+    text-align: center;
 }
 
 
@@ -993,6 +1013,10 @@ details[open] .summary-chevron {
 .measure-table-ref thead tr {
     background-color: var(--link-color);
     color: #ffffff;
+    text-align: center;
+}
+
+.measure-table-ref th:first-child {
     text-align: left;
 }
 
@@ -1005,16 +1029,19 @@ details[open] .summary-chevron {
     white-space: nowrap;
     font-weight: 500;
     width: 40%;
+    text-align: left;
 }
 
 .measure-table-ref td.value-cell {
     word-break: break-all;
     width: 30%;
+    text-align: center;
 }
 
 .measure-table-ref td.ref-cell,
 .measure-table-ref th.ref-cell {
     width: 30%;
+    text-align: center;
     background-color: var(--bs-success-bg-subtle);
     border-left: 2px solid var(--link-color);
 }
@@ -1155,6 +1182,11 @@ details[open] .summary-chevron {
 
 .measure-table-dataset tbody tr:last-of-type td.ref-cell {
     border-bottom: 2px solid var(--ref-border);
+}
+
+.img-fluid.bg-black {
+    border: 1px solid var(--header-divider);
+    border-radius: 4px;
 }
 
 /* ============================================================

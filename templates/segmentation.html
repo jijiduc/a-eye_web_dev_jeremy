@@ -5,7 +5,7 @@
 {% block body_container %}container-fluid px-3{% endblock %}
 
 {% block content %}
-<div class="container-xl">
+<div class="container-wide">
     <div class="text-center">
         <h2 class="main-title mt-5 fw-bold">
             Segmentation Tool
@@ -13,7 +13,7 @@
         <hr class="mx-auto mt-2 mb-0" style="width: 7rem; border-top: 2px solid var(--link-color); opacity: 1;">
     </div>
 
-    <details class="mt-4">
+    <details class="mt-4" open>
         <summary style="cursor: pointer; list-style: none; display: inline-flex; align-items: center; gap: 4px; color: var(--link-color); font-weight: 600;">
             <i class="fa-solid fa-chevron-right summary-chevron"></i>
             About the segmentation tool
@@ -45,7 +45,7 @@
                     <strong>Important</strong>
                 </div>
                 <ul class="mb-0">
-                    <li><strong>T1-weighted images only.</strong> The model was trained exclusively on T1w sequences.</li>
+                    <li><strong>Human T1-weighted images only.</strong></li>
                     <li><strong>Accepted formats</strong>
                         <ul>
                             <li>Files for selection: <code>.nii</code> &middot; <code>.nii.gz</code> &middot; <code>.zip</code> &middot; <code>.7z</code></li>
@@ -121,7 +121,9 @@
             <small class="text-muted d-block mt-2">Reset the process</small>
         </div>
     </div>
+</div>
 
+<div class="container-wide">
     <!-- rejection notice -->
     <div class="row text-center" style="margin-top: 30px;">
         <div class="col-md-12">
@@ -146,7 +148,7 @@
 
 <!-- segmentation results -->
 <div id="segmentation-result-section" style="display:none; margin-top: 30px;">
-    <div class="container-xl">
+    <div class="container-wide">
         <div class="d-flex align-items-center gap-2 mb-3">
             <h5 class="mb-0 fw-semibold">Results</h5>
             <hr class="flex-grow-1 my-0" style="border-top: 1px solid var(--link-color);">
