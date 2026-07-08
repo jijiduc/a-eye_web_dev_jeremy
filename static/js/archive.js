@@ -63,5 +63,5 @@ async function getCaseInfo(file) {
     }
 
     // 3, else simple .nii / default
-    return { count: 1, labels: null };
+    return { count: 1, labels: [file.name] };
 }

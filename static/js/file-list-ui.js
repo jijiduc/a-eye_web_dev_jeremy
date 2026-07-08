@@ -339,7 +339,10 @@ function renderBiomarkersDropdownContent(results) {
     const title = `<div class="d-flex align-items-center gap-2 mb-3">
                         <h4 class="mb-0 fw-semibold" style="color: var(--stat-value-color)">Biomarkers</h4>
                         <hr class="flex-grow-1 my-0" style="border-top: 1px solid var( --summary-link-color);">
-                </div>`;
+                </div>
+                <p style="color: var(--muted-text); font-size: 0.85rem; margin-bottom: 1rem;">
+                    This section present the extracted biomarkers : axial length and volumetry.
+                </p>`;
     const details = `<details class="mb-3" style="font-size:0.82em;">
                         <summary style="cursor: pointer; font-weight: 600; list-style: none; display: inline-flex;
                                          align-items: center; gap: 6px; color:var(--summary-link-color); 
@@ -395,23 +398,19 @@ function renderBiomarkersDropdownContent(results) {
                             </div>
                             <div class="card-body d-flex flex-column gap-4">
                                 <div>
-                                    <p class="text-muted small fw-semibold text-uppercase mb-2 text-center">
+                                    <h5 style="color: var(--stat-value-color);">
                                         Volumetry
-                                    </p>
+                                    </h5>
                                     ${renderVolumetryTable(data)}
                                 </div>
-                                ${data.axial_length_image ? `
-                                    <div>
-                                        <p class="text-muted small fw-semibold text-uppercase mb-2 text-center">
-                                            Axial length visualisation
-                                        </p>
-                                         <img src="${data.axial_length_image}" class="img-fluid bg-black"
-                                            alt="Axial length ${side} eye">
-                                    </div>` : ''}
                                 <div>
-                                    <p class="text-muted small fw-semibold text-uppercase mb-2 text-center">
+                                    <h5 style="color: var(--stat-value-color);">
                                         Axial length
-                                    </p>
+                                    </h5>
+                                    ${data.axial_length_image ? `
+                                        <img src="${data.axial_length_image}" class="img-fluid bg-black mb-2"
+                                            style="border: 1px solid var(--header-divider); border-radius: 4px;"
+                                            alt="Axial length ${side} eye">` : ''}
                                     ${renderAxialLengthTable(data)}
                                 </div>
                             </div>
@@ -435,7 +434,12 @@ function renderStatisticalDropdownContent(results) {
     const title = `<div class="d-flex align-items-center gap-2 mb-3">
                     <h4 class="mb-0 fw-semibold" style="color: var(--stat-value-color)">Statistics</h4>
                     <hr class="flex-grow-1 my-0" style="border-top: 1px solid var( --summary-link-color);">
-            </div>`;
+            </div>
+            <p style="color: var(--muted-text); font-size: 0.85rem; margin-bottom: 1rem;">
+                This section compare the extracted biomarkers to the reference dataset
+                 (composed of 1157 samples, processed with quadrant segmentation). The "Reference mean" value correspond
+                 to both sex samples combined.
+            </p>`;
     let columns = ``;
     const sides = [`left`, `right`];
 
@@ -459,49 +463,39 @@ function renderStatisticalDropdownContent(results) {
                             <div class="card-body d-flex flex-column gap-4">
 
                                 <div>
-                                    <p class="text-muted small fw-semibold text-uppercase mb-2 text-center">
+                                    <h5 style="color: var(--stat-value-color);">
                                         Volumetry
-                                    </p>
+                                    </h5>
                                     ${renderOutlierAlert(data, VOLUME_LABELS)}
                                     ${renderVolumetryTable(data, true)}
                                 </div>
 
                                 ${data.vol_violin_image ? `
                                     <div>
-                                        <p class="text-muted small fw-semibold text-uppercase mb-2 text-center">
-                                            Volumetry visualisation
-                                        </p>
-                                        <p class="text-muted small text-uppercase mb-2 text-center">
-                                            case compared to reference dataset
-                                        </p>
                                         <div class='wheel-zoom'>
                                             <img src="${data.vol_violin_image}" class="img-fluid bg-black"
+                                            style="border: 1px solid var(--header-divider); border-radius: 4px;"
                                             alt="Volumetry violin plot ${side} eye">
                                         </div>
                                         <p class="text-center mt-2 mb-0">
                                             <span class="zoom-hint">
-                                                <kbd>Shift</kbd> + <kbd>mouse wheel</kbd> to zoom &middot; 
+                                                <kbd>Shift</kbd> + <kbd>mouse wheel</kbd> to zoom &middot;
                                                 <kbd>Esc</kbd> to reset view
                                             </span>
                                         </p>
                                     </div>` : ''}
                                 <div>
-                                    <p class="text-muted small fw-semibold text-uppercase mb-2 text-center">
+                                    <h5 style="color: var(--stat-value-color);">
                                         Axial length
-                                    </p>
+                                    </h5>
                                     ${renderOutlierAlert(data, AXIAL_LENGTH_LABELS)}
                                     ${renderAxialLengthTable(data, true)}
                                 </div>
 
                                 ${data.al_violin_image ? `
                                     <div>
-                                        <p class="text-muted small fw-semibold text-uppercase mb-2 text-center">
-                                            Axial length visualisation
-                                        </p>
-                                        <p class="text-muted small text-uppercase mb-2 text-center">
-                                            case compared to reference dataset
-                                        </p>
                                         <img src="${data.al_violin_image}" class="img-fluid bg-black"
+                                        style="border: 1px solid var(--header-divider); border-radius: 4px;"
                                         alt="Axial length violin plot ${side} eye">
                                     </div>` : ''}
 
@@ -606,17 +600,17 @@ function renderComparisonAccordion(results) {
                         </div>
                         <div class="card-body d-flex flex-column gap-4">
                             <div>
-                                <p class="text-muted small fw-semibold text-uppercase mb-2 text-center">
+                                <h5 style="color: var(--stat-value-color);">
                                     Volumetry
-                                </p>
+                                </h5>
                                 ${renderComparisonTable(VOLUME_LABELS, volStats, reference.reference_mean,
                                                          reference.reference_std, results.length,
                                                          reference.reference_count.volumetry)}
                             </div>
                             <div>
-                                <p class="text-muted small fw-semibold text-uppercase mb-2 text-center">
+                                <h5 style="color: var(--stat-value-color);">
                                     Axial length
-                                </p>
+                                </h5>
                                 ${renderComparisonTable(AXIAL_LENGTH_LABELS, alStats, reference.reference_mean,
                                                          reference.reference_std, results.length,
                                                          reference.reference_count.axial_length)}
@@ -627,7 +621,11 @@ function renderComparisonAccordion(results) {
         }
     }
 
-    return `<div class="row g-3">${columns}</div>`;
+    return `<p style="color: var(--muted-text); font-size: 0.85rem; margin-bottom: 1rem;">
+                This section present a biomarkers comparison between a dataset of the aggregated values of
+                 the case's processed and the reference dataset.
+            </p>
+            <div class="row g-3">${columns}</div>`;
 }
 
 // Appends sub-rows for each case in a selected file
@@ -654,7 +652,7 @@ function buildFileList(ulElement, files, onRemove = null, dropdowns = [], caseIn
     ulElement.innerHTML = '';
 
     const header = document.createElement('li');
-    header.className = 'list-group-item d-flex justify-content-between align-items-center';
+    header.className = 'list-group-item d-flex align-items-center gap-2';
     header.style.backgroundColor = 'var(--progress-bg)';
     header.style.color = 'var(--text-color)';
 
