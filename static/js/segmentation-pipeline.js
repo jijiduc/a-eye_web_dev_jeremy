@@ -406,3 +406,13 @@ document.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape') return;
     document.querySelectorAll('.wheel-zoom img').forEach((img) => img.panzoom?.reset());
 });
+
+
+function resetSession() {
+    const resetButton = document.getElementById('reset-button');
+    resetButton.disabled = true;
+
+    fetch('/reset', { method: 'POST' })
+        .catch(error => console.error('Error:', error))
+        .finally(() => window.location.reload());
+}
