@@ -12,7 +12,7 @@
         <h1 class="welcome-title">A-Eye Web Platform</h1>
         <p class="welcome-tagline">Automated 3D MRI Segmentation of Human Eye Structures</p>
         <p class="welcome-description">
-            Upload a T1-weighted orbital MRI and receive fully-automated segmentation masks for
+            Upload a human T1-weighted orbital MRI and receive fully-automated segmentation masks for
             <strong>9 structures</strong> of the eye, together with quantitative biomarkers —
             axial length and volumetry — delivered as a ready-to-use <code>.zip</code> archive.
         </p>
@@ -50,11 +50,6 @@
                     <li>
                         <a class="dropdown-item" href="https://hub.docker.com/r/jaimebarran/fw_gear_aeye" target="_blank" rel="noopener">
                             <i class="fa-brands fa-docker"></i> Docker image (Docker Hub)
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item" href="#run-it-yourself">
-                            <i class="fa-solid fa-terminal"></i> Docker usage instructions
                         </a>
                     </li>
                     <li>
@@ -207,13 +202,16 @@
     <div class="welcome-section-inner">
         <h2 class="welcome-section-title">Resources &amp; downloads</h2>
         <p class="welcome-section-lead">
-            All code, data, and pretrained models behind A-Eye are openly available.
+            All code, eye atlases, and pretrained model weights behind A-eye are openly available.
         </p>
         <div class="welcome-resources-grid">
             <a class="welcome-resource-card" href="https://github.com/jaimebarran/a-eye" target="_blank" rel="noopener">
                 <i class="fa-brands fa-github"></i>
                 <span class="welcome-resource-title">GitHub</span>
-                <span class="welcome-resource-desc">Source code of the A-Eye pipeline and web platform.</span>
+                <span class="welcome-resource-desc">
+                    Source code of the A-Eye pipeline and web platform and the Docker image with
+                    nnU-Net and the pretrained model weights already installed, for plug-and-play segmentation.
+                </span>
             </a>
             <a class="welcome-resource-card" href="https://doi.org/10.5281/zenodo.13325369" target="_blank" rel="noopener">
                 <i class="fa-solid fa-database"></i>
@@ -224,54 +222,7 @@
                     the pretrained model weights, and a reference to the Docker image.
                 </span>
             </a>
-            <a class="welcome-resource-card" href="https://hub.docker.com/r/jaimebarran/fw_gear_aeye" target="_blank" rel="noopener">
-                <i class="fa-brands fa-docker"></i>
-                <span class="welcome-resource-title">Docker Hub</span>
-                <span class="welcome-resource-desc">Docker image with nnU-Net and the pretrained model weights already installed, for plug-and-play segmentation.</span>
-            </a>
         </div>
-    </div>
-</section>
-
-<!-- Run it yourself -->
-<section id="run-it-yourself" class="welcome-section welcome-section-dark">
-    <div class="welcome-section-inner">
-        <h2 class="welcome-section-title welcome-section-title-light"><i class="fa-solid fa-terminal"></i> Run it yourself</h2>
-        <p class="welcome-section-lead welcome-section-lead-light">
-            Prefer to run the model locally or on your own infrastructure? Use the ready-to-use Docker
-            image, or install the pretrained weights into your own nnU-Net setup.
-        </p>
-
-        <h3 class="welcome-format-title welcome-format-title-light">Using the Docker image</h3>
-        <p class="welcome-section-lead-light">
-            The <a href="https://hub.docker.com/r/jaimebarran/fw_gear_aeye" target="_blank" rel="noopener">Docker image</a>
-            ships with nnU-Net and the pretrained weights already installed:
-        </p>
-        <pre class="welcome-code-block">
-            <code>
-            docker run --rm --gpus all --shm-size=10gb \
-                -v /path/to/local/input:/input \
-                -v /path/to/local/output:/output \
-                jaimebarran/fw_gear_aeye:0.0.1 \
-                nnUNet_predict \
-                    -i /input \
-                    -o /output \
-                    -tr nnUNetTrainerV2 \
-                    -ctr nnUNetTrainerV2CascadeFullRes \
-                    -m 3d_fullres \
-                    -p nnUNetPlansv2.1 \
-                    -t Task313_Eyee
-            </code>
-        </pre>
-
-        <h3 class="welcome-format-title welcome-format-title-light">Using the model weights directly</h3>
-        <p class="welcome-section-lead-light">
-            The pretrained model weights (soon available directly on
-            <a href="https://doi.org/10.5281/zenodo.13325369" target="_blank" rel="noopener">Zenodo</a>)
-            can be installed into any existing nnU-Net environment:
-        </p>
-        <pre class="welcome-code-block"><code>nnUNet_install_pretrained_model_from_zip A-eye_nnUNet_model_weights.zip
-nnUNet_predict -i /input -o /output -t Task313_Eye -m 3d_fullres -tr nnUNetTrainerV2</code></pre>
     </div>
 </section>
 {% endblock %}
