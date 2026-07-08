@@ -513,7 +513,7 @@ def segment() -> tuple[Response, int]:
     # send_email(user_email, "A-eye segmentation task completed successfully. You can download the results.")
     threading.Thread(
         target=copy_segmentation_data,
-        args=(user_email, paths.aux_input, paths.download),
+        args=(user_email, paths.download),
     ).start()
 
     # 4. add result file and metadata
@@ -688,3 +688,30 @@ def extract_biomarkers() -> tuple[Response, int]:
 @bp.route("/license")
 def serve_license():
     return send_file(Path("LICENSE.txt"), mimetype="text/plain")
+
+@bp.route("/reset", methods=["POST"])
+def reset_session() -> tuple[Response, int]:
+    """Reset a session by :
+        - cancelling any running job
+        - deleting the user's uploaded files and segmentation results
+
+    Returns:
+        tuple[Response, int]: JSON response with reset status and HTTP code
+    """
+    user_email: str = session.get("user", {}).get("email", "unknown_user")
+    paths: UserPaths = get_user_paths(user_email)
+
+    _cancel_job(paths)
+
+    try:
+        clean_folders(user_email)
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as error:
+        current_app.logger.exception("Could not prepare HPC folders for upload")
+        return jsonify({
+            "message": "Could not reach the HPC over SSH to prepare the upload."
+            "Please try again once chacha/disco SSH access is available.",
+            "status": "error",
+            "error": str(error),
+        }), 503
+
+    return jsonify({"message": "Session reset", "status": "success"}), 200

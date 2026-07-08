@@ -295,7 +295,7 @@ def convert_country_to_iso3(country_code):
         return None
 
 
-def copy_segmentation_data(user_email, input, output):
+def copy_segmentation_data(user_email, output):
     zurich_time = datetime.now(ZoneInfo("Europe/Zurich"))
     timestamp = zurich_time.strftime("%Y%m%d_%H%M")
     user_reference_email = clean_email(user_email)
@@ -303,10 +303,8 @@ def copy_segmentation_data(user_email, input, output):
 
     os.makedirs(dest_dir, exist_ok=True)
 
-    input_dest = os.path.join(dest_dir, "input")
     output_dest = os.path.join(dest_dir, "output")
 
-    copy_folder(input, input_dest)
     copy_folder(output, output_dest)
 
     print_and_log(
