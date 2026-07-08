@@ -1,7 +1,7 @@
 let selection = [];
 let selectionCaseInfoMap = new Map();
 let segmentationResult = [];
-const MAX_CASES = 5;
+const MAX_CASES = 10;
 
 // ensure no duplicate, correct file extension, and case limit in the selection
 async function onSelectionFilter() {
