@@ -15,6 +15,41 @@ const AXIAL_LENGTH_LABELS = {
     axial_length_cornea: 'axial length (until cornea)',
 };
 
+
+/**
+* Compute the dataset of the case's aggregate, mean and standard deviation for each biomarker
+* @param {array} results - results of segmentation, with biomarkers object
+* @param {string} side - "left" or "right" eye
+* @param {array} biomarkers - biomarkers to compute
+* @returns {object} - key (biomarker) -> {mean, std}
+*/
+/*
+* Adapted from : https://medium.com/@giacinti.2224996/online-computation-of-mean-and-variance-cd8d741c8e54
+*/
+function computeSelectionStats(results, side, biomarkers) {
+    const statistics = {};
+    for (const key of biomarkers) {
+        let n = 0, mean = 0, m2 = 0;
+        for (const result of results) {
+            const value = result.biomarkers[side][key];
+            if (value === null || value === undefined) continue;
+            n++;
+            const delta = value - mean;
+            mean += delta / n;
+            m2 += delta * (value - mean);
+        }
+
+        if (!n) {
+            statistics[key] = { mean: null, std: null };
+            continue;
+        }
+
+        statistics[key] = { mean, std: Math.sqrt(n > 1 ? m2 / (n - 1) : 0) };
+    }
+    return statistics;
+}
+
+
 /**
 * Add a panzoom component a the image. 
 * Enable to zoom on it with Shift + mouse Wheel.
@@ -146,7 +181,7 @@ function renderAxialLengthTable(sideData, displayReference = false) {
         let refTd = ``;
         let rowClass = ``;
         if (displayReference) {
-            const refValue = sideData?.reference?.[key];
+            const refValue = sideData?.reference_mean?.[key];
             const refCleanedValue = (refValue !== null && refValue !== undefined)
                                      ? `${refValue.toFixed(2)} ${unit}` : '—';
             refTd = `<td class="value-cell">${refCleanedValue}</td>`;
@@ -208,13 +243,13 @@ function renderVolumetryTable(sideData, displayReference = false) {
 
     for (const [key, label] of data) {
         const value = sideData?.[key];
-        const cleanedValue = (value !== null && value !== undefined) ? `${value.toFixed(1)} mm³` : '—';
+        const cleanedValue = (value !== null && value !== undefined) ? `${value.toFixed(2)} mm³` : '—';
         let refTd = ``;
         let rowClass = ``;
 
         if (displayReference) {
-            const refValue = sideData?.reference?.[key];
-            const refCleanedValue = (refValue !== null && refValue !== undefined) ? `${refValue.toFixed(1)} mm³` : '—';
+            const refValue = sideData?.reference_mean?.[key];
+            const refCleanedValue = (refValue !== null && refValue !== undefined) ? `${refValue.toFixed(2)} mm³` : '—';
             refTd = `<td class="value-cell">${refCleanedValue}</td>`;
             rowClass = sideData.outliers.F[key] || sideData.outliers.M[key] ? ` class="active-row"` : ``;
         }
@@ -346,7 +381,7 @@ function renderBiomarkersDropdownContent(results) {
 
         if (!data || data.error) {
             columns += `
-                    <div class="col-6">
+                    <div class="col-12 col-md-6">
                         <p class="text-warning d-block">${data?.error || 'No data'}</p>
                     </div>`;
         } else {
@@ -409,7 +444,7 @@ function renderStatisticalDropdownContent(results) {
 
         if (!data || data.error) {
             columns += `
-                    <div class="col-6">
+                    <div class="col-12 col-md-6">
                         <p class="text-danger">${data?.error || 'No data'}</p>
                     </div>`;
         } else {
@@ -479,6 +514,120 @@ function renderStatisticalDropdownContent(results) {
             ${title}
             ${columns}
             </div>`;
+}
+
+/**
+* Render a comparison table (mean & standard deviation) between the aggregate dataset of selection cases
+* and the reference dataset
+* @param {object} labelsMap - biomarker key mapped to it's display label
+* @param {object} selectionStats - key -> {mean, std} of the selected cases
+* @param {object} referenceMean - key -> mean of the reference dataset
+* @param {object} referenceStd - key -> standard deviation of the referecence dataset
+* @param {number} caseCount - number of selected cases aggregated
+* @param {number} referenceCount - number of sample in the reference dataset
+*/
+function renderComparisonTable(labelsMap, selectionStats, referenceMean, referenceStd, caseCount, referenceCount) {
+    const unit = labelsMap === VOLUME_LABELS ? `mm³` : `mm`;
+    let row = ``;
+    for (const key in labelsMap) {
+        const selection = selectionStats[key];
+        const selMean = selection?.mean != null ? `${selection.mean.toFixed(2)} ${unit}` : '—';
+        const selStd = selection?.std != null ? `${selection.std.toFixed(2)} ${unit}` : '—';
+        const refMeanValue = referenceMean?.[key];
+        const refStdValue = referenceStd?.[key];
+        const refMean = refMeanValue != null ? `${refMeanValue.toFixed(2)} ${unit}` : '—';
+        const refStd = refStdValue != null ? `${refStdValue.toFixed(2)} ${unit}` : '—';
+
+        row += `
+            <tr>
+                <td class="label-cell">${labelsMap[key]}</td>
+                <td class="value-cell">${selMean}</td>
+                <td class="value-cell">${selStd}</td>
+                <td class="value-cell ref-cell">${refMean}</td>
+                <td class="value-cell ref-cell">${refStd}</td>
+            </tr>`;
+    }
+    return `
+        <table class="measure-table-dataset">
+            <thead>
+                <tr>
+                    <th class="label-cell" rowspan="2">Measures</th>
+                    <th colspan="2">Selected cases (n=${caseCount})</th>
+                    <th colspan="2" class="ref-cell">Reference dataset (n=${referenceCount})</th>
+                </tr>
+                <tr>
+                    <th>Mean</th>
+                    <th>SD</th>
+                    <th class="ref-cell">Mean</th>
+                    <th class="ref-cell">SD</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${row}
+            </tbody>
+        </table>`;
+}
+
+/**
+* Build the HTML content shown inside the accordion comparing the aggregate case's result and reference dataset
+* @param {array} results - segmentation results, each optionally holding a `biomarkers` object
+*/
+function renderComparisonAccordion(results) {
+    const sides = [`left`, `right`];
+    let columns = ``;
+
+    for (const side of sides) {
+        let reference = null;
+        for (const result of results) {
+            const data = result.biomarkers[side];
+            // only using the first case reference
+            if (data && !data.error && data.reference_mean) {
+                reference = data;
+                break;
+            }
+        }
+
+        if (!reference) {
+            columns += `
+                <div class="col-12 col-md-6">
+                    <p class="text-warning d-block">No reference data available for the ${side} eye</p>
+                </div>`;
+        } else {
+            const volStats = computeSelectionStats(results, side, Object.keys(VOLUME_LABELS));
+            const alStats = computeSelectionStats(results, side, Object.keys(AXIAL_LENGTH_LABELS));
+
+            columns += `
+                <div class="col-12 col-md-6">
+                    <div class="card h-100 shadow-sm border-0">
+                        <div class="card-header d-flex align-items-center gap-2 justify-content-center"
+                            style="background:var(--card-bg);">
+                            <i class="fa-solid fa-eye fa-fw text-success"></i>
+                            <strong class="text-capitalize">${side} eye</strong>
+                        </div>
+                        <div class="card-body d-flex flex-column gap-4">
+                            <div>
+                                <p class="text-muted small fw-semibold text-uppercase mb-2 text-center">
+                                    Volumetry
+                                </p>
+                                ${renderComparisonTable(VOLUME_LABELS, volStats, reference.reference_mean,
+                                                         reference.reference_std, results.length,
+                                                         reference.reference_count.volumetry)}
+                            </div>
+                            <div>
+                                <p class="text-muted small fw-semibold text-uppercase mb-2 text-center">
+                                    Axial length
+                                </p>
+                                ${renderComparisonTable(AXIAL_LENGTH_LABELS, alStats, reference.reference_mean,
+                                                         reference.reference_std, results.length,
+                                                         reference.reference_count.axial_length)}
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+        }
+    }
+
+    return `<div class="row g-3">${columns}</div>`;
 }
 
 // Appends sub-rows for each case in a selected file
