@@ -24,7 +24,7 @@ COPY *.py .
 COPY LICENSE.txt .
 
 # Set environment variables
-ENV FLASK_DEBUG=1
+ENV FLASK_DEBUG=0
 
 # Expose port
 EXPOSE 5000
