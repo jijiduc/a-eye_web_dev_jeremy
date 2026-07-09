@@ -236,8 +236,9 @@
         { name: 'superior rectus muscle', color: [200, 121, 60] },
     ];
 
-    /*
-    * To get the colormap based on the ROI classes
+    /**
+    * Build the colormap for the eye segmentation overlay, based on the A-eye paper colors
+    * @returns {Object} - RGBA channels (R, G, B, A arrays of 256 entries each) for Niivue's colormap
     */
     function buildEyeSegColormap() {
         const n = 256;
@@ -267,6 +268,14 @@
     }
 
 
+    /**
+    * Initialize a Niivue canvas and load a single volume into it
+    * @param {string} canvasId - id of the canvas element to attach Niivue to
+    * @param {string} url - URL of the NIfTI volume to load
+    * @param {string} [colorMap='gray'] - colormap name, or 'eye-seg' for the segmentation colormap
+    * @param {number|null} [cal_min=null] - minimum intensity for display calibration
+    * @param {number|null} [cal_max=null] - maximum intensity for display calibration
+    */
     window.initNiivue = async (canvasId, url, colorMap = 'gray', cal_min = null, cal_max = null) => {
         const nv = new Niivue({ isResizeCanvas: true });
         await nv.attachTo(canvasId);
@@ -280,6 +289,12 @@
         await nv.loadVolumes([vol]);
     };
 
+    /**
+    * Initialize a Niivue canvas with a raw background volume and a segmentation overlay
+    * @param {string} canvasId - id of the canvas element to attach Niivue to
+    * @param {string} backgroundUrl - URL of the raw background NIfTI volume
+    * @param {string} overlayUrl - URL of the segmentation NIfTI volume, shown with the eye-seg colormap
+    */
     window.initNiivueOverlay = async (canvasId, backgroundUrl, overlayUrl) => {
         const nv = new Niivue({ isResizeCanvas: true });
         await nv.attachTo(canvasId);
