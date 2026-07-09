@@ -7,7 +7,7 @@ In the production environnement, the website run in a Docker container called `a
 ### Flow
 From internet, access on port :443 to the `Traefik_aeyeweb` container. This container act as a reverse proxy and handle SSL/TLS with Let's Encrypt.
 
-Traefik then act to redirect to port :5000 for the `aeyeweb` container. IT is based on Flask + Gunicorn.
+Traefik then act to redirect to port :5000 for the `aeyeweb` container. It is based on Flask + Gunicorn.
 `aeyeweb` has ssh access to the HEVS "chacha" server for HPC in the segmentation process. HPC is handled by Slurm.
 Also `aeyeweb` mount the `/mnt/filer01` Filer01 volume from the HEVS server for data and logs storage.
 
@@ -64,8 +64,7 @@ Also `aeyeweb` mount the `/mnt/filer01` Filer01 volume from the HEVS server for 
 The segmentation process is handled by `getSegmentation` function in `main.py`.
 
 The pipeline is : 
-1. Uploading a file with MRI data (supported format : (.nii.gz / .zip /
-    .7z / .nii)) in the segmentation page. 
+1. Uploading a file with MRI data (supported formats: `.nii.gz` / `.zip` / `.7z` / `.nii`) on the segmentation page.
 
 2. This call the `/upload` route to :
     - Clear previous logs and files before uploading new ones
