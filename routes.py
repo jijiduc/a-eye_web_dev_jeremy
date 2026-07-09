@@ -74,6 +74,7 @@ from utils import (
     mail,
     print_and_log,
     requires_auth,
+    requires_auth_api,
     sync_logs_to_output,
     upload_files,
     zip_folder,
@@ -344,12 +345,11 @@ def segmentation():
         user_email: str = session.get("user", {}).get("email", "unknown_user")
         _cancel_job(get_user_paths(user_email))
         return render_template("segmentation.html")
-    if current_app.debug:
-        return render_template("segmentation.html")
     return redirect(url_for("routes.login"))
 
 
 @bp.route("/upload", methods=["POST"])
+@requires_auth_api
 def upload_file() -> tuple[Response, int]:
     """File upload handling for the user logged-in
 
@@ -423,6 +423,7 @@ def upload_file() -> tuple[Response, int]:
 
 
 @bp.route("/segment", methods=["POST"])
+@requires_auth_api
 def segment() -> tuple[Response, int]:
     """Run the segmentation pipeline for the logged-in user.
 
@@ -553,6 +554,7 @@ def profile():
 
 
 @bp.route("/download", methods=["GET"])
+@requires_auth
 def download_files() -> Response | tuple[str, int]:
     """Download the ZIP file generated for the user logged in
 
@@ -573,6 +575,7 @@ def download_files() -> Response | tuple[str, int]:
 
 
 @bp.route("/test-email")
+@requires_auth
 def test_email():
     # Get user email from session or token
     user_email = session.get("user", {}).get("email", "unknown_user")
@@ -623,6 +626,7 @@ def serve_display_image(filename: str):
 
 
 @bp.route("/biomarkers", methods=["POST"])
+@requires_auth_api
 def extract_biomarkers() -> tuple[Response, int]:
     """Run biomarker extraction for all segmented cases.
 
@@ -690,6 +694,7 @@ def serve_license():
     return send_file(Path("LICENSE.txt"), mimetype="text/plain")
 
 @bp.route("/reset", methods=["POST"])
+@requires_auth_api
 def reset_session() -> tuple[Response, int]:
     """Reset a session by :
         - cancelling any running job

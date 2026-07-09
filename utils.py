@@ -22,7 +22,7 @@ import numpy as np
 import py7zr
 import pycountry
 import requests
-from flask import current_app, redirect, session, url_for
+from flask import current_app, jsonify, redirect, session, url_for
 from flask_mail import Message
 
 from app import mail
@@ -274,6 +274,18 @@ def requires_auth(f):
     def decorated(*args, **kwargs):
         if "user" not in session:
             return redirect(url_for("routes.login"))
+        return f(*args, **kwargs)
+
+    return decorated
+
+
+def requires_auth_api(f):
+    """Auth guard for JSON/XHR endpoints: returns 401 JSON instead of redirecting."""
+
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if "user" not in session:
+            return jsonify({"message": "Unauthorized", "status": "error"}), 401
         return f(*args, **kwargs)
 
     return decorated
