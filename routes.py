@@ -1,3 +1,6 @@
+"""Flask routes for the A-eye web platform.
+"""
+
 import csv
 import math
 import os
@@ -33,7 +36,6 @@ from werkzeug.utils import secure_filename
 from app import oauth
 from config import LOGS_FOLDER
 from main import getSegmentation
-from models import UserPaths
 from package.biomarkers.biomarkers import (
     compute_axial_length_data,
     compute_volumetry,
@@ -56,6 +58,7 @@ from package.statistical_analysis.visualisations import (
     plot_axial_length_violin,
     plot_volumetry_violin,
 )
+from user_paths import UserPaths
 from utils import (
     Message,
     allowed_file,
@@ -95,7 +98,7 @@ def _process_eye(
         case_name (str): name of the case
         side (str): "left" or "right"
         left_side (bool): True if processing the left eye, False for the right
-        raw_path (Path): path to the raw  NIfTI file
+        raw_path (Path): path to the raw NIfTI file
 
     Returns:
         tuple[dict, dict | None]: biomarkers values, biomarkers values formatted for csv
@@ -127,21 +130,26 @@ def _process_eye(
     # add the references and outliers
     ref_means = references_means(side)
     ref_standard_deviation = references_standard_deviation(side)
-    bounds = {"F": references_iqr_bounds(side, "F"), "M": references_iqr_bounds(side, "M")}
+    bounds = {
+        "F": references_iqr_bounds(side, "F"),
+        "M": references_iqr_bounds(side, "M"),
+    }
     eye_data["reference_mean"] = {}
     eye_data["reference_std"] = {}
     eye_data["reference_count"] = references_size(side)
     eye_data["outliers"] = {"F": {}, "M": {}}
 
-    for key, value in ref_means.items() :
-        if key in eye_data :
+    for key, value in ref_means.items():
+        if key in eye_data:
             eye_data["reference_mean"][key] = value
             eye_data["reference_std"][key] = ref_standard_deviation[key]
             case_value = eye_data[key]
             if case_value is not None:
                 for sex in ("F", "M"):
                     lower_bound, upper_bound = bounds[sex][key]
-                    eye_data["outliers"][sex][key] = case_value < lower_bound or case_value > upper_bound
+                    eye_data["outliers"][sex][key] = (
+                        case_value < lower_bound or case_value > upper_bound
+                    )
 
     # add the violin plot with this case's own value marked on it
     vol_violin_filename = f"{case_name}_{side}_vol_violin_plot.png"
@@ -159,7 +167,6 @@ def _process_eye(
     al_violin_fig.savefig(al_violin_path, dpi=150, bbox_inches="tight")
     plt.close(al_violin_fig)
     eye_data["al_violin_image"] = f"/display-image/{al_violin_filename}"
-
 
     csv_row = {"case": case_name, "side": side, **volumes, **axial_measures}
     return eye_data, csv_row
@@ -485,9 +492,7 @@ def segment() -> tuple[Response, int]:
             paths.download / f"{case_name}_right_cropped.nii.gz",
         )
 
-        left_uncropped = uncrop_quadrant(
-            left_segmented, original_shape, left_side=True
-        )
+        left_uncropped = uncrop_quadrant(left_segmented, original_shape, left_side=True)
         right_uncropped = uncrop_quadrant(
             right_segmented, original_shape, left_side=False
         )
@@ -592,7 +597,14 @@ def test_email():
 
 @bp.route("/result/<filename>", methods=["GET"])
 def serve_result(filename: str):
-    # check that the logged in user try to access
+    """Serve a result file (.nii.gz) to be included in the output download
+
+    Args:
+        filename (str): name of the file to serve, in the user's download folder
+
+    Returns:
+        Response: the requested file, or a 401 JSON response if not logged in
+    """
     if "user" not in session:
         return jsonify({"message": "Unauthorized"}), 401
 
@@ -604,7 +616,7 @@ def serve_result(filename: str):
 
 @bp.route("/result-image/<filename>", methods=["GET"])
 def serve_result_image(filename: str):
-    """Serve image that are displayed in the page and will be in the output download"""
+    """Serve an image that is displayed in the page and will be in the output download"""
     if "user" not in session:
         return jsonify({"message": "Unauthorized"}), 401
 
@@ -613,9 +625,10 @@ def serve_result_image(filename: str):
 
     return send_file(file_path)
 
+
 @bp.route("/display-image/<filename>", methods=["GET"])
 def serve_display_image(filename: str):
-    """Serve image that are displayed in the page"""
+    """Serve an image that is displayed in the page"""
     if "user" not in session:
         return jsonify({"message": "Unauthorized"}), 401
 
@@ -689,9 +702,11 @@ def extract_biomarkers() -> tuple[Response, int]:
         "results": results,
     }), 200
 
+
 @bp.route("/license")
 def serve_license():
     return send_file(Path("LICENSE.txt"), mimetype="text/plain")
+
 
 @bp.route("/reset", methods=["POST"])
 @requires_auth_api

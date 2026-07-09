@@ -1,3 +1,6 @@
+"""Configuration of all static variables for the web platform
+"""
+
 import os
 from dotenv import load_dotenv
 

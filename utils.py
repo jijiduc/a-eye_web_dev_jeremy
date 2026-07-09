@@ -1,3 +1,8 @@
+"""Helper functions for the web platform.
+
+This module contains everything the routes needs.
+"""
+
 import fnmatch
 import glob
 import gzip
@@ -34,7 +39,7 @@ from config import (
     SSH_USER,
     STATS_FILE,
 )
-from models import UserPaths
+from user_paths import UserPaths
 
 NOT_TO_OUTPUT = [
     "logs",
@@ -44,12 +49,15 @@ NOT_TO_OUTPUT = [
     "*_cropped.nii.gz",
     "*_raw.nii.gz",
 ]
+
+
 # Adapted from (open-webui-graphiti-memory, Skyzi000, accessed 01.06.2026)
 # Line 472
-# URL: https://github.com/Skyzi000/open-webui-graphiti-memory/blob/main/functions/action/add_graphiti_memory_action.py 
+# URL: https://github.com/Skyzi000/open-webui-graphiti-memory/blob/main/functions/action/add_graphiti_memory_action.py
 def clean_email(email: str) -> str:
     """Clean the email by replacing @ and ."""
-    return  email.replace("@", "_at_").replace(".", "_")
+    return email.replace("@", "_at_").replace(".", "_")
+
 
 def _header_to_dict(
     header: nibabel.nifti1.Nifti1Header,
@@ -93,7 +101,7 @@ def extract_nifti_metadata(file_path: str) -> dict[str, dict]:
     Returns:
         dict[str, dict]: case label, case header
                 - on success : one entry per NIfTI file or DICOM series
-                - on failure : empty dictionnary
+                - on failure : empty dictionary
     """
     path = Path(file_path)
     extension = "".join(path.suffixes).lower()
@@ -206,7 +214,7 @@ def cancel_slurm_job(id_job: str) -> None:
 
 
 def clear_folder(folder: Path | str) -> None:
-    """ "Deletes all files and subdirectories inside folder"""
+    """Deletes all files and subdirectories inside folder"""
     delete_files_in_folder(folder)
     delete_subfolders(folder)
 
@@ -218,7 +226,7 @@ def get_user_paths(user_email: str) -> UserPaths:
         user_email (str): The email address of the user to process
 
     Returns:
-        UserPaths: Dataclass holding the different path relative to the user
+        UserPaths: Dataclass holding the different paths relative to the user
     """
     cleaned_email: str = clean_email(user_email)
     base_path: Path = Path("./nnUNet/nnUNet_inference") / cleaned_email
@@ -238,19 +246,26 @@ def get_user_paths(user_email: str) -> UserPaths:
 
 
 def allowed_file(filename):
-    """Wether the file type is allowed or not (allowd type : .nii.gz / .zip /
-    .7z / .nii))
+    """Whether the file type is allowed or not (allowed type : .nii.gz / .zip /
+    .7z / .nii)
 
     Args:
-        filename (_type_): The name of the file
+        filename (str): The name of the file
 
     Returns:
-        Bool: True if allowed, else False
+        bool: True if allowed, else False
     """
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
+
 def zip_folder(folder_path, output_path, to_exclude=NOT_TO_OUTPUT):
-    """Zip a folder
+    """Zip a folder, excluding files/directories not to output
+
+    Args:
+        folder_path (str): path of the folder to zip
+        output_path (str): path of the resulting .zip archive
+        to_exclude (list[str], optional): glob patterns of files/directories to leave
+            out of the archive.
     """
     with zipfile.ZipFile(output_path, "w", zipfile.ZIP_DEFLATED) as zipf:
         for root, directories, files in os.walk(folder_path):
@@ -402,6 +417,12 @@ def move_file(pattern, destination):
 
 
 def copy_file_to_hpc(source, destination):
+    """Copy a single local file to the HPC
+
+    Args:
+        source (str): source path of the file to copy
+        destination (str): destination path on the HPC
+    """
     print_and_log(
         f"[A-eye] Copying files from local {source} to HPC {destination}...",
         "info",
@@ -434,6 +455,12 @@ def copy_folder_to_hpc(source: str, destination: str) -> None:
 
 
 def copy_files_from_hpc(source, destination):
+    """Copy the content of a HPC folder to a local folder
+
+    Args:
+        source (str): source folder path on the HPC
+        destination (str): local destination folder path, created if missing
+    """
     print_and_log(
         f"[A-eye] Copying files from HPC {source} to local {destination}...",
         "info",
@@ -476,9 +503,9 @@ def clean_folder_hpc(folder: str) -> None:
             "ssh",  # using the ssh client
             "-o",  # ssh config option n.1
             "BatchMode=yes",  # non-interactive mode : will fail if a password if asked
-            "-o",  # ssh confing option n.2
+            "-o",  # ssh config option n.2
             "ConnectTimeout=8",  # Maximum time (in seconds) to establish the ssh connection
-            SSH_USER,  # ID and adress of the distant server
+            SSH_USER,  # ID and address of the distant server
             f"mkdir -p {folder} && rm -rf {folder}/*",
         ],  # Commands executed on the server : create folders and clear it's content
         check=True,  # Raise a CalledProcessError if exit code isn't 0
@@ -748,7 +775,7 @@ def run_command_and_print_output(command):
 
 
 def clean_folders(user_email: str) -> None:
-    """Clear all folders used in the segmentation process from old remaining datas"""
+    """Clear all folders used in the segmentation process from old remaining data"""
     paths = get_user_paths(user_email)
     paths.create_directories()
 

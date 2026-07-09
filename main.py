@@ -1,11 +1,17 @@
+"""HPC segmentation job management.
+
+Submits the nnU-Net inference job to the HPC cluster via Slurm, waits for
+completion, and copies the resulting segmentation files back to the user's
+local download folder.
+"""
+
 import os
 import re
 import subprocess
-from collections.abc import Callable
 from datetime import datetime
 
 from config import JOBFILE_HPC, JOBFILE_TEMPLATE, LOGS_FOLDER, OUTPUT_HPC, SSH_USER
-from models import UserPaths
+from user_paths import UserPaths
 from utils import (
     cancel_slurm_job,
     clean_email,
@@ -30,13 +36,13 @@ def getSegmentation(
 
     Args:
         user_email (str): user's email address
-        paths (UserPaths): the generated paths based on the user's adress
+        paths (UserPaths): the generated paths based on the user's address
 
     Returns:
         str: a message to announce segmentation done
     """
-    # We would need this for copying the resulting files from the HPC to the local machine
-    # Make the email safe for paths
+    # safe_email and timestamp are needed to find the HPC output folder
+    # when copying the resulting files back to the local machine
     safe_email = clean_email(user_email)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
@@ -70,10 +76,10 @@ def getSegmentation(
             paths.active_job_file.parent.mkdir(parents=True, exist_ok=True)
             paths.active_job_file.write_text(job_id)
     try:
-        _, sub_sdterr = process.communicate()
+        _, sub_stderr = process.communicate()
         if process.returncode != 0:
             raise subprocess.CalledProcessError(
-                process.returncode, inference_command, stderr=sub_sdterr
+                process.returncode, inference_command, stderr=sub_stderr
             )
     except Exception:
         if job_id:
