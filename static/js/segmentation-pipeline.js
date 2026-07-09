@@ -3,7 +3,10 @@ let selectionCaseInfoMap = new Map();
 let segmentationResult = [];
 const MAX_CASES = 10;
 
-// ensure no duplicate, correct file extension, and case limit in the selection
+/**
+* Filter the newly selected files: reject duplicates, invalid extensions, and
+* selections that would exceed the case limit, then rebuild the selection file list
+*/
 async function onSelectionFilter() {
     let selectedFiles = document.getElementById('file-input').files;
     let rejectedFileNames = [];
@@ -56,6 +59,10 @@ async function onSelectionFilter() {
     buildSelectionFileList();
 }
 
+/**
+* Compute the total number of cases in the current selection
+* @returns {number} - count of cases across all selected files
+*/
 function currentCaseCount() {
     let total = 0;
     selectionCaseInfoMap.forEach(
@@ -64,7 +71,11 @@ function currentCaseCount() {
     return total;
 }
 
-// Display a notice in case of selection's rejection
+/**
+* Display a temporary notice listing the rejected files and the reason for each
+* @param {string[]} names - rejected file names
+* @param {string[]} reasons - rejection reason for each file
+*/
 function onRejectionNotice(names, reasons) {
     let notice = document.getElementById('rejection-tooltip');
     notice.innerHTML = '';
@@ -80,12 +91,19 @@ function onRejectionNotice(names, reasons) {
     window._rejectionTimer = setTimeout(function () { notice.style.display = 'none'; }, 6000);
 }
 
+/**
+* Remove a file from the current selection
+* @param {number} index - index of the file to remove in the selection array
+*/
 function unselectFile(index) {
     selectionCaseInfoMap.delete(selection[index]);
     selection.splice(index, 1);
     buildSelectionFileList();
 }
 
+/**
+* Rebuild the selection file list UI, showing the number of cases badge if any file is selected
+*/
 function buildSelectionFileList() {
     let fileList = document.getElementById('file-list');
 
@@ -102,11 +120,9 @@ function buildSelectionFileList() {
     updateUploadButtonState();
 }
 
-/*
-* Handles the multi-file upload :
-*   - managing UI states
-*   - preparing form data
-*   - submitting files to the server
+/**
+* Handle the multi-file upload: manage UI state, prepare the form data,
+* and submit the selected files to the server
 */
 function uploadFiles() {
     let formData = new FormData();
@@ -185,11 +201,9 @@ function uploadFiles() {
         });
 }
 
-/*
-* Handles the file segmentation process :
-*   - managing the UI state
-*   - initiating a server request
-*   - processing the response
+/**
+* Handle the file segmentation process: manage UI state, initiate a server
+* request, and process the response
 */
 function segmentFiles() {
     ['segment-button', 'upload-button'].forEach(id => {
@@ -250,11 +264,9 @@ function segmentFiles() {
 }
 
 
-/*
-* Handles the biomarkers extraction process:
-*   - managing UI state
-*   - initiating the server request
-*   - processing the response
+/**
+* Handle the biomarkers extraction process: manage UI state, initiate the
+* server request, and process the response
 */
 function extractBiomarkers() {
     const biomarkersButton = document.getElementById('biomarkers-button');
@@ -311,8 +323,8 @@ function extractBiomarkers() {
                 buildResultFileList(segmentationResult);
                 alert(data.message);
             } else {
-                throw new Error(data.message || 'Extraction failed');
                 document.getElementById('display-file-list').style.display = '';
+                throw new Error(data.message || 'Extraction failed');
             }
         })
         .catch(error => {
@@ -333,8 +345,9 @@ function extractBiomarkers() {
 }
 
 
-/*
-* Build the result file list with a segmentation action per row
+/**
+* Build the result file list, with segmentation/biomarkers/statistics dropdowns per row
+* @param {array} results - segmentation results for each case
 */
 function buildResultFileList(results) {
     const dropdowns = [
@@ -351,8 +364,8 @@ function buildResultFileList(results) {
                 }).observe(overlay);
 
                 await window.initNiivueOverlay(`niivue-overlay-${idx}`,
-                                                 `/result/${result.input_name}`,
-                                                  `/result/${result.both_name}`);
+                    `/result/${result.input_name}`,
+                    `/result/${result.both_name}`);
                 await window.initNiivue(`niivue-eyes-${idx}`, `/result/${result.both_name}`, 'eye-seg', 0, 9);
             },
             onClose: (result, idx, row) => { row.innerHTML = ''; }
@@ -399,6 +412,9 @@ document.addEventListener('keydown', (event) => {
 });
 
 
+/**
+* Reset the current session on the server and reload the page
+*/
 function resetSession() {
     const resetButton = document.getElementById('reset-button');
     resetButton.disabled = true;
@@ -408,8 +424,9 @@ function resetSession() {
         .finally(() => window.location.reload());
 }
 
-/*
-* Consent checkboxes to condition access to the "Upload" button
+/**
+* Enable the upload button only when both consent checkboxes are checked
+* and at least one file is selected
 */
 function updateUploadButtonState() {
     const consent = document.getElementById('consent-authorization-checkbox').checked

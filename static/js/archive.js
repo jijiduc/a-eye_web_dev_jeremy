@@ -1,6 +1,13 @@
 let archiveWorker = null;
-// adapted from https://byte-explorer.medium.com/promise-practice-of-web-worker-8c713d1c0754, accessed on 16.06.2026
-// Listing the files in a .zip/.7z via worker
+
+/**
+* List the files contained in a .zip/.7z archive, via a web worker
+* @param {File} file - the archive file to inspect
+* @returns {Promise<string[]>} - resolves with the list of paths found in the archive
+*/
+/*
+* Adapted from : https://byte-explorer.medium.com/promise-practice-of-web-worker-8c713d1c0754, accessed on 16.06.2026
+*/
 function listArchiveEntries(file) {
     return new Promise((resolve, reject) => {
         archiveWorker ??= new Worker('/static/js/archive-worker.js');
@@ -28,7 +35,11 @@ function listArchiveEntries(file) {
     });
 }
 
-// Getting cases number and providing labels
+/**
+* Get the number of cases contained in a file, and a label for each of them
+* @param {File} file - the selected file (archive or single NIfTI)
+* @returns {Promise<{count: number, labels: (string[] | null)}>} - resolve with the number of cases and their labels if found
+*/
 async function getCaseInfo(file) {
     let nameLower = file.name.toLowerCase();
 

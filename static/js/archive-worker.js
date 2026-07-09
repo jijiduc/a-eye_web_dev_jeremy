@@ -5,6 +5,12 @@
 
 importScripts('/static/js/js7z/js7z.js');
 
+/**
+* Handle the request to list an archive's contents
+* @param {MessageEvent} event - event.data: {id, name, buffer} - request id, archive
+*   file name, and its content as an ArrayBuffer
+* Posts back {id, paths} on success, or {id, error} on failure/abort
+*/
 self.onmessage = async function (event) {
     const { id, name, buffer } = event.data;
     const unzipped = [];
@@ -36,7 +42,11 @@ self.onmessage = async function (event) {
 
 };
 
-// Extracting the files path
+/**
+* Extract file paths from js7z's "list" command output lines
+* @param {string[]} lines - stdout/stderr lines produced by js7z's `l -slt` command
+* @returns {string[]} - paths found in the archive, excluding the archive itself
+*/
 function parsePaths(lines) {
     const paths = [];
 
