@@ -19,7 +19,7 @@ COPY static/ ./static/
 COPY templates/ ./templates/
 COPY jobfiles/ ./jobfiles/
 
-COPY module/ ./module/
+COPY package/ ./package/
 COPY *.py .
 COPY LICENSE.txt .
 

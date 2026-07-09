@@ -1,3 +1,8 @@
+"""Visualisation maker for the biomarkers extraction part.
+
+This module contains functions to make the axial length plot.
+"""
+
 # Adapted from (extract_biometrics.ipynb, jaimebarran, accessed 26.05.2026)
 # URL: https://github.com/jaimebarran/a-eye_segmentation/blob/main/deep_learning/3D_multilabel/extract_biometrics.ipynb
 import matplotlib.pyplot as plt
@@ -9,7 +14,10 @@ from matplotlib.lines import Line2D
 from .al_data import ALData
 
 
-def _project_to_axial(coord: np.ndarray, voxel_dim: tuple[float, float],) -> tuple[float, float]:
+def _project_to_axial(
+    coord: np.ndarray,
+    voxel_dim: tuple[float, float],
+) -> tuple[float, float]:
     """Project the 3D X,Y voxel coordinates to physical mm in the axial plane."""
     projected_coord: tuple = coord[0] * voxel_dim[0], coord[1] * voxel_dim[1]
     return projected_coord
@@ -41,7 +49,9 @@ def plot_axial_length(ray_data: ALData | None, case_name: str) -> Figure | None:
     )
 
     lens_xy: tuple = _project_to_axial(ray_data.lens_anterior_boundary, voxel_xy_size)
-    globe_xy: tuple = _project_to_axial(ray_data.globe_posterior_boundary, voxel_xy_size)
+    globe_xy: tuple = _project_to_axial(
+        ray_data.globe_posterior_boundary, voxel_xy_size
+    )
     lens_centroid_xy: tuple = _project_to_axial(ray_data.lens_centroid, voxel_xy_size)
     globe_centroid_xy: tuple = _project_to_axial(ray_data.globe_centroid, voxel_xy_size)
     if ray_data.cornea_boundary is not None:
@@ -50,7 +60,7 @@ def plot_axial_length(ray_data: ALData | None, case_name: str) -> Figure | None:
         cornea_xy = None
     if ray_data.intfat_boundary is not None:
         intfat_xy: tuple = _project_to_axial(ray_data.intfat_boundary, voxel_xy_size)
-    else :
+    else:
         intfat_xy = None
 
     image_height: int
@@ -76,8 +86,12 @@ def plot_axial_length(ray_data: ALData | None, case_name: str) -> Figure | None:
         interpolation="none",
         extent=[0, image_width * voxel_xy_size[0], 0, image_height * voxel_xy_size[1]],
     )
-    ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f'{x - (globe_centroid_xy[0] - pad):.0f}'))
-    ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda y, _: f'{y - (globe_centroid_xy[1] - pad):.0f}'))
+    ax.xaxis.set_major_formatter(
+        ticker.FuncFormatter(lambda x, _: f"{x - (globe_centroid_xy[0] - pad):.0f}")
+    )
+    ax.yaxis.set_major_formatter(
+        ticker.FuncFormatter(lambda y, _: f"{y - (globe_centroid_xy[1] - pad):.0f}")
+    )
     ax.set_xlabel("mm")
     ax.set_ylabel("mm")
 
@@ -105,9 +119,33 @@ def plot_axial_length(ray_data: ALData | None, case_name: str) -> Figure | None:
     ax.legend(
         handles=[
             Line2D([0], [0], color="y", lw=2, label="Axial line"),
-            Line2D([],[],color="y",marker="+",markersize=8,linestyle="None",label="Extreme points" ),
-            Line2D([],[],color="b",marker="+",markersize=8,linestyle="None",label="Lens/Globe centroids"),
-            Line2D([],[],color="c",marker="+",markersize=8,linestyle="None",label="Extra boundaries"),
+            Line2D(
+                [],
+                [],
+                color="y",
+                marker="+",
+                markersize=8,
+                linestyle="None",
+                label="Extreme points",
+            ),
+            Line2D(
+                [],
+                [],
+                color="b",
+                marker="+",
+                markersize=8,
+                linestyle="None",
+                label="Lens/Globe centroids",
+            ),
+            Line2D(
+                [],
+                [],
+                color="c",
+                marker="+",
+                markersize=8,
+                linestyle="None",
+                label="Extra boundaries",
+            ),
         ],
         loc="lower right",
         fontsize=6,

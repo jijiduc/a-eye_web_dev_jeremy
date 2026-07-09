@@ -1,8 +1,13 @@
+"""Biomarker extraction from a segmented eye NIfTI image.
+
+This module contains both biomarkers (volumetry and axial length) extraction
+functions.
+"""
+
 # Adapted from (extract_biometrics.ipynb, jaimebarran, accessed 26.05.2026)
 # URL: https://github.com/jaimebarran/a-eye_segmentation/blob/main/deep_learning/3D_multilabel/extract_biometrics.ipynb
 import nibabel as nib
 import numpy as np
-import numpy.typing as npt
 from scipy.ndimage import map_coordinates
 from scipy.signal import convolve, find_peaks
 from skimage.measure import regionprops
@@ -23,7 +28,8 @@ LABELS: dict[int, str] = {
 
 EXTRA_ANT_MEDIAN = 2.72
 
-def _centroid_of_mask(mask: npt.NDArray[np.int_]) -> npt.NDArray[np.float64]:
+
+def _centroid_of_mask(mask: np.ndarray) -> np.ndarray:
     """Return centroid (x,y,z) in voxel coordinates as float array"""
     region_properties = regionprops(mask.astype(int))
 
@@ -33,9 +39,17 @@ def _centroid_of_mask(mask: npt.NDArray[np.int_]) -> npt.NDArray[np.float64]:
     return np.asarray(region_properties[0].centroid, dtype=float)
 
 
-def _nearest_labels(
-    mask: npt.NDArray[np.int_], coords: npt.NDArray[np.float64]
-) -> npt.NDArray[np.int_]:
+def _sample_ray(start: np.ndarray, end: np.ndarray, n_samples: int) -> np.ndarray:
+    """Return n_samples coordinates evenly spaced from start to end along the ray"""
+    return np.linspace(start, end, n_samples)
+
+
+def _sample_intensities(image: np.ndarray, coords: np.ndarray) -> np.ndarray:
+    """Sample image intensities at ray coordinates using trilinear interpolation"""
+    return map_coordinates(image, coords.T, order=1, mode="nearest")
+
+
+def _nearest_labels(mask: np.ndarray, coords: np.ndarray) -> np.ndarray:
     """Sample mask labels at each ray coordinate using nearest-neighbour rounding"""
     idx = np.round(coords).astype(int)
     idx[:, 0] = np.clip(idx[:, 0], 0, mask.shape[0] - 1)
@@ -45,35 +59,43 @@ def _nearest_labels(
 
 
 def _line_box_intersection(
-    o: npt.NDArray[np.float64],
-    r: npt.NDArray[np.float64],
+    origin: np.ndarray,
+    direction: np.ndarray,
     shape: tuple[int, ...],
-) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]] | tuple[None, None]:
-    """Compute entry/exit points of a line through a 3D volume bounding box.
+) -> tuple[np.ndarray, np.ndarray] | tuple[None, None]:
+    """Compute entry/exit points of a line through a 3D volume bounding box
 
     Using slab algorithm, reference : https://en.wikipedia.org/wiki/Slab_method
+
+    Args:
+        origin (np.ndarray): ray's starting point in voxel coordinates
+        direction (np.ndarray): ray's unit direction vector
+        shape (tuple[int, ...]): 3D volume bounding box's shape
+
+    Returns:
+        tuple[np.ndarray, np.ndarray] | tuple[None, None]: entry and exit points in voxel coordinates
     """
     eps = 1e-12
     t_close_list = []
     t_far_list = []
 
     # for each axis, compute the t values where the ray hits the low and high bounding planes
-    for ax in range(3):
-        r_i = float(r[ax])
-        o_i = float(o[ax])
-        l_i = 0.0
-        h_i = float(shape[ax] - 1)
-        if abs(r_i) < eps:
+    for axis in range(3):
+        direction_component = float(direction[axis])
+        origin_component = float(origin[axis])
+        axis_low = 0.0
+        axis_high = float(shape[axis] - 1)
+        if abs(direction_component) < eps:
             # ray is parallel to this axis — valid only if origin is already inside the slab
-            if not (l_i <= o_i <= h_i):
+            if not (axis_low <= origin_component <= axis_high):
                 return None, None
             continue
         # t at which the ray crosses each bounding plane along this axis
-        t_i_low = (l_i - o_i) / r_i
-        t_i_high = (h_i - o_i) / r_i
+        t_entry_candidate = (axis_low - origin_component) / direction_component
+        t_exit_candidate = (axis_high - origin_component) / direction_component
         # t_close is the entry into this slab and t_far the exit
-        t_close_list.append(min(t_i_low, t_i_high))
-        t_far_list.append(max(t_i_low, t_i_high))
+        t_close_list.append(min(t_entry_candidate, t_exit_candidate))
+        t_far_list.append(max(t_entry_candidate, t_exit_candidate))
     if not t_close_list:
         return None, None
 
@@ -83,61 +105,96 @@ def _line_box_intersection(
     if t_far < t_close:
         # slabs don't overlap — ray misses the box
         return None, None
-    return o + t_close * r, o + t_far * r
+    return origin + t_close * direction, origin + t_far * direction
 
 
 def _detect_cornea(
-    int_profile: npt.NDArray[np.float64],
+    int_profile: np.ndarray,
     limit_idx: int,
-    kernel: npt.NDArray[np.int_] | None = None,
+    kernel: np.ndarray | None = None,
     thr_list: list[float] | None = None,
     min_drop: float = 0.03,
     peak_prominence: float = 0.05,
 ) -> int | None:
-    """Detect cornea as the first gradient peak after the first major gradient drop,
-    searching in the region before limit_idx."""
+    """Detect cornea as the first gradient peak after the first major gradient drop.
+
+    Args:
+        int_profile (np.ndarray): MRI intensity profile sampled along the ray
+        limit_idx (int): Limit the search region
+        kernel (np.ndarray | None, optional): kernel used to compute the gradient
+        thr_list (list[float] | None, optional): gradient thresholds normalised, for the search of the first peak
+        min_drop (float, optional): minimum gradient normalised decrease to be taken as a drop
+        peak_prominence (float, optional): minimum peak prominence, for the cornea peak
+
+    Returns:
+        int | None: index of the detected cornea along the ray if found
+    """
     if kernel is None:
         kernel = np.array([1, 0, -1])
 
-    grad = np.abs(convolve(int_profile, kernel, mode="same"))
-    if grad.size == 0 or grad.max() == 0:
+    # Calculate the gradient (intensity change's magnitude) of tissue boundaries
+    gradient = np.abs(convolve(int_profile, kernel, mode="same"))
+    if gradient.size == 0 or gradient.max() == 0:
         return None
 
-    norm_grad = grad / grad.max()
+    # normalise to apply general threshold then
+    normalized_gradient = gradient / gradient.max()
 
     if thr_list is None:
         thr_list = [0.45, 0.35, 0.25, 0.15, 0.1, 0.05]
 
-    candidate_mask = np.arange(len(norm_grad)) < limit_idx
+    # restrict the detection until the lens boundary
+    candidate_mask = np.arange(len(normalized_gradient)) < limit_idx
     first_drop_idx = None
-    for thr in thr_list:
-        cand_idxs = np.where((norm_grad > thr) & candidate_mask)[0]
-        if cand_idxs.size == 0:
+    # Using custom thresholds, from strictest to loosest. We prefer to find a clear demarcation
+    for threshold in thr_list:
+        # finding all potential starting peak
+        candidate_indices = np.where(
+            (normalized_gradient > threshold) & candidate_mask
+        )[0]
+        if candidate_indices.size == 0:
             continue
-        i = int(cand_idxs[0])
-        while i < limit_idx - 1:
-            if norm_grad[i + 1] < norm_grad[i] - min_drop:
-                while i < limit_idx - 1 and norm_grad[i + 1] < norm_grad[i]:
-                    i += 1
-                first_drop_idx = i
+        # scanning for the bottom of the drop after a peak
+        idx = int(candidate_indices[0])
+        while idx < limit_idx - 1:
+            if normalized_gradient[idx + 1] < normalized_gradient[idx] - min_drop:
+                # going down to the bottom of the drop
+                while (
+                    idx < limit_idx - 1
+                    and normalized_gradient[idx + 1] < normalized_gradient[idx]
+                ):
+                    idx += 1
+                first_drop_idx = idx
                 break
-            i += 1
+            idx += 1
         if first_drop_idx is not None:
             break
 
+    # if no significant drop found : cornea can't be located
     if first_drop_idx is None or first_drop_idx >= limit_idx - 2:
         return None
 
-    search_region = norm_grad[first_drop_idx + 1 : limit_idx]
+    # the cornea should be a smaller secondary peak right after the drop
+    search_region = normalized_gradient[first_drop_idx + 1 : limit_idx]
     if search_region.size < 3:
         return None
 
-    for prom in [peak_prominence, 0.05, 0.03, 0.01]:
-        peaks, _ = find_peaks(search_region, prominence=prom)
+    # searching the cornea peak
+    for prominence in [peak_prominence, 0.05, 0.03, 0.01]:
+        peaks, _ = find_peaks(search_region, prominence=prominence)
         if len(peaks):
             return int(first_drop_idx + 1 + peaks[0])
 
+    # Fallback: when no clear peak, take the region's maximum (after the drop) as the cornea position
     return int(first_drop_idx + 1 + np.argmax(search_region))
+
+
+def _find_first_intfat_index(
+    globe_ext_idx: int, intfat_labels_along: np.ndarray
+) -> int | None:
+    """Find index of the first intraconal fat sample beyond the posterior globe boundary"""
+    search = np.where(intfat_labels_along[globe_ext_idx + 1 :] > 0)[0]
+    return int(globe_ext_idx + 1 + search[0]) if search.size else None
 
 
 def compute_axial_length_data(
@@ -146,11 +203,11 @@ def compute_axial_length_data(
     """Compute all ray-based coordinates and measurements for axial length.
 
     Args:
-        segmented_image (nib.Nifti1Image): _description_
-        raw_image (nib.Nifti1Image): _description_
+        segmented_image (nib.Nifti1Image): cropped quadrant segmented image
+        raw_image (nib.Nifti1Image): cropped quadrant original image
 
     Returns:
-        ALData | None: return populated ALData or None
+        ALData | None: populated ALData, or None if no lens or globe after segmentation
     """
     voxel_dim = np.array(segmented_image.header.get_zooms()[:3])
     segmented_arr = segmented_image.get_fdata()
@@ -182,15 +239,17 @@ def compute_axial_length_data(
     start, end = _line_box_intersection(
         lens_centroid, lens_to_globe_unit_vector, raw_image_array.shape
     )
+    if start is None or end is None:
+        return None
 
     # sample densely enough to not miss any sub-voxel structure boundary
     approx_mm_length = float(np.linalg.norm((end - start) * voxel_dim))
     min_vox_mm = float(voxel_dim.min())
     samples = max(800, int(np.ceil(approx_mm_length / (min_vox_mm / 4.0))))
-    ray_coords = np.linspace(start, end, samples)
+    ray_coords = _sample_ray(start, end, samples)
 
     # sample MRI intensities and structure labels at each point along the ray
-    intensities = map_coordinates(raw_image_array, ray_coords.T, order=1, mode="nearest")
+    intensities = _sample_intensities(raw_image_array, ray_coords)
     lens_labels_along = _nearest_labels(lens_mask, ray_coords)
     globe_labels_along = _nearest_labels(globe_mask, ray_coords)
     intfat_labels_along = _nearest_labels(intfat_mask, ray_coords)
@@ -215,14 +274,13 @@ def compute_axial_length_data(
         cornea_boundary = None
 
     # find first intraconal fat sample beyond the posterior globe boundary
-    intfat_search = np.where(intfat_labels_along[globe_ext_idx + 1 :] > 0)[0]
-    if intfat_search.size:
-        intfat_boundary = ray_coords[globe_ext_idx + 1 + intfat_search[0]]
-    else:
-        intfat_boundary = None
+    intfat_idx = _find_first_intfat_index(globe_ext_idx, intfat_labels_along)
+    intfat_boundary = ray_coords[intfat_idx] if intfat_idx is not None else None
 
     # compute distances in mm
-    lens_to_globe_vec_mm = (lens_anterior_boundary - globe_posterior_boundary) * voxel_dim
+    lens_to_globe_vec_mm = (
+        lens_anterior_boundary - globe_posterior_boundary
+    ) * voxel_dim
     axial_length_mm = float(np.round(np.linalg.norm(lens_to_globe_vec_mm), 2))
 
     if cornea_boundary is not None:
@@ -275,7 +333,7 @@ def extract_axial_length_measurements(ray_data: ALData | None) -> dict[str, floa
 
 
 def compute_volumetry(image: nib.Nifti1Image) -> dict[str, float]:
-    """Compute volumes for each classes of ROI in mm3.
+    """Compute volumes for each class of the ROI in mm3.
 
     Args:
         image (nib.Nifti1Image): cropped segmented NIfTI image

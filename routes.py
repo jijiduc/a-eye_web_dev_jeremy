@@ -34,25 +34,25 @@ from app import oauth
 from config import LOGS_FOLDER
 from main import getSegmentation
 from models import UserPaths
-from module.biomarkers.biomarkers import (
+from package.biomarkers.biomarkers import (
     compute_axial_length_data,
     compute_volumetry,
     extract_axial_length_measurements,
 )
-from module.biomarkers.visualisations import plot_axial_length
-from module.quadrant_segmentation.quadrant import (
+from package.biomarkers.visualisations import plot_axial_length
+from package.quadrant_segmentation.quadrant import (
     crop_quadrant,
     merge_quadrants,
     uncrop_quadrant,
 )
-from module.statistical_analysis.analysis import (
+from package.statistical_analysis.analysis import (
     load_reference,
     references_iqr_bounds,
     references_means,
     references_size,
     references_standard_deviation,
 )
-from module.statistical_analysis.visualisations import (
+from package.statistical_analysis.visualisations import (
     plot_axial_length_violin,
     plot_volumetry_violin,
 )

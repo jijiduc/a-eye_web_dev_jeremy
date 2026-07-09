@@ -1,3 +1,10 @@
+"""Image handler for the quadrant segmentation.
+
+This module contains functions to perform the quadrant-based segmentation:
+cropping each eye's quadrant before segmentation, then uncropping and merging
+the two segmented quadrants back into a single image.
+"""
+
 # Adapted from (quadrant_segmentation.ipynb, jaimebarran, accessed 26.05.2026)
 # URL: https://github.com/jaimebarran/a-eye_preprocessing/blob/main/Code/quadrant_segmentation.ipynb
 from pathlib import Path
@@ -33,8 +40,9 @@ def crop_quadrant(img_path: Path, left_side: bool) -> nib.Nifti1Image:
     return nib.Nifti1Image(cropped, img.affine, img.header)
 
 
-def uncrop_quadrant(cropped_img: nib.Nifti1Image, original_shape: tuple[int, int, int],
-                     left_side: bool) -> nib.Nifti1Image:
+def uncrop_quadrant(
+    cropped_img: nib.Nifti1Image, original_shape: tuple[int, int, int], left_side: bool
+) -> nib.Nifti1Image:
     """To reverse a cropped file back into the original image space
 
     Args:
@@ -61,7 +69,9 @@ def uncrop_quadrant(cropped_img: nib.Nifti1Image, original_shape: tuple[int, int
     return nib.Nifti1Image(full_data, cropped_img.affine, new_header)
 
 
-def merge_quadrants(left_img: nib.Nifti1Image, right_img: nib.Nifti1Image) -> nib.Nifti1Image:
+def merge_quadrants(
+    left_img: nib.Nifti1Image, right_img: nib.Nifti1Image
+) -> nib.Nifti1Image:
     """To merge the left and right uncropped quadrants
 
     Args:
