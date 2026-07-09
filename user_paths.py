@@ -1,3 +1,9 @@
+"""Dataclass for the paths at user-scope used in the segmentation tool.
+
+This module contains the UserPaths dataclass. It gathers every local and HPC
+path a user's segmentation tool use need.
+"""
+
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -30,12 +36,10 @@ class UserPaths:
     hpc_base_input: str
     hpc_input: str
 
-
     def create_directories(self) -> None:
         """Create the needed local directories if missing"""
         self.upload.mkdir(parents=True, exist_ok=True)
         self.aux_input.mkdir(parents=True, exist_ok=True)
         self.download.mkdir(parents=True, exist_ok=True)
         self.jobfile.parent.mkdir(parents=True, exist_ok=True)
-        self.visualisation.mkdir(parents=True,exist_ok=True)
-
+        self.visualisation.mkdir(parents=True, exist_ok=True)
