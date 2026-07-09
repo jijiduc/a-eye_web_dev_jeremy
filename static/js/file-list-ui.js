@@ -398,13 +398,13 @@ function renderBiomarkersDropdownContent(results) {
                             </div>
                             <div class="card-body d-flex flex-column gap-4">
                                 <div>
-                                    <h5 style="color: var(--stat-value-color); text-align: center;"
+                                    <h5 style="color: var(--stat-value-color); text-align: center;">
                                         Volumetry
                                     </h5>
                                     ${renderVolumetryTable(data)}
                                 </div>
                                 <div>
-                                    <h5 style="color: var(--stat-value-color); text-align: center;"
+                                    <h5 style="color: var(--stat-value-color); text-align: center;">
                                         Axial length
                                     </h5>
                                     ${data.axial_length_image ? `
@@ -463,7 +463,7 @@ function renderStatisticalDropdownContent(results) {
                             <div class="card-body d-flex flex-column gap-4">
 
                                 <div>
-                                    <h5 style="color: var(--stat-value-color); text-align: center;"
+                                    <h5 style="color: var(--stat-value-color); text-align: center;">
                                         Volumetry
                                     </h5>
                                     ${renderOutlierAlert(data, VOLUME_LABELS)}
@@ -485,7 +485,7 @@ function renderStatisticalDropdownContent(results) {
                                         </p>
                                     </div>` : ''}
                                 <div>
-                                    <h5 style="color: var(--stat-value-color); text-align: center;"
+                                    <h5 style="color: var(--stat-value-color); text-align: center;">
                                         Axial length
                                     </h5>
                                     ${renderOutlierAlert(data, AXIAL_LENGTH_LABELS)}
@@ -600,7 +600,7 @@ function renderComparisonAccordion(results) {
                         </div>
                         <div class="card-body d-flex flex-column gap-4">
                             <div>
-                                <h5 style="color: var(--stat-value-color); text-align: center;"
+                                <h5 style="color: var(--stat-value-color); text-align: center;">
                                     Volumetry
                                 </h5>
                                 ${renderComparisonTable(VOLUME_LABELS, volStats, reference.reference_mean,
@@ -608,7 +608,7 @@ function renderComparisonAccordion(results) {
                                                          reference.reference_count.volumetry)}
                             </div>
                             <div>
-                                <h5 style="color: var(--stat-value-color); text-align: center;"
+                                <h5 style="color: var(--stat-value-color); text-align: center;">
                                     Axial length
                                 </h5>
                                 ${renderComparisonTable(AXIAL_LENGTH_LABELS, alStats, reference.reference_mean,
