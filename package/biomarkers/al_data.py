@@ -1,3 +1,10 @@
+"""Dataclass for the computed data during an axial length extraction of one eye.
+
+This module contains the ALData dataclass, with all values computed while
+extracting the axial length biomarker. These values are computed once and
+shared between the extraction and plotting functions.
+"""
+
 from dataclasses import dataclass
 
 import numpy as np
