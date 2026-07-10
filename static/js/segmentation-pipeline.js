@@ -187,7 +187,7 @@ function uploadFiles() {
                 segmentButton.classList.add('btn-success');
                 segmentButton.disabled = false;
             } else {
-                throw new Error(data.message || 'Upload failed');
+                throw new Error(data.message);
             }
         })
         .catch(error => {
@@ -248,7 +248,7 @@ function segmentFiles() {
                 buildResultFileList(segmentationResult);
                 alert(data.message);
             } else {
-                throw new Error(data.message || 'segmentation failed');
+                throw new Error(data.message);
             }
         })
         .catch(error => {
@@ -324,7 +324,7 @@ function extractBiomarkers() {
                 alert(data.message);
             } else {
                 document.getElementById('display-file-list').style.display = '';
-                throw new Error(data.message || 'Extraction failed');
+                throw new Error(data.message);
             }
         })
         .catch(error => {
