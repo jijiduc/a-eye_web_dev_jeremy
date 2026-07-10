@@ -1,6 +1,9 @@
 /**
  * JS worker for inspecting .zip/.7z archive contents in the counting cases process.
- * Adapted from https://github.com/GMH-Code/JS7z
+ */
+/**
+ * Adapted from (JS7z, accessed 16.06.2026)
+ * URL: https://github.com/GMH-Code/JS7z
  */
 
 importScripts('/static/js/js7z/js7z.js');

@@ -23,9 +23,10 @@ const AXIAL_LENGTH_LABELS = {
 * @param {array} biomarkers - biomarkers to compute
 * @returns {object} - key (biomarker) -> {mean, std}
 */
-/*
-* Adapted from : https://medium.com/@giacinti.2224996/online-computation-of-mean-and-variance-cd8d741c8e54
-*/
+/**
+ * Adapted from (Online computation of mean and variance, accessed 08.07.2026)
+ * URL: https://medium.com/@giacinti.2224996/online-computation-of-mean-and-variance-cd8d741c8e54
+ */
 function computeSelectionStats(results, side, biomarkers) {
     const statistics = {};
     for (const key of biomarkers) {
@@ -54,10 +55,12 @@ function computeSelectionStats(results, side, biomarkers) {
 * Add a panzoom component a the image. 
 * Enable to zoom on it with Shift + mouse Wheel.
 * @param {Element} row - The container to search in : '.wheel-zoom img', to attach panzoom to
-* Adapted from :
-*       - https://github.com/timmywil/panzoom
-*       - https://timmywil.com/panzoom/demo/
 */
+/**
+ * Adapted from (panzoom, accessed 04.07.2026)
+ * URL: https://github.com/timmywil/panzoom
+ * URL: https://timmywil.com/panzoom/demo/
+ */
 function addMouseWheelZoom(row) {
     row.querySelectorAll('.wheel-zoom img').forEach((image) => {
         const panzoom = Panzoom(image, { minScale: 1, maxScale: 5, panOnlyWhenZoomed: true, canvas: true });

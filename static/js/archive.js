@@ -5,9 +5,10 @@ let archiveWorker = null;
 * @param {File} file - the archive file to inspect
 * @returns {Promise<string[]>} - resolves with the list of paths found in the archive
 */
-/*
-* Adapted from : https://byte-explorer.medium.com/promise-practice-of-web-worker-8c713d1c0754, accessed on 16.06.2026
-*/
+/**
+ * Adapted from (Promise practice of web worker, accessed 16.06.2026)
+ * URL: https://byte-explorer.medium.com/promise-practice-of-web-worker-8c713d1c0754
+ */
 function listArchiveEntries(file) {
     return new Promise((resolve, reject) => {
         archiveWorker ??= new Worker('/static/js/archive-worker.js');
