@@ -943,7 +943,10 @@ details[open] .summary-chevron {
 /* ============================================================
    Measures tables
    ============================================================ */
-/* Adapted from : https://dev.to/dcodeyt/creating-beautiful-html-tables-with-css-428l*/
+/**
+ * Adapted from (Creating beautiful HTML tables with CSS, accessed 01.07.2026)
+ * URL: https://dev.to/dcodeyt/creating-beautiful-html-tables-with-css-428l
+ */
 .measure-table {
     border-collapse: collapse;;
     font-size: 0.875em;
